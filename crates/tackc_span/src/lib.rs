@@ -2,8 +2,6 @@
 
 use std::{cmp::Ordering, ops::Range};
 
-use tackc_macros::fuzz;
-
 /// The `Span` type represents an area of a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Span {
@@ -176,7 +174,6 @@ impl PartialOrd for Span {
     }
 }
 
-#[fuzz]
 fn dual_order(x: Ordering, y: Ordering) -> Option<Ordering> {
     match (x, y) {
         (x, y) if x == y => Some(x),

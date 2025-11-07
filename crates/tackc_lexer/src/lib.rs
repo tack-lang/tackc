@@ -205,10 +205,7 @@ impl<'src> Lexer<'src> {
     fn make_token(&mut self, ty: TokenKind<'src>) -> Token<'src> {
         let span = self.span;
         self.span.reset();
-        Token {
-            span,
-            ty,
-        }
+        Token { span, ty }
     }
 
     fn current_lexeme(&self) -> &'src str {
@@ -219,10 +216,7 @@ impl<'src> Lexer<'src> {
         let span = self.span;
         self.span.reset();
 
-        Error {
-            span,
-            ty,
-        }
+        Error { span, ty }
     }
 
     fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token<'src>, Error> {
@@ -288,14 +282,13 @@ impl<'src> Lexer<'src> {
     }
 
     fn handle_digits(&mut self) {
-        while let Some(c) = self.current_byte() {
-            match c {
-                c if c.is_ascii_digit() => {}
-                b'_' => {}
-                _ => return,
-            }
+        while matches!(self.current_byte(), Some(c) if c.is_ascii_digit() || c == b'_') {
             self.next_byte();
         }
+    }
+
+    fn clean_digits(lexeme: &str) -> String {
+        lexeme.chars().filter(|&c| c != '_').collect()
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -303,103 +296,99 @@ impl<'src> Lexer<'src> {
         &mut self,
         prefix: IntegerPrefix,
     ) -> Result<Token<'src>, Error> {
-        self.next_byte();
-        self.next_byte();
-
+        self.next_byte(); // skip '0'
+        self.next_byte(); // skip prefix char
         self.handle_digits();
-        let lexeme = &self.current_lexeme()[2..]; // Ignore prefix
 
-        let digits = lexeme
-            .bytes()
-            .filter(|x| *x != b'_')
-            .map(|x| x as char)
-            .collect::<String>();
-        let integer = IntegerLiteral {
+        let digits = Self::clean_digits(&self.current_lexeme()[2..]);
+        Ok(self.make_token(TokenKind::IntLit(Box::new(IntegerLiteral {
             prefix,
             digits: digits.into_boxed_str(),
-        };
-
-        Ok(self.make_token(TokenKind::IntLit(Box::new(integer))))
-    }
-
-    fn filter_lexeme_underscore(lexeme: &'src str) -> String {
-        lexeme.chars().filter(|x| *x != '_').collect::<String>()
+        }))))
     }
 
     fn handle_num_lit(&mut self) -> Result<Token<'src>, Error> {
-        if self.current_byte() == Some(b'0') {
-            match self.peek_byte() {
-                Some(b'b') => {
-                    return self.handle_int_lit_before_prefix(IntegerPrefix::Binary);
-                }
-                Some(b'o') => {
-                    return self.handle_int_lit_before_prefix(IntegerPrefix::Octal);
-                }
-                Some(b'x') => {
-                    return self.handle_int_lit_before_prefix(IntegerPrefix::Hex);
-                }
-                _ => {}
+        // Prefixed integer literals (0b, 0o, 0x)
+        if let (Some(b'0'), Some(prefix)) = (self.current_byte(), self.peek_byte()) {
+            let prefix = match prefix {
+                b'b' => Some(IntegerPrefix::Binary),
+                b'o' => Some(IntegerPrefix::Octal),
+                b'x' => Some(IntegerPrefix::Hex),
+                _ => None,
+            };
+            if let Some(p) = prefix {
+                return self.handle_int_lit_before_prefix(p);
             }
         }
 
         let start = self.span.start;
-
         self.handle_digits();
 
-        let (digits1, digits2) = match self.current_byte() {
+        let digits1 = Self::clean_digits(self.current_lexeme());
+        match self.current_byte() {
             Some(b'.') => {
-                let digits1 = Self::filter_lexeme_underscore(self.current_lexeme());
                 self.next_byte();
                 self.span.reset();
                 self.handle_digits();
-                let digits2 = Self::filter_lexeme_underscore(self.current_lexeme());
+                let digits2 = Self::clean_digits(self.current_lexeme());
+
+                // No exponent → simple float
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
-                    let float = FloatLiteral {
+                    self.span.start = start;
+                    return Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
                         pre_dot_digits: digits1.into_boxed_str(),
                         post_dot_digits: Some(digits2.into_boxed_str()),
                         post_e: None,
-                    };
-                    self.span.start = start;
-                    return Ok(self.make_token(TokenKind::FloatLit(Box::new(float))));
+                    }))));
                 }
+
+                // Exponent part
                 self.next_byte();
-                (digits1.into_boxed_str(), Some(digits2.into_boxed_str()))
+                self.handle_float_with_exponent(start, digits1, Some(digits2.into_boxed_str()))
             }
             Some(b'e' | b'E') => {
-                let digits1 = Self::filter_lexeme_underscore(self.current_lexeme());
                 self.next_byte();
-                (digits1.into_boxed_str(), None)
+                self.handle_float_with_exponent(start, digits1, None)
             }
             _ => {
-                let digits = Self::filter_lexeme_underscore(self.current_lexeme());
-
                 let integer = IntegerLiteral {
-                    digits: digits.into_boxed_str(),
                     prefix: IntegerPrefix::Decimal,
+                    digits: digits1.into_boxed_str(),
                 };
-
-                return Ok(self.make_token(TokenKind::IntLit(Box::new(integer))));
+                Ok(self.make_token(TokenKind::IntLit(Box::new(integer))))
             }
-        };
+        }
+    }
 
+    #[allow(clippy::unnecessary_wraps)]
+    fn handle_float_with_exponent(
+        &mut self,
+        start: usize,
+        pre_dot_digits: String,
+        post_dot_digits: Option<Box<str>>,
+    ) -> Result<Token<'src>, Error> {
         let sign = match self.current_byte() {
-            Some(b'-') => { self.next_byte(); false },
-            Some(b'+') => { self.next_byte(); true  },
+            Some(b'-') => {
+                self.next_byte();
+                false
+            }
+            Some(b'+') => {
+                self.next_byte();
+                true
+            }
             _ => false,
         };
 
         self.span.reset();
         self.handle_digits();
-        let digits3 = Self::filter_lexeme_underscore(self.current_lexeme());
+        let digits3 = Self::clean_digits(self.current_lexeme());
         self.span.start = start;
 
-        let float = FloatLiteral {
-            pre_dot_digits: digits1,
-            post_dot_digits: digits2,
+        Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
+            pre_dot_digits: pre_dot_digits.into_boxed_str(),
+            post_dot_digits,
             post_e: Some((sign, digits3.into_boxed_str())),
-        };
-
-        Ok(self.make_token(TokenKind::FloatLit(Box::new(float))))
+        }))))
     }
 
     #[allow(clippy::unnecessary_wraps)]
