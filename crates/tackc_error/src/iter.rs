@@ -60,7 +60,7 @@ where
                             self.stopped = true;
                             // Drain the rest
                             for t in self.iter.by_ref() {
-                                if let Err(e) = t{
+                                if let Err(e) = t {
                                     (self.callback)(e);
                                 }
                             }
@@ -75,11 +75,7 @@ where
 }
 
 pub trait IteratorExt: Iterator {
-    fn reporter<T, E, F: FnMut(E)>(
-        self,
-        callback: F,
-        mode: ReportMode,
-    ) -> impl Iterator<Item = T>
+    fn reporter<T, E, F: FnMut(E)>(self, callback: F, mode: ReportMode) -> impl Iterator<Item = T>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
