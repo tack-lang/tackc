@@ -1,0 +1,12 @@
+func main() {
+    let x = 5__223_2e-2;
+    let y = 2.2e+5;
+    let z = x * y + 5.2;
+    let a = 2e+52;
+    print(z);
+    print("Hello, world!");
+
+    `syntax` `error`
+
+    print("Oh no! Unterminated string!");
+}

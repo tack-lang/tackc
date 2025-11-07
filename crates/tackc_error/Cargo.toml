@@ -1,0 +1,10 @@
+[package]
+name = "tackc_error"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tackc_span = { version = "0.1.0", path = "../tackc_span" }
+
+[lints]
+workspace = true

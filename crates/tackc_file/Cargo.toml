@@ -1,0 +1,10 @@
+[package]
+name = "tackc_file"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tackc_macros = { version = "0.1.0", path = "../tackc_macros" }
+
+[lints]
+workspace = true

@@ -1,0 +1,479 @@
+use std::fmt::Display;
+
+use tackc_span::Span;
+use thiserror::Error;
+
+use tackc_file::File;
+
+#[derive(Debug)]
+pub struct Token<'src> {
+    pub span: Span,
+    pub ty: TokenKind<'src>,
+}
+
+#[derive(Debug)]
+pub enum TokenKind<'src> {
+    Ident(&'src str),
+
+    // Literals
+    StringLit(Box<str>),
+    IntLit(Box<IntegerLiteral>),
+    FloatLit(Box<FloatLiteral>),
+
+    Eof,
+
+    // Keywords
+    Func,
+    Let,
+
+    // Symbols
+    OpenParen,
+    CloseParen,
+    OpenBrace,
+    CloseBrace,
+
+    Eq,
+
+    Semicolon,
+
+    Plus,
+    Dash,
+    Star,
+    Slash,
+}
+
+impl Display for TokenKind<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TokenKind::Ident(ident) => write!(f, "{ident}"),
+
+            TokenKind::StringLit(string) => write!(f, "{string}"),
+            TokenKind::IntLit(int) => write!(f, "{int}"),
+            TokenKind::FloatLit(float) => write!(f, "{float}"),
+
+            TokenKind::Eof => write!(f, "<EOF>"),
+
+            TokenKind::Func => write!(f, "func"),
+            TokenKind::Let => write!(f, "let"),
+
+            TokenKind::OpenParen => write!(f, "("),
+            TokenKind::CloseParen => write!(f, ")"),
+            TokenKind::OpenBrace => write!(f, "{{"),
+            TokenKind::CloseBrace => write!(f, "}}"),
+
+            TokenKind::Eq => write!(f, "="),
+
+            TokenKind::Semicolon => write!(f, ";"),
+
+            TokenKind::Plus => write!(f, "+"),
+            TokenKind::Dash => write!(f, "-"),
+            TokenKind::Star => write!(f, "*"),
+            TokenKind::Slash => write!(f, "/"),
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub struct Error {
+    pub span: Span,
+    pub ty: ErrorKind,
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.ty)
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ErrorKind {
+    #[error("unknown character {0}")]
+    UnknownChar(char),
+    #[error("unterminated string")]
+    UnterminatedString,
+    #[error("unexpected character {0}")]
+    UnexpectedCharacter(char),
+}
+
+#[derive(Debug)]
+pub struct IntegerLiteral {
+    pub prefix: IntegerPrefix,
+    pub digits: Box<str>,
+}
+
+impl Display for IntegerLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}", self.prefix, self.digits)
+    }
+}
+
+#[derive(Debug)]
+pub enum IntegerPrefix {
+    /// No prefix
+    Decimal,
+    /// `0b` prefix
+    Binary,
+    /// `0o` prefix
+    Octal,
+    /// `0x` prefix
+    Hex,
+}
+
+impl Display for IntegerPrefix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Decimal => write!(f, ""),
+            Self::Binary => write!(f, "0b"),
+            Self::Octal => write!(f, "0o"),
+            Self::Hex => write!(f, "0x"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct FloatLiteral {
+    pub pre_dot_digits: Box<str>,
+    pub post_dot_digits: Option<Box<str>>,
+    // (sign_is_positive, digits)
+    pub post_e: Option<(bool, Box<str>)>,
+}
+
+impl Display for FloatLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.pre_dot_digits)?;
+        if let Some(post_dot) = &self.post_dot_digits {
+            write!(f, ".{post_dot}")?;
+        }
+        if let Some((sign, post_e)) = &self.post_e {
+            write!(f, "e")?;
+            if !*sign {
+                write!(f, "-")?;
+            }
+            write!(f, "{post_e}")?;
+        }
+        Ok(())
+    }
+}
+
+pub struct Lexer<'src> {
+    src: &'src File,
+    span: Span,
+}
+
+impl<'src> Lexer<'src> {
+    pub fn new(src: &'src File) -> Self {
+        Lexer {
+            src,
+            span: Span::new(),
+        }
+    }
+
+    pub fn at_eof(&self) -> bool {
+        self.src.len() <= self.span.end
+    }
+
+    fn current_byte(&self) -> Option<u8> {
+        self.src.as_bytes().get(self.span.end).copied()
+    }
+
+    fn peek_byte(&self) -> Option<u8> {
+        self.src.as_bytes().get(self.span.end + 1).copied()
+    }
+
+    fn next_byte(&mut self) -> Option<u8> {
+        if self.at_eof() {
+            None
+        } else {
+            let temp = self.current_byte();
+            self.span.end += 1;
+            temp
+        }
+    }
+
+    fn skip_whitespace(&mut self) {
+        while !self.at_eof() {
+            match self.current_byte().unwrap() {
+                c if c.is_ascii_whitespace() => {
+                    self.next_byte();
+                }
+                _ => break,
+            }
+        }
+        self.span.reset();
+    }
+
+    fn make_token(&mut self, ty: TokenKind<'src>) -> Token<'src> {
+        let span = self.span;
+        self.span.reset();
+        Token {
+            span,
+            ty,
+        }
+    }
+
+    fn current_lexeme(&self) -> &'src str {
+        self.span.apply_bytes(self.src)
+    }
+
+    fn make_error(&mut self, ty: ErrorKind) -> Error {
+        let span = self.span;
+        self.span.reset();
+
+        Error {
+            span,
+            ty,
+        }
+    }
+
+    fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token<'src>, Error> {
+        let ty = match c {
+            '(' => TokenKind::OpenParen,
+            ')' => TokenKind::CloseParen,
+            '{' => TokenKind::OpenBrace,
+            '}' => TokenKind::CloseBrace,
+
+            '=' => TokenKind::Eq,
+
+            ';' => TokenKind::Semicolon,
+
+            '+' => TokenKind::Plus,
+            '-' => TokenKind::Dash,
+            '*' => TokenKind::Star,
+            '/' => TokenKind::Slash,
+
+            c => return Err(self.make_error(ErrorKind::UnknownChar(c))),
+        };
+
+        Ok(self.make_token(ty))
+    }
+
+    /// Handle a multi-byte UTF-8 character, given the first byte.
+    ///
+    /// # Returns
+    /// Returns the character itself.
+    fn handle_utf8_extras(&mut self, c: u8) -> char {
+        let extra_bytes = match c {
+            0b1100_0000..=0b1101_1111 => 1, // 2-byte
+            0b1110_0000..=0b1110_1111 => 2, // 3-byte
+            0b1111_0000..=0b1111_0111 => 3, // 4-byte
+            _ => 0,
+        };
+
+        for _ in 0..extra_bytes {
+            self.next_byte();
+        }
+
+        let lexeme = self.current_lexeme();
+        let char_len = extra_bytes + 1;
+        lexeme[lexeme.len() - char_len..].chars().next().unwrap()
+    }
+
+    fn handle_string_lit(&mut self) -> Result<Token<'src>, Error> {
+        let mut string = String::new();
+        loop {
+            match self.next_byte() {
+                None => return Err(self.make_error(ErrorKind::UnterminatedString)),
+                Some(b'"') => {
+                    break;
+                }
+                Some(c) if c & 0x80 != 0 => {
+                    let char = self.handle_utf8_extras(c);
+
+                    string.push(char);
+                }
+                Some(c) => string.push(c as char),
+            }
+        }
+        Ok(self.make_token(TokenKind::StringLit(string.into_boxed_str())))
+    }
+
+    fn handle_digits(&mut self) {
+        while let Some(c) = self.current_byte() {
+            match c {
+                c if c.is_ascii_digit() => {}
+                b'_' => {}
+                _ => return,
+            }
+            self.next_byte();
+        }
+    }
+
+    #[allow(clippy::unnecessary_wraps)]
+    fn handle_int_lit_before_prefix(
+        &mut self,
+        prefix: IntegerPrefix,
+    ) -> Result<Token<'src>, Error> {
+        self.next_byte();
+        self.next_byte();
+
+        self.handle_digits();
+        let lexeme = &self.current_lexeme()[2..]; // Ignore prefix
+
+        let digits = lexeme
+            .bytes()
+            .filter(|x| *x != b'_')
+            .map(|x| x as char)
+            .collect::<String>();
+        let integer = IntegerLiteral {
+            prefix,
+            digits: digits.into_boxed_str(),
+        };
+
+        Ok(self.make_token(TokenKind::IntLit(Box::new(integer))))
+    }
+
+    fn filter_lexeme_underscore(lexeme: &'src str) -> String {
+        lexeme.chars().filter(|x| *x != '_').collect::<String>()
+    }
+
+    fn handle_num_lit(&mut self) -> Result<Token<'src>, Error> {
+        if self.current_byte() == Some(b'0') {
+            match self.peek_byte() {
+                Some(b'b') => {
+                    return self.handle_int_lit_before_prefix(IntegerPrefix::Binary);
+                }
+                Some(b'o') => {
+                    return self.handle_int_lit_before_prefix(IntegerPrefix::Octal);
+                }
+                Some(b'x') => {
+                    return self.handle_int_lit_before_prefix(IntegerPrefix::Hex);
+                }
+                _ => {}
+            }
+        }
+
+        let start = self.span.start;
+
+        self.handle_digits();
+
+        let (digits1, digits2) = match self.current_byte() {
+            Some(b'.') => {
+                let digits1 = Self::filter_lexeme_underscore(self.current_lexeme());
+                self.next_byte();
+                self.span.reset();
+                self.handle_digits();
+                let digits2 = Self::filter_lexeme_underscore(self.current_lexeme());
+                if !matches!(self.current_byte(), Some(b'e' | b'E')) {
+                    let float = FloatLiteral {
+                        pre_dot_digits: digits1.into_boxed_str(),
+                        post_dot_digits: Some(digits2.into_boxed_str()),
+                        post_e: None,
+                    };
+                    self.span.start = start;
+                    return Ok(self.make_token(TokenKind::FloatLit(Box::new(float))));
+                }
+                self.next_byte();
+                (digits1.into_boxed_str(), Some(digits2.into_boxed_str()))
+            }
+            Some(b'e' | b'E') => {
+                let digits1 = Self::filter_lexeme_underscore(self.current_lexeme());
+                self.next_byte();
+                (digits1.into_boxed_str(), None)
+            }
+            _ => {
+                let digits = Self::filter_lexeme_underscore(self.current_lexeme());
+
+                let integer = IntegerLiteral {
+                    digits: digits.into_boxed_str(),
+                    prefix: IntegerPrefix::Decimal,
+                };
+
+                return Ok(self.make_token(TokenKind::IntLit(Box::new(integer))));
+            }
+        };
+
+        let sign = match self.current_byte() {
+            Some(b'-') => { self.next_byte(); false },
+            Some(b'+') => { self.next_byte(); true  },
+            _ => false,
+        };
+
+        self.span.reset();
+        self.handle_digits();
+        let digits3 = Self::filter_lexeme_underscore(self.current_lexeme());
+        self.span.start = start;
+
+        let float = FloatLiteral {
+            pre_dot_digits: digits1,
+            post_dot_digits: digits2,
+            post_e: Some((sign, digits3.into_boxed_str())),
+        };
+
+        Ok(self.make_token(TokenKind::FloatLit(Box::new(float))))
+    }
+
+    #[allow(clippy::unnecessary_wraps)]
+    fn handle_ident_or_keyword(&mut self) -> Result<Token<'src>, Error> {
+        while let Some(c) = self.current_byte() {
+            match c {
+                b'_' => {}
+                c if c.is_ascii_alphanumeric() => {}
+                _ => break,
+            }
+            self.next_byte();
+        }
+
+        let ty = match self.current_lexeme() {
+            "func" => TokenKind::Func,
+            "let" => TokenKind::Let,
+            ident => TokenKind::Ident(ident),
+        };
+
+        Ok(self.make_token(ty))
+    }
+
+    #[allow(clippy::missing_panics_doc)]
+    /// Gets the next token in the lexer. Nearly equivilant to [`next()`](`Self::next()`), but returns an [`TokenKind::Eof`] token instead of `None`.
+    ///
+    /// # Errors
+    /// See [`ErrorKind`].
+    pub fn next_token(&mut self) -> Result<Token<'src>, Error> {
+        self.skip_whitespace();
+        if self.at_eof() {
+            return Ok(self.make_token(TokenKind::Eof));
+        }
+
+        match self.next_byte().unwrap() {
+            b'"' => self.handle_string_lit(),
+            c if c.is_ascii_digit() => self.handle_num_lit(),
+            c if c.is_ascii_alphabetic() => self.handle_ident_or_keyword(),
+            c if c & 0x80 != 0 => {
+                let char = self.handle_utf8_extras(c);
+
+                self.handle_single_character_or_unknown(char)
+            }
+            c => self.handle_single_character_or_unknown(c as char),
+        }
+    }
+}
+
+impl<'src> Iterator for Lexer<'src> {
+    type Item = Result<Token<'src>, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let tok = self.next_token();
+        match tok {
+            Ok(Token {
+                ty: TokenKind::Eof, ..
+            }) => None,
+            _ => Some(tok),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tackc_macros::fuzz;
+
+    use super::*;
+
+    #[fuzz(20)]
+    #[cfg(test)]
+    #[allow(clippy::needless_pass_by_value)]
+    fn lexer_fuzz(file: File) {
+        let lexer = Lexer::new(&file);
+        for i in lexer {
+            drop(std::hint::black_box(i));
+        }
+    }
+}
