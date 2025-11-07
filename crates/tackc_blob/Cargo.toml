@@ -1,0 +1,20 @@
+[package]
+name = "tackc_blob"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tackc_error = { version = "0.1.0", path = "../tackc_error" }
+tackc_file = { version = "0.1.0", path = "../tackc_file" }
+tackc_global = { version = "0.1.0", path = "../tackc_global" }
+tackc_lexer = { version = "0.1.0", path = "../tackc_lexer" }
+tackc_macros = { version = "0.1.0", path = "../tackc_macros" }
+tackc_span = { version = "0.1.0", path = "../tackc_span" }
+
+[lints]
+workspace = true
+
+[build-dependencies]
+proc-macro2 = "1.0.103"
+quote = "1.0.42"
+syn = { version = "2.0.109", features = ["full"] }

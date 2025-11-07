@@ -1,0 +1,13 @@
+[package]
+name = "tackc_lexer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tackc_file = { version = "0.1.0", path = "../tackc_file" }
+tackc_macros = { version = "0.1.0", path = "../tackc_macros" }
+tackc_span = { version = "0.1.0", path = "../tackc_span" }
+thiserror = "2"
+
+[lints]
+workspace = true
