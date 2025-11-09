@@ -7,6 +7,7 @@ use std::{
 use tackc_macros::Random;
 
 #[derive(Debug, Hash, PartialEq, Eq, Random)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct File {
     src: String,
     path: PathBuf,

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+serde = { version = "1.0.228", optional = true }
 tackc_file = { version = "0.1.0", path = "../tackc_file" }
 tackc_macros = { version = "0.1.0", path = "../tackc_macros" }
 tackc_span = { version = "0.1.0", path = "../tackc_span" }
@@ -11,3 +12,6 @@ thiserror = "2"
 
 [lints]
 workspace = true
+
+[features]
+serde = ["dep:serde"]
