@@ -18,6 +18,5 @@ workspace = true
 serde = ["tackc_file/serde", "tackc_span/serde", "tackc_lexer/serde"]
 
 [build-dependencies]
-proc-macro2 = "1.0.103"
-quote = "1.0.42"
-syn = { version = "2.0.109", features = ["full"] }
+proc-macro2.workspace = true
+quote.workspace = true
