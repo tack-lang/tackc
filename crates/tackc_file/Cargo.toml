@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-serde = { version = "1.0.228", optional = true }
+serde = { workspace = true, optional = true }
 tackc_macros = { version = "0.1.0", path = "../tackc_macros" }
 
 [lints]
