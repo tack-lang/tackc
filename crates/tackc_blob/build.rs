@@ -8,7 +8,9 @@ fn main() -> io::Result<()> {
             let entry = entry.ok()?;
             entry.metadata().ok()?.is_dir().then_some(entry.file_name())
         })
-        .filter(|name| name != "tackc" && name != "tackc_blob" && name != "tackc_macros_impl")
+        .filter(|name| name != "tackc")
+        .filter(|name| name != "tackc_blob")
+        .filter(|name| name != "tackc_macros_impl")
         .collect::<Vec<_>>();
 
     let crate_names2 = crate_names.clone();

@@ -4,6 +4,7 @@ use std::{cmp::Ordering, ops::Range};
 
 /// The `Span` type represents an area of a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Span {
     /// The start of the `Span` (Inclusive)
     pub start: usize,

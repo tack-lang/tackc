@@ -14,6 +14,9 @@ tackc_span = { version = "0.1.0", path = "../tackc_span" }
 [lints]
 workspace = true
 
+[features]
+serde = ["tackc_file/serde", "tackc_span/serde", "tackc_lexer/serde"]
+
 [build-dependencies]
 proc-macro2 = "1.0.103"
 quote = "1.0.42"

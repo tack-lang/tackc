@@ -1,0 +1,2 @@
+[alias]
+tackc = "run -p tackc --bin tackc"

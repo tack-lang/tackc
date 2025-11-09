@@ -6,12 +6,15 @@ use thiserror::Error;
 use tackc_file::File;
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'src")))]
 pub struct Token<'src> {
     pub span: Span,
     pub ty: TokenKind<'src>,
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenKind<'src> {
     Ident(&'src str),
 
@@ -74,6 +77,7 @@ impl Display for TokenKind<'_> {
 }
 
 #[derive(Debug, Error)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Error {
     pub span: Span,
     pub ty: ErrorKind,
@@ -86,6 +90,7 @@ impl Display for Error {
 }
 
 #[derive(Debug, Error)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ErrorKind {
     #[error("unknown character {0}")]
     UnknownChar(char),
@@ -96,6 +101,7 @@ pub enum ErrorKind {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IntegerLiteral {
     pub prefix: IntegerPrefix,
     pub digits: Box<str>,
@@ -108,6 +114,7 @@ impl Display for IntegerLiteral {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum IntegerPrefix {
     /// No prefix
     Decimal,
@@ -131,6 +138,7 @@ impl Display for IntegerPrefix {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FloatLiteral {
     pub pre_dot_digits: Box<str>,
     pub post_dot_digits: Option<Box<str>>,
