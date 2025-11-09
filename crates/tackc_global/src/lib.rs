@@ -1,7 +1,7 @@
 use std::{
     any::Any,
     collections::HashMap,
-    hash::{Hash, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     marker::PhantomData,
 };
 
@@ -37,14 +37,38 @@ impl<T: Internable> Clone for Interned<T> {
 
 impl<T: Internable> Copy for Interned<T> {}
 
+/// A hasher that just uses the key as the hash.
+#[derive(Default)]
+struct IdentityHasher {
+    hash: u64,
+}
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, bytes: &[u8]) {
+        // Expect exactly 8 bytes for u64 keys
+        assert_eq!(bytes.len(), 8);
+        self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
+    }
+
+    fn write_u64(&mut self, i: u64) {
+        self.hash = i;
+    }
+
+    fn finish(&self) -> u64 {
+        self.hash
+    }
+}
+
+type IdentityHasherBuilder = BuildHasherDefault<IdentityHasher>;
+
 pub struct Global {
-    interned: HashMap<u64, Box<dyn Internable>>,
+    interned: HashMap<u64, Box<dyn Internable>, IdentityHasherBuilder>,
 }
 
 impl Global {
     /// Creates a new 'static `Global` by leaking it. Recomended for applications that compile entire files, and should hold one `Global` the entire time.
     /// Should only be called once during an entire program. For programs that need multiple `Global`s in a program, use [`Global::create_heap`].
-    /// 
+    ///
     /// # Panics
     /// If `debug_assertions` is enabled, an extra check will be added.
     /// If this function is called more than once, that function will panic.
@@ -54,7 +78,10 @@ impl Global {
             use std::sync::atomic::{AtomicBool, Ordering};
 
             static USED: AtomicBool = AtomicBool::new(false);
-            assert!(!USED.swap(true, Ordering::AcqRel), "`Global::new` should only be called once!");
+            assert!(
+                !USED.swap(true, Ordering::AcqRel),
+                "`Global::new` should only be called once!"
+            );
         }
 
         Box::leak(Self::create_heap())
@@ -64,7 +91,7 @@ impl Global {
     /// If your program will only use one `Global`, and for the entire lifetime, use [`Global::new`].
     pub fn create_heap() -> Box<Self> {
         Box::new(Self {
-            interned: HashMap::new(),
+            interned: HashMap::with_hasher(IdentityHasherBuilder::new()),
         })
     }
 
