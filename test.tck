@@ -5,8 +5,4 @@ func main() {
     let a = 2e+52;
     print(z);
     print("Hello, world!");
-
-    `syntax` `error`
-
-    print("Oh no! Unterminated string!");
 }

@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use tackc_file::File;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'src")))]
 pub struct Token<'src> {
@@ -13,7 +13,7 @@ pub struct Token<'src> {
     pub ty: TokenKind<'src>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenKind<'src> {
     Ident(&'src str),
@@ -76,7 +76,7 @@ impl Display for TokenKind<'_> {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Error {
     pub span: Span,
@@ -89,7 +89,7 @@ impl Display for Error {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ErrorKind {
     #[error("unknown character {0}")]
@@ -98,9 +98,13 @@ pub enum ErrorKind {
     UnterminatedString,
     #[error("unexpected character {0}")]
     UnexpectedCharacter(char),
+    #[error("expected digits after integer prefix")]
+    MissingIntegerPrefixDigits,
+    #[error("expected at least one digit in exponent")]
+    MissingExponentDigits,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IntegerLiteral {
     pub prefix: IntegerPrefix,
@@ -113,7 +117,7 @@ impl Display for IntegerLiteral {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum IntegerPrefix {
     /// No prefix
@@ -137,7 +141,7 @@ impl Display for IntegerPrefix {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FloatLiteral {
     pub pre_dot_digits: Box<str>,
@@ -182,10 +186,6 @@ impl<'src> Lexer<'src> {
 
     fn current_byte(&self) -> Option<u8> {
         self.src.as_bytes().get(self.span.end).copied()
-    }
-
-    fn peek_byte(&self) -> Option<u8> {
-        self.src.as_bytes().get(self.span.end + 1).copied()
     }
 
     fn next_byte(&mut self) -> Option<u8> {
@@ -289,10 +289,26 @@ impl<'src> Lexer<'src> {
         Ok(self.make_token(TokenKind::StringLit(string.into_boxed_str())))
     }
 
-    fn handle_digits(&mut self) {
-        while matches!(self.current_byte(), Some(c) if c.is_ascii_digit() || c == b'_') {
+    fn handle_digits(&mut self) -> bool {
+        #[inline]
+        fn current_is_digit(lexer: &mut Lexer<'_>) -> bool {
+            matches!(lexer.current_byte(), Some(c) if c.is_ascii_digit())
+        }
+        #[inline]
+        fn current_is_underscore(lexer: &mut Lexer<'_>) -> bool {
+            lexer.current_byte() == Some(b'_')
+        }
+
+        if current_is_digit(self) || current_is_underscore(self) {
+            self.next_byte();
+        } else {
+            return false;
+        }
+
+        while current_is_digit(self) || current_is_underscore(self) {
             self.next_byte();
         }
+        true
     }
 
     fn clean_digits(lexeme: &str) -> String {
@@ -304,9 +320,13 @@ impl<'src> Lexer<'src> {
         &mut self,
         prefix: IntegerPrefix,
     ) -> Result<Token<'src>, Error> {
-        self.next_byte(); // skip '0'
+        // Don't, `next_token` does this.
+        //self.next_byte(); // skip '0'
+
         self.next_byte(); // skip prefix char
-        self.handle_digits();
+        if !self.handle_digits() {
+            return Err(self.make_error(ErrorKind::MissingIntegerPrefixDigits));
+        }
 
         let digits = Self::clean_digits(&self.current_lexeme()[2..]);
         Ok(self.make_token(TokenKind::IntLit(Box::new(IntegerLiteral {
@@ -315,9 +335,9 @@ impl<'src> Lexer<'src> {
         }))))
     }
 
-    fn handle_num_lit(&mut self) -> Result<Token<'src>, Error> {
+    fn handle_num_lit(&mut self, c: u8) -> Result<Token<'src>, Error> {
         // Prefixed integer literals (0b, 0o, 0x)
-        if let (Some(b'0'), Some(prefix)) = (self.current_byte(), self.peek_byte()) {
+        if let (b'0', Some(prefix)) = (c, self.current_byte()) {
             let prefix = match prefix {
                 b'b' => Some(IntegerPrefix::Binary),
                 b'o' => Some(IntegerPrefix::Octal),
@@ -330,17 +350,24 @@ impl<'src> Lexer<'src> {
         }
 
         let start = self.span.start;
+        // No check needed, the only way this can trigger is if the current lexeme already has at least one digit.
+        // If this returns false, there's still a digit in the lexeme, since that's the only way for `handle_num_lit` to be called.
         self.handle_digits();
 
         let digits1 = Self::clean_digits(self.current_lexeme());
         match self.current_byte() {
             Some(b'.') => {
+                // Skip `.`
                 self.next_byte();
                 self.span.reset();
-                self.handle_digits();
-                let digits2 = Self::clean_digits(self.current_lexeme());
+                let digits2 = if self.handle_digits() {
+                    Self::clean_digits(self.current_lexeme())
+                } else {
+                    // If we don't find any digits, make it zero.
+                    String::from("0")
+                };
 
-                // No exponent → simple float
+                // No exponent -> simple float
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
                     return Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
@@ -384,11 +411,13 @@ impl<'src> Lexer<'src> {
                 self.next_byte();
                 true
             }
-            _ => false,
+            _ => true,
         };
 
         self.span.reset();
-        self.handle_digits();
+        if !self.handle_digits() {
+            return Err(self.make_error(ErrorKind::MissingExponentDigits));
+        }
         let digits3 = Self::clean_digits(self.current_lexeme());
         self.span.start = start;
 
@@ -432,7 +461,7 @@ impl<'src> Lexer<'src> {
 
         match self.next_byte().unwrap() {
             b'"' => self.handle_string_lit(),
-            c if c.is_ascii_digit() => self.handle_num_lit(),
+            c if c.is_ascii_digit() => self.handle_num_lit(c),
             c if c.is_ascii_alphabetic() => self.handle_ident_or_keyword(),
             c if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
