@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow.workspace = true
-tackc_error = { version = "0.1.0", path = "../tackc_error" }
-tackc_file = { version = "0.1.0", path = "../tackc_file" }
-tackc_global = { version = "0.1.0", path = "../tackc_global" }
-tackc_lexer = { version = "0.1.0", path = "../tackc_lexer" }
+anyhow = { workspace = true }
+tackc_error = { workspace = true }
+tackc_file = { workspace = true }
+tackc_global = { workspace = true }
+tackc_lexer = { workspace = true }
