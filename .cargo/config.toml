@@ -1,2 +1,3 @@
 [alias]
 tackc = "run -p tackc --bin tackc"
+testing = "run -p tackc_testing --bin test"
