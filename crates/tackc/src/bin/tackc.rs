@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     });
 
     for i in lexer {
-        println!("{}", i.ty);
+        println!("{}", i.data);
     }
 
     Ok(())

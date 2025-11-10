@@ -1,21 +1,13 @@
 use std::fmt::Display;
 
-use tackc_span::Span;
+use tackc_span::{Span, Spanned};
 use thiserror::Error;
 
 use tackc_file::File;
 
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'src")))]
-pub struct Token<'src> {
-    pub span: Span,
-    pub ty: TokenKind<'src>,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TokenKind<'src> {
+pub enum Token<'src> {
     Ident(&'src str),
 
     // Literals
@@ -45,33 +37,33 @@ pub enum TokenKind<'src> {
     Slash,
 }
 
-impl Display for TokenKind<'_> {
+impl Display for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenKind::Ident(ident) => write!(f, "{ident}"),
+            Token::Ident(ident) => write!(f, "{ident}"),
 
-            TokenKind::StringLit(string) => write!(f, "{string}"),
-            TokenKind::IntLit(int) => write!(f, "{int}"),
-            TokenKind::FloatLit(float) => write!(f, "{float}"),
+            Token::StringLit(string) => write!(f, "{string}"),
+            Token::IntLit(int) => write!(f, "{int}"),
+            Token::FloatLit(float) => write!(f, "{float}"),
 
-            TokenKind::Eof => write!(f, "<EOF>"),
+            Token::Eof => write!(f, "<EOF>"),
 
-            TokenKind::Func => write!(f, "func"),
-            TokenKind::Let => write!(f, "let"),
+            Token::Func => write!(f, "func"),
+            Token::Let => write!(f, "let"),
 
-            TokenKind::OpenParen => write!(f, "("),
-            TokenKind::CloseParen => write!(f, ")"),
-            TokenKind::OpenBrace => write!(f, "{{"),
-            TokenKind::CloseBrace => write!(f, "}}"),
+            Token::OpenParen => write!(f, "("),
+            Token::CloseParen => write!(f, ")"),
+            Token::OpenBrace => write!(f, "{{"),
+            Token::CloseBrace => write!(f, "}}"),
 
-            TokenKind::Eq => write!(f, "="),
+            Token::Eq => write!(f, "="),
 
-            TokenKind::Semicolon => write!(f, ";"),
+            Token::Semicolon => write!(f, ";"),
 
-            TokenKind::Plus => write!(f, "+"),
-            TokenKind::Dash => write!(f, "-"),
-            TokenKind::Star => write!(f, "*"),
-            TokenKind::Slash => write!(f, "/"),
+            Token::Plus => write!(f, "+"),
+            Token::Dash => write!(f, "-"),
+            Token::Star => write!(f, "*"),
+            Token::Slash => write!(f, "/"),
         }
     }
 }
@@ -181,11 +173,11 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     pub fn at_eof(&self) -> bool {
-        self.src.len() <= self.span.end
+        self.src.len() <= self.span.end as usize
     }
 
     fn current_byte(&self) -> Option<u8> {
-        self.src.as_bytes().get(self.span.end).copied()
+        self.src.as_bytes().get(self.span.end as usize).copied()
     }
 
     fn next_byte(&mut self) -> Option<u8> {
@@ -210,10 +202,10 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.reset();
     }
 
-    fn make_token(&mut self, ty: TokenKind<'src>) -> Token<'src> {
+    fn make_token(&mut self, ty: Token<'src>) -> Spanned<Token<'src>> {
         let span = self.span;
         self.span.reset();
-        Token { span, ty }
+        Spanned { span, data: ty }
     }
 
     fn current_lexeme(&self) -> &'src str {
@@ -227,21 +219,24 @@ impl<'src, F: File> Lexer<'src, F> {
         Error { span, ty }
     }
 
-    fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token<'src>, Error> {
+    fn handle_single_character_or_unknown(
+        &mut self,
+        c: char,
+    ) -> Result<Spanned<Token<'src>>, Error> {
         let ty = match c {
-            '(' => TokenKind::OpenParen,
-            ')' => TokenKind::CloseParen,
-            '{' => TokenKind::OpenBrace,
-            '}' => TokenKind::CloseBrace,
+            '(' => Token::OpenParen,
+            ')' => Token::CloseParen,
+            '{' => Token::OpenBrace,
+            '}' => Token::CloseBrace,
 
-            '=' => TokenKind::Eq,
+            '=' => Token::Eq,
 
-            ';' => TokenKind::Semicolon,
+            ';' => Token::Semicolon,
 
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Dash,
-            '*' => TokenKind::Star,
-            '/' => TokenKind::Slash,
+            '+' => Token::Plus,
+            '-' => Token::Dash,
+            '*' => Token::Star,
+            '/' => Token::Slash,
 
             c => return Err(self.make_error(ErrorKind::UnknownChar(c))),
         };
@@ -270,7 +265,7 @@ impl<'src, F: File> Lexer<'src, F> {
         lexeme[lexeme.len() - char_len..].chars().next().unwrap()
     }
 
-    fn handle_string_lit(&mut self) -> Result<Token<'src>, Error> {
+    fn handle_string_lit(&mut self) -> Result<Spanned<Token<'src>>, Error> {
         let mut string = String::new();
         loop {
             match self.next_byte() {
@@ -286,7 +281,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 Some(c) => string.push(c as char),
             }
         }
-        Ok(self.make_token(TokenKind::StringLit(string.into_boxed_str())))
+        Ok(self.make_token(Token::StringLit(string.into_boxed_str())))
     }
 
     fn handle_digits(&mut self) -> bool {
@@ -319,7 +314,7 @@ impl<'src, F: File> Lexer<'src, F> {
     fn handle_int_lit_before_prefix(
         &mut self,
         prefix: IntegerPrefix,
-    ) -> Result<Token<'src>, Error> {
+    ) -> Result<Spanned<Token<'src>>, Error> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
 
@@ -329,13 +324,13 @@ impl<'src, F: File> Lexer<'src, F> {
         }
 
         let digits = Self::clean_digits(&self.current_lexeme()[2..]);
-        Ok(self.make_token(TokenKind::IntLit(Box::new(IntegerLiteral {
+        Ok(self.make_token(Token::IntLit(Box::new(IntegerLiteral {
             prefix,
             digits: digits.into_boxed_str(),
         }))))
     }
 
-    fn handle_num_lit(&mut self, c: u8) -> Result<Token<'src>, Error> {
+    fn handle_num_lit(&mut self, c: u8) -> Result<Spanned<Token<'src>>, Error> {
         // Prefixed integer literals (0b, 0o, 0x)
         if let (b'0', Some(prefix)) = (c, self.current_byte()) {
             let prefix = match prefix {
@@ -370,7 +365,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 // No exponent -> simple float
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
-                    return Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
+                    return Ok(self.make_token(Token::FloatLit(Box::new(FloatLiteral {
                         pre_dot_digits: digits1.into_boxed_str(),
                         post_dot_digits: Some(digits2.into_boxed_str()),
                         post_e: None,
@@ -390,7 +385,7 @@ impl<'src, F: File> Lexer<'src, F> {
                     prefix: IntegerPrefix::Decimal,
                     digits: digits1.into_boxed_str(),
                 };
-                Ok(self.make_token(TokenKind::IntLit(Box::new(integer))))
+                Ok(self.make_token(Token::IntLit(Box::new(integer))))
             }
         }
     }
@@ -398,10 +393,10 @@ impl<'src, F: File> Lexer<'src, F> {
     #[allow(clippy::unnecessary_wraps)]
     fn handle_float_with_exponent(
         &mut self,
-        start: usize,
+        start: u32,
         pre_dot_digits: String,
         post_dot_digits: Option<Box<str>>,
-    ) -> Result<Token<'src>, Error> {
+    ) -> Result<Spanned<Token<'src>>, Error> {
         let sign = match self.current_byte() {
             Some(b'-') => {
                 self.next_byte();
@@ -421,7 +416,7 @@ impl<'src, F: File> Lexer<'src, F> {
         let digits3 = Self::clean_digits(self.current_lexeme());
         self.span.start = start;
 
-        Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
+        Ok(self.make_token(Token::FloatLit(Box::new(FloatLiteral {
             pre_dot_digits: pre_dot_digits.into_boxed_str(),
             post_dot_digits,
             post_e: Some((sign, digits3.into_boxed_str())),
@@ -429,7 +424,7 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_ident_or_keyword(&mut self) -> Result<Token<'src>, Error> {
+    fn handle_ident_or_keyword(&mut self) -> Result<Spanned<Token<'src>>, Error> {
         while let Some(c) = self.current_byte() {
             match c {
                 b'_' => {}
@@ -440,9 +435,9 @@ impl<'src, F: File> Lexer<'src, F> {
         }
 
         let ty = match self.current_lexeme() {
-            "func" => TokenKind::Func,
-            "let" => TokenKind::Let,
-            ident => TokenKind::Ident(ident),
+            "func" => Token::Func,
+            "let" => Token::Let,
+            ident => Token::Ident(ident),
         };
 
         Ok(self.make_token(ty))
@@ -453,10 +448,10 @@ impl<'src, F: File> Lexer<'src, F> {
     ///
     /// # Errors
     /// See [`ErrorKind`].
-    pub fn next_token(&mut self) -> Result<Token<'src>, Error> {
+    pub fn next_token(&mut self) -> Result<Spanned<Token<'src>>, Error> {
         self.skip_whitespace();
         if self.at_eof() {
-            return Ok(self.make_token(TokenKind::Eof));
+            return Ok(self.make_token(Token::Eof));
         }
 
         match self.next_byte().unwrap() {
@@ -474,13 +469,13 @@ impl<'src, F: File> Lexer<'src, F> {
 }
 
 impl<'src, F: File> Iterator for Lexer<'src, F> {
-    type Item = Result<Token<'src>, Error>;
+    type Item = Result<Spanned<Token<'src>>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let tok = self.next_token();
         match tok {
-            Ok(Token {
-                ty: TokenKind::Eof, ..
+            Ok(Spanned {
+                data: Token::Eof, ..
             }) => None,
             _ => Some(tok),
         }
@@ -490,7 +485,7 @@ impl<'src, F: File> Iterator for Lexer<'src, F> {
 #[cfg(test)]
 mod tests {
     #[cfg(test)]
-use tackc_file::OwnedFile;
+    use tackc_file::OwnedFile;
     use tackc_macros::fuzz;
 
     use super::*;

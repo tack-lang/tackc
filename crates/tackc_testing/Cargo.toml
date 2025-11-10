@@ -12,6 +12,7 @@ sbof = "1.1.1"
 serde = { workspace = true, features = ["derive"] }
 tackc_file = { version = "0.1.0", path = "../tackc_file", features = ["serde"] }
 tackc_lexer = { version = "0.1.0", path = "../tackc_lexer", features = ["serde"] }
+tackc_span = { version = "0.1.0", path = "../tackc_span", features = ["serde"] }
 toml.workspace = true
 walkdir = "2.5.0"
 
