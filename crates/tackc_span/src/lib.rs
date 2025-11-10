@@ -2,14 +2,23 @@
 
 use std::{cmp::Ordering, ops::Range};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Spanned<T> {
+    pub data: T,
+    pub span: Span,
+}
+
+pub type SpanValue = u32;
+
 /// The `Span` type represents an area of a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Span {
     /// The start of the `Span` (Inclusive)
-    pub start: usize,
+    pub start: SpanValue,
     /// The end of the `Span` (Exclusive)
-    pub end: usize,
+    pub end: SpanValue,
 }
 
 impl Span {
@@ -22,20 +31,20 @@ impl Span {
     ///
     /// # Panics
     /// Panics if start is greater than end, since spans can't have a negative length.
-    pub fn new_from(start: usize, end: usize) -> Self {
+    pub fn new_from(start: SpanValue, end: SpanValue) -> Self {
         assert!(end >= start, "cannot create negative-size span");
 
         Span { start, end }
     }
 
     /// Grows the span from the front. This moves the end value up by `amount`.
-    pub fn grow_front(&mut self, amount: usize) {
+    pub fn grow_front(&mut self, amount: SpanValue) {
         self.end += amount;
     }
 
     /// Returns a span that is grown from the front. This moves the end value up by `amount`.
     #[must_use]
-    pub fn with_grow_front(&self, amount: usize) -> Self {
+    pub fn with_grow_front(&self, amount: SpanValue) -> Self {
         let mut new = *self;
         new.end += amount;
         new
@@ -45,7 +54,7 @@ impl Span {
     ///
     /// # Panics
     /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value,
-    pub fn grow_back(&mut self, amount: usize) {
+    pub fn grow_back(&mut self, amount: SpanValue) {
         assert!(
             self.start >= amount,
             "cannot create a span with a negative start value"
@@ -58,7 +67,7 @@ impl Span {
     /// # Panics
     /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value,
     #[must_use]
-    pub fn with_grow_back(&self, amount: usize) -> Self {
+    pub fn with_grow_back(&self, amount: SpanValue) -> Self {
         assert!(
             self.start >= amount,
             "cannot create a span with a negative start value"
@@ -72,7 +81,7 @@ impl Span {
     ///
     /// # Panics
     /// Panics if the size of the `Span` is less than `amount`, since a `Span`'s size can't be negative.
-    pub fn shrink_back(&mut self, amount: usize) {
+    pub fn shrink_back(&mut self, amount: SpanValue) {
         assert!(self.len() >= amount, "cannot create negative-size span");
         self.start += amount;
     }
@@ -82,7 +91,7 @@ impl Span {
     /// # Panics
     /// Panics if the size of the `Span` is less than `amount`, since a `Span`'s size can't be negative.
     #[must_use]
-    pub fn with_shrink_back(&self, amount: usize) -> Self {
+    pub fn with_shrink_back(&self, amount: SpanValue) -> Self {
         assert!(self.len() >= amount, "cannot create negative-size span");
         let mut new = *self;
         new.start += amount;
@@ -93,7 +102,7 @@ impl Span {
     ///
     /// # Panics
     /// This method will panic if the size of the `Span` is less than `amount`, since a `Span`'s size can't be negative.
-    pub fn shrink_front(&mut self, amount: usize) {
+    pub fn shrink_front(&mut self, amount: SpanValue) {
         assert!(self.len() >= amount, "cannot create negative-size span");
         self.end -= amount;
     }
@@ -103,7 +112,7 @@ impl Span {
     /// # Panics
     /// This method will panic if the size of the `Span` is less than `amount`, since a `Span`'s size can't be negative.
     #[must_use]
-    pub fn with_shrink_front(&self, amount: usize) -> Self {
+    pub fn with_shrink_front(&self, amount: SpanValue) -> Self {
         assert!(self.len() >= amount, "cannot create negative-size span");
         let mut new = *self;
         new.end -= amount;
@@ -116,7 +125,7 @@ impl Span {
     }
 
     /// Gets the length of a `Span`.
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> SpanValue {
         self.end - self.start
     }
 
@@ -133,11 +142,11 @@ impl Span {
         let mut chars = string.char_indices();
 
         let start = chars
-            .nth(self.start)
+            .nth(self.start as usize)
             .expect("string is too short to have the span applied")
             .0;
         let end = chars
-            .nth(self.len())
+            .nth(self.len() as usize)
             .expect("string is too short to have the span applied")
             .0;
         &string[start..end]
@@ -157,14 +166,14 @@ impl Span {
     }
 }
 
-impl From<Span> for Range<usize> {
+impl From<Span> for Range<SpanValue> {
     fn from(val: Span) -> Self {
         val.start..val.end
     }
 }
 
-impl From<Range<usize>> for Span {
-    fn from(value: Range<usize>) -> Self {
+impl From<Range<SpanValue>> for Span {
+    fn from(value: Range<SpanValue>) -> Self {
         Self::new_from(value.start, value.end)
     }
 }
