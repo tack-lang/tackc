@@ -3,7 +3,7 @@ use std::{ffi::OsStr, fs, io::Read, path::Path};
 use anyhow::{Context, Result};
 use flate2::Compression;
 use serde::{Deserialize, Serialize};
-use tackc_file::File;
+use tackc_file::OwnedFile;
 
 mod prelude {
     pub(crate) use super::{
@@ -81,10 +81,10 @@ fn save_serialized_bytes<S: Serialize>(
     Ok(())
 }
 
-fn make_file(manifest_path: &Path, file_path_relative: impl AsRef<Path>) -> Result<File> {
+fn make_file(manifest_path: &Path, file_path_relative: impl AsRef<Path>) -> Result<OwnedFile> {
     let manifest_dir = manifest_path.parent().unwrap();
     let file_path = manifest_dir.join(file_path_relative);
-    let file: File = file_path.try_into().context("Failed to create file!")?;
+    let file: OwnedFile = file_path.try_into().context("Failed to create file!")?;
     Ok(file)
 }
 

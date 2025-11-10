@@ -167,13 +167,13 @@ impl Display for FloatLiteral {
     }
 }
 
-pub struct Lexer<'src> {
-    src: &'src File,
+pub struct Lexer<'src, F: File> {
+    src: &'src F,
     span: Span,
 }
 
-impl<'src> Lexer<'src> {
-    pub fn new(src: &'src File) -> Self {
+impl<'src, F: File> Lexer<'src, F> {
+    pub fn new(src: &'src F) -> Self {
         Lexer {
             src,
             span: Span::new(),
@@ -291,11 +291,11 @@ impl<'src> Lexer<'src> {
 
     fn handle_digits(&mut self) -> bool {
         #[inline]
-        fn current_is_digit(lexer: &mut Lexer<'_>) -> bool {
+        fn current_is_digit<F: File>(lexer: &mut Lexer<'_, F>) -> bool {
             matches!(lexer.current_byte(), Some(c) if c.is_ascii_digit())
         }
         #[inline]
-        fn current_is_underscore(lexer: &mut Lexer<'_>) -> bool {
+        fn current_is_underscore<F: File>(lexer: &mut Lexer<'_, F>) -> bool {
             lexer.current_byte() == Some(b'_')
         }
 
@@ -473,7 +473,7 @@ impl<'src> Lexer<'src> {
     }
 }
 
-impl<'src> Iterator for Lexer<'src> {
+impl<'src, F: File> Iterator for Lexer<'src, F> {
     type Item = Result<Token<'src>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -489,6 +489,8 @@ impl<'src> Iterator for Lexer<'src> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(test)]
+use tackc_file::OwnedFile;
     use tackc_macros::fuzz;
 
     use super::*;
@@ -496,7 +498,7 @@ mod tests {
     #[fuzz(20)]
     #[cfg(test)]
     #[allow(clippy::needless_pass_by_value)]
-    fn lexer_fuzz(file: File) {
+    fn lexer_fuzz(file: OwnedFile) {
         let lexer = Lexer::new(&file);
         for i in lexer {
             drop(std::hint::black_box(i));
