@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
-use tackc_file::File;
+use tackc_file::OwnedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_error::prelude::*;
@@ -10,7 +10,7 @@ use tackc_error::prelude::*;
 fn main() -> Result<()> {
     let global = Global::new();
 
-    let file: File = PathBuf::from("../test.tck")
+    let file: OwnedFile = PathBuf::from("../test.tck")
         .try_into()
         .context("Failed to open test.tck!")?;
     let file_interned = global.intern(file);
