@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use tackc_span::Span;
+use tackc_span::{Span, SpanValue};
 use thiserror::Error;
 
 use tackc_file::File;
@@ -181,11 +181,11 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     pub fn at_eof(&self) -> bool {
-        self.src.len() <= self.span.end
+        self.src.len() <= self.span.end as usize
     }
 
     fn current_byte(&self) -> Option<u8> {
-        self.src.as_bytes().get(self.span.end).copied()
+        self.src.as_bytes().get(self.span.end as usize).copied()
     }
 
     fn next_byte(&mut self) -> Option<u8> {
@@ -398,7 +398,7 @@ impl<'src, F: File> Lexer<'src, F> {
     #[allow(clippy::unnecessary_wraps)]
     fn handle_float_with_exponent(
         &mut self,
-        start: usize,
+        start: SpanValue,
         pre_dot_digits: String,
         post_dot_digits: Option<Box<str>>,
     ) -> Result<Token<'src>, Error> {
