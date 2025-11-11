@@ -13,10 +13,11 @@ ahash = "0.8.12"
 dashmap = "6"
 anyhow = "1"
 toml = "0.9.8"
-clap = "4.5.51"
-colored = "3.0.0"
-flate2 = "1.1.5"
-sbof = "1.1.1"
+clap = "4"
+colored = "3"
+flate2 = "1"
+sbof = "1"
+walkdir = "2"
 tackc_error = { version = "0.1.0", path = "crates/tackc_error" }
 tackc_file = { version = "0.1.0", path = "crates/tackc_file" }
 tackc_global = { version = "0.1.0", path = "crates/tackc_global" }
@@ -24,7 +25,6 @@ tackc_lexer = { version = "0.1.0", path = "crates/tackc_lexer" }
 tackc_macros = { version = "0.1.0", path = "crates/tackc_macros" }
 tackc_macros_impl = { version = "0.1.0", path = "crates/tackc_macros_impl" }
 tackc_span = { version = "0.1.0", path = "crates/tackc_span" }
-walkdir = "2.5.0"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }
