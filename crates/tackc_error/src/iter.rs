@@ -1,3 +1,4 @@
+/*#[derive(Clone)]
 pub enum ReportMode {
     /// Skip errors and keep going.
     Skip,
@@ -5,67 +6,104 @@ pub enum ReportMode {
     Stop,
     /// Report all errors, ignoring subsequent successes.
     Consume,
+}*/
+
+#[derive(Clone, Copy, Default)]
+pub struct Skip;
+#[derive(Clone, Copy, Default)]
+pub struct Stop;
+#[derive(Clone, Copy, Default)]
+pub struct Consume;
+
+impl ReportMode for Skip {
+    fn on_error<I, T, E, F>(_: &mut I, _: &mut F) -> bool
+    where
+        I: Iterator<Item = Result<T, E>>,
+        F: FnMut(E),
+    {
+        true
+    }
 }
 
-pub struct Reporter<I, T, E, F>
+impl ReportMode for Stop {
+    fn on_error<I, T, E, F>(iter: &mut I, _: &mut F) -> bool
+    where
+        I: Iterator<Item = Result<T, E>>,
+        F: FnMut(E),
+    {
+        for _ in iter {
+            
+        }
+        false
+    }
+}
+
+impl ReportMode for Consume {
+    fn on_error<I, T, E, F>(iter: &mut I, callback: &mut F) -> bool
+    where
+        I: Iterator<Item = Result<T, E>>,
+        F: FnMut(E),
+    {
+        for i in iter {
+            if let Err(e) = i {
+                callback(e);
+            }
+        }
+        false
+    }
+}
+
+pub trait ReportMode: Clone + Copy + Default {
+    fn on_error<I, T, E, F>(iter: &mut I, callback: &mut F) -> bool
+    where
+        I: Iterator<Item = Result<T, E>>,
+        F: FnMut(E);
+}
+
+pub struct Reporter<I, T, E, F, M>
 where
     I: Iterator<Item = Result<T, E>>,
     F: FnMut(E),
+    M: ReportMode,
 {
     iter: I,
     callback: F,
-    mode: ReportMode,
-    stopped: bool,
+    mode: M,
 }
 
-impl<I, T, E, F> Reporter<I, T, E, F>
+impl<I, T, E, F, M> Reporter<I, T, E, F, M>
 where
     I: Iterator<Item = Result<T, E>>,
     F: FnMut(E),
+    M: ReportMode,
 {
-    pub fn new(iter: I, callback: F, mode: ReportMode) -> Self {
-        Self {
+    pub fn new(iter: I, callback: F, mode: M) -> Reporter<I, T, E, F, M> {
+        Reporter {
             iter,
             callback,
             mode,
-            stopped: false,
         }
     }
 }
 
-impl<I, T, E, F> Iterator for Reporter<I, T, E, F>
+impl<I, T, E, F, M> Iterator for Reporter<I, T, E, F, M>
 where
     I: Iterator<Item = Result<T, E>>,
     F: FnMut(E),
+    M: ReportMode,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stopped {
-            return None;
-        }
-
-        for res in self.iter.by_ref() {
-            match res {
+        while let Some(item) = self.iter.next() {
+            match item {
                 Ok(ok) => return Some(ok),
                 Err(e) => {
                     (self.callback)(e);
-                    match self.mode {
-                        ReportMode::Skip => {}
-                        ReportMode::Stop => {
-                            self.stopped = true;
-                            return None;
-                        }
-                        ReportMode::Consume => {
-                            self.stopped = true;
-                            // Drain the rest
-                            for t in self.iter.by_ref() {
-                                if let Err(e) = t {
-                                    (self.callback)(e);
-                                }
-                            }
-                            return None;
-                        }
+                    if M::on_error(&mut self.iter, &mut self.callback) {
+
+                    } else {
+                        return None;
                     }
                 }
             }
@@ -74,33 +112,53 @@ where
     }
 }
 
+impl<I, T, E, F, M> Clone for Reporter<I, T, E, F, M>
+where
+    I: Iterator<Item = Result<T, E>> + Clone,
+    F: FnMut(E) + Clone,
+    M: ReportMode,
+{
+    fn clone(&self) -> Self {
+        Reporter {
+            iter: self.iter.clone(),
+            callback: self.callback.clone(),
+            mode: self.mode,
+        }
+    }
+}
+
 pub trait IteratorExt: Iterator {
-    fn reporter<T, E, F: FnMut(E)>(self, callback: F, mode: ReportMode) -> Reporter<Self, T, E, F>
+    fn reporter<M, T, E, F: FnMut(E)>(self, callback: F, mode: M) -> Reporter<Self, T, E, F, M>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
+        M: ReportMode,
     {
-        Reporter::new(self, callback, mode)
+        Reporter {
+            iter: self,
+            callback,
+            mode,
+        }
     }
 
-    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
+    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Skip>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
-        self.reporter(callback, ReportMode::Skip)
+        self.reporter(callback, Skip)
     }
 
-    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
+    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Stop>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
-        self.reporter(callback, ReportMode::Stop)
+        self.reporter(callback, Stop)
     }
 
-    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
+    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Consume>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
-        self.reporter(callback, ReportMode::Consume)
+        self.reporter(callback, Consume)
     }
 }
 
