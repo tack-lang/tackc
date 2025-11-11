@@ -482,6 +482,15 @@ impl<'src, F: File> Iterator for Lexer<'src, F> {
     }
 }
 
+impl<F: File> Clone for Lexer<'_, F> {
+    fn clone(&self) -> Self {
+        Lexer {
+            src: self.src,
+            span: self.span,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(test)]
