@@ -53,10 +53,7 @@ pub struct BorrowedFile<'src> {
 
 impl<'src> BorrowedFile<'src> {
     pub fn new(src: &'src str, path: &'src Path) -> Self {
-        BorrowedFile {
-            src,
-            path,
-        }
+        BorrowedFile { src, path }
     }
 }
 

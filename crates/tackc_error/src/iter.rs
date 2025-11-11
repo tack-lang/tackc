@@ -31,9 +31,7 @@ impl ReportMode for Stop {
         I: Iterator<Item = Result<T, E>>,
         F: FnMut(E),
     {
-        for _ in iter {
-            
-        }
+        for _ in iter {}
         false
     }
 }
@@ -101,7 +99,6 @@ where
                 Err(e) => {
                     (self.callback)(e);
                     if M::on_error(&mut self.iter, &mut self.callback) {
-
                     } else {
                         return None;
                     }

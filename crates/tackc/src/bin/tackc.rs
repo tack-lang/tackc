@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
+use tackc_error::prelude::*;
 use tackc_file::OwnedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_error::prelude::*;
 
 fn main() -> Result<()> {
     let global = Global::new();
