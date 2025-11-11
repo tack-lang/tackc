@@ -530,7 +530,6 @@ dependencies = [
  "serde",
  "tackc_file",
  "tackc_lexer",
- "tackc_span",
  "toml",
  "walkdir",
 ]

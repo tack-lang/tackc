@@ -1,5 +1,4 @@
 use tackc_lexer::{Error, Lexer, Token};
-use tackc_span::Spanned;
 
 use super::prelude::*;
 
@@ -41,7 +40,7 @@ pub fn run(manifest_path: &Path, bless: BlessType) -> Result<TestResult> {
         Ok(TestResult::Skipped)
     } else {
         let expected_bytes = load_src_bytes(manifest_path, &expected_path).context("Failed to load bytes from expected file! If there is no expected file, try running with --bless!")?;
-        let expected = sbof::from_bytes::<Vec<Result<Spanned<Token<'_>>, Error>>>(&expected_bytes)
+        let expected = sbof::from_bytes::<Vec<Result<Token<'_>, Error>>>(&expected_bytes)
             .context("Failed to deserialize expected file!")?;
 
         if expected != tokens {
@@ -58,12 +57,12 @@ pub fn view(manifest_path: &Path) -> Result<()> {
     run(manifest_path, BlessType::None).context("Failed to run test!")?;
 
     let bytes = load_src_bytes(manifest_path, &out_path).context("Failed to read output bytes!")?;
-    let data = sbof::from_bytes::<Vec<Result<Spanned<Token<'_>>, Error>>>(&bytes)
+    let data = sbof::from_bytes::<Vec<Result<Token<'_>, Error>>>(&bytes)
         .context("Failed to deserialize output bytes!")?;
 
     for res in data {
         match res {
-            Ok(tok) => println!("{}", tok.data),
+            Ok(tok) => println!("{}", tok.ty),
             Err(e) => println!("{e}"),
         }
     }
@@ -77,12 +76,12 @@ pub fn view_expected(manifest_path: &Path) -> Result<()> {
 
     let bytes =
         load_src_bytes(manifest_path, &expected_path).context("Failed to read expected bytes!")?;
-    let data = sbof::from_bytes::<Vec<Result<Spanned<Token<'_>>, Error>>>(&bytes)
+    let data = sbof::from_bytes::<Vec<Result<Token<'_>, Error>>>(&bytes)
         .context("Failed to deserialize expected bytes!")?;
 
     for res in data {
         match res {
-            Ok(tok) => println!("{}", tok.data),
+            Ok(tok) => println!("{}", tok.ty),
             Err(e) => println!("{e}"),
         }
     }
