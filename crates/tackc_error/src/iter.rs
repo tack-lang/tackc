@@ -75,28 +75,28 @@ where
 }
 
 pub trait IteratorExt: Iterator {
-    fn reporter<T, E, F: FnMut(E)>(self, callback: F, mode: ReportMode) -> impl Iterator<Item = T>
+    fn reporter<T, E, F: FnMut(E)>(self, callback: F, mode: ReportMode) -> Reporter<Self, T, E, F>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
         Reporter::new(self, callback, mode)
     }
 
-    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> impl Iterator<Item = T>
+    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.reporter(callback, ReportMode::Skip)
     }
 
-    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> impl Iterator<Item = T>
+    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.reporter(callback, ReportMode::Stop)
     }
 
-    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> impl Iterator<Item = T>
+    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
