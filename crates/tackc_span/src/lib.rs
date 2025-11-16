@@ -30,6 +30,17 @@ impl Span {
         Span { start, end }
     }
 
+    /// Creates a new `Span` pointing to the end of a string.
+    ///
+    /// # Panics
+    /// This function can panic, if the input string's length is greater than [`SpanValue::MAX`].
+    pub fn eof(string: &str) -> Self {
+        Span {
+            start: string.len().try_into().unwrap(),
+            end: string.len().try_into().unwrap(),
+        }
+    }
+
     /// Grows the span from the front. This moves the end value up by `amount`.
     pub fn grow_front(&mut self, amount: SpanValue) {
         self.end += amount;
@@ -127,28 +138,11 @@ impl Span {
         self.start = self.end;
     }
 
-    /// Applies the span to `string`, with `start` and `end` corresponding to char indexes.
-    ///
-    /// # Panics
-    /// Panics if `string` is shorter than the end of the span.
-    pub fn apply<'a>(&self, string: &'a str) -> &'a str {
-        let mut chars = string.char_indices();
-
-        let start = chars
-            .nth(self.start as usize)
-            .expect("string is too short to have the span applied")
-            .0;
-        let end = chars
-            .nth(self.len() as usize)
-            .expect("string is too short to have the span applied")
-            .0;
-        &string[start..end]
-    }
-
     /// Applies the span to `string`, with `start` and `end` corresponding to byte indexes.
     ///
     /// # Panics
     /// Panics if `string` is shorter than the end of the span.
+    #[allow(clippy::cast_possible_truncation)]
     pub fn apply_bytes<'a>(&self, string: &'a str) -> &'a str {
         assert!(
             string.len() >= self.end as usize,

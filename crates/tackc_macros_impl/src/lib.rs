@@ -54,7 +54,9 @@ pub fn derive_random(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
         Data::Struct(struct_in) => {
             derive_random_struct_impl(struct_in, input.ident, input.generics)
         }
-        _ => todo!(),
+        _ => unimplemented!(
+            "please implement this macro for the type of item you need for future use"
+        ),
     }
     .into()
 }

@@ -1,0 +1,24 @@
+[package]
+name = "tackc_fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = { workspace = true }
+tackc_error.workspace = true
+tackc_file.workspace = true
+tackc_global.workspace = true
+tackc_lexer.workspace = true
+tackc_parser.workspace = true
+
+
+[[bin]]
+name = "full"
+path = "fuzz_targets/full.rs"
+test = false
+doc = false
+bench = false
