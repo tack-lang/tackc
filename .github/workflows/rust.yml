@@ -78,4 +78,40 @@ jobs:
               toolchain: nightly
           - name: Check Formatting
             run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
-            
+    cleanup-caches:
+      name: Cleanup Old Caches
+      runs-on: ubuntu-latest
+      needs: [main, once]
+      permissions:
+        actions: write
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v5
+
+        - name: Install gh CLI
+          uses: cli/cli@v3
+
+        - name: List caches
+          id: list
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            gh cache list --limit 1000 --json id,key > caches.json
+
+        - name: Delete old caches
+          env:
+            HASH: ${{ hashFiles('**/Cargo.lock') }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            echo "Keeping caches ending with: $HASH"
+            jq -c '.[]' caches.json | while read cache; do
+              id=$(echo "$cache" | jq -r '.id')
+              key=$(echo "$cache" | jq -r '.key')
+
+              if [[ "$key" == *"$HASH" ]]; then
+                echo "KEEP: $key"
+              else
+                echo "DELETE: $key (id=$id)"
+                gh cache delete "$id" --confirm
+              fi
+            done
