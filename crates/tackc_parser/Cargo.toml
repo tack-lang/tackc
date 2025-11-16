@@ -17,4 +17,4 @@ thiserror = { workspace = true }
 workspace = true
 
 [features]
-serde = ["dep:serde", "tackc_file/serde", "tackc_lexer/serde", "tackc_span/serde", "tackc_global/serde"]
+serde = ["dep:serde", "ecow/serde", "tackc_file/serde", "tackc_lexer/serde", "tackc_span/serde", "tackc_global/serde"]

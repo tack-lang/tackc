@@ -521,13 +521,6 @@ dependencies = [
 [[package]]
 name = "tackc_error"
 version = "0.1.0"
-dependencies = [
- "ecow",
- "serde",
- "tackc_file",
- "tackc_global",
- "tackc_span",
-]
 
 [[package]]
 name = "tackc_file"
@@ -621,9 +614,11 @@ dependencies = [
  "flate2",
  "sbof",
  "serde",
+ "tackc_error",
  "tackc_file",
  "tackc_global",
  "tackc_lexer",
+ "tackc_parser",
  "tackc_span",
  "toml",
  "walkdir",

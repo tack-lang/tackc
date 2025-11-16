@@ -4,14 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ecow = { workspace = true }
-serde = { workspace = true, optional = true, features = ["derive"] }
-tackc_file = { workspace = true }
-tackc_global = { workspace = true }
-tackc_span = { workspace = true }
 
 [lints]
 workspace = true
-
-[features]
-serde = ["dep:serde", "ecow/serde", "tackc_span/serde", "tackc_global/serde"]
