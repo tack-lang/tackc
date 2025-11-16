@@ -131,6 +131,11 @@ fn main() -> Result<()> {
                     normalized_subpath =
                         Some(PathBuf::from("data/lexer").join(components.collect::<PathBuf>()));
                     break;
+                } else if comp.as_os_str() == "expr" {
+                    test_type = Some(TestType::expr());
+                    normalized_subpath =
+                        Some(PathBuf::from("data/expr").join(components.collect::<PathBuf>()));
+                    break;
                 } else {
                     break;
                 }
@@ -158,6 +163,11 @@ fn main() -> Result<()> {
                     test_type = Some(TestType::lexer());
                     normalized_test_path =
                         Some(PathBuf::from("data/lexer").join(components.collect::<PathBuf>()));
+                    break;
+                } else if comp.as_os_str() == "expr" {
+                    test_type = Some(TestType::expr());
+                    normalized_test_path =
+                        Some(PathBuf::from("data/expr").join(components.collect::<PathBuf>()));
                     break;
                 } else {
                     break;
@@ -187,7 +197,8 @@ fn main() -> Result<()> {
 }
 
 fn run_test_tys(bless: BlessType) {
-    run_test_ty(TestType::lexer(), "data/lexer", bless)
+    run_test_ty(TestType::lexer(), "data/lexer", bless);
+    run_test_ty(TestType::expr(), "data/expr", bless);
 }
 
 fn run_test_ty(ty: &TestType, path: impl AsRef<Path>, bless: BlessType) {

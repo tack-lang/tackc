@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::fmt::Write;
 use std::ops::Deref;
@@ -10,7 +11,8 @@ use tackc_file::File;
 use tackc_lexer::Token;
 use tackc_span::Span;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseErrors {
     errors: EcoVec<ParseError>,
 }
@@ -30,7 +32,7 @@ impl ParseErrors {
         let errors = self.errors.make_mut();
         let first = &mut errors[0];
 
-        first.expected = str;
+        first.expected = str.into();
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -55,25 +57,26 @@ impl Deref for ParseErrors {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseError {
-    pub expected: &'static str,
+    pub expected: Cow<'static, str>,
     pub found: Option<Token>,
 }
 
 impl ParseError {
     #[must_use]
-    pub const fn new(expected: &'static str, found: Token) -> Self {
+    pub fn new(expected: &'static str, found: Token) -> Self {
         ParseError {
-            expected,
+            expected: expected.into(),
             found: Some(found),
         }
     }
 
     #[must_use]
-    pub const fn eof(expected: &'static str) -> Self {
+    pub fn eof(expected: &'static str) -> Self {
         ParseError {
-            expected,
+            expected: expected.into(),
             found: None,
         }
     }

@@ -8,7 +8,16 @@ use tackc_span::Span;
 
 use crate::Parser;
 
-pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized {
+#[cfg(feature = "serde")]
+pub trait Serde: serde::Serialize + for<'a> serde::Deserialize<'a> {}
+#[cfg(feature = "serde")]
+impl<T: serde::Serialize + for<'a> serde::Deserialize<'a>> Serde for T {}
+#[cfg(not(feature = "serde"))]
+pub trait Serde {}
+#[cfg(not(feature = "serde"))]
+impl<T> Serde for T {}
+
+pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized + Serde {
     const NAME: &str;
 
     /// Parse the AST node using the given parser.
@@ -24,12 +33,14 @@ pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Expr {
     pub span: Span,
     pub kind: ExprKind,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExprKind {
     Atomic(Atom),
 
@@ -249,6 +260,7 @@ impl AstNode for Expr {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Atom {
     pub span: Span,
     pub kind: AtomKind,
@@ -298,6 +310,7 @@ impl AstNode for Atom {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AtomKind {
     IntLit(Box<str>),
     FloatLit(Box<str>),

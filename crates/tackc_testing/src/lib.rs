@@ -31,6 +31,7 @@ pub enum TestResult {
 }
 
 mod lexer;
+mod expr;
 
 fn exists(manifest_path: &Path, entry_relative_path: impl AsRef<Path>) -> bool {
     let manifest_dir = manifest_path.parent().unwrap();
@@ -123,6 +124,10 @@ pub struct TestType {
 impl TestType {
     pub fn lexer() -> &'static Self {
         lexer::get()
+    }
+
+    pub fn expr() -> &'static Self {
+        expr::get()
     }
 
     pub fn run(&self, manifest_path: &Path, bless: BlessType) -> Result<TestResult> {

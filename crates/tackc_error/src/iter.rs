@@ -1,13 +1,3 @@
-/*#[derive(Clone)]
-pub enum ReportMode {
-    /// Skip errors and keep going.
-    Skip,
-    /// Stop after the first error.
-    Stop,
-    /// Report all errors, ignoring subsequent successes.
-    Consume,
-}*/
-
 #[derive(Clone, Copy, Default)]
 pub struct Skip;
 #[derive(Clone, Copy, Default)]
