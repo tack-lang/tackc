@@ -30,7 +30,7 @@ jobs:
               id: install
               uses: dtolnay/rust-toolchain@master
               with: 
-                components: clippy, rustfmt
+                components: clippy
                 toolchain: ${{ matrix.toolchain }}
             - name: Build Project
               run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_fuzz
@@ -40,5 +40,123 @@ jobs:
               run: cargo +${{ steps.install.outputs.name }} testing --verbose --release
             - name: Run Unit Tests
               run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_fuzz
-            - name: Check Formatting
-              run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
+    once:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v5
+          - uses: actions/cache@v4
+            with:
+              path: |
+                ~/.cargo/bin/
+                ~/.cargo/registry/index/
+                ~/.cargo/registry/cache/
+                ~/.cargo/git/db/
+                target/
+              key: ${{ runner.os }}-${{ runner.arch }}-cargo-nighly-${{ hashFiles('**/Cargo.lock') }}
+          - name: Install Nightly
+            id: install
+            uses: dtolnay/rust-toolchain@master
+            with: 
+              components: rustfmt
+              toolchain: nightly
+          - name: Check Formatting
+            run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
+    cleanup:
+        needs: [main, once]
+        runs-on: ubuntu-latest
+        permissions:
+            actions: write
+            contents: read
+        name: Cleanup caches
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v5
+
+          - name: Install jq
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y jq
+
+          - name: Remove caches not used by `main` or `once`
+            env:
+              REPO: ${{ github.repository }}
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            run: |
+              set -euo pipefail
+
+              # Determine the earliest start time of the main/once jobs in this run.
+              RUN_ID=${GITHUB_RUN_ID}
+              echo "Inspecting jobs for run $RUN_ID to find which caches were used by 'main' or 'once'..."
+
+              jobs_resp=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100")
+
+              # Get started_at timestamps for the two jobs (if present). If a job isn't present,
+              # fall back to keeping caches accessed in the last 30 days to be safe.
+              main_start=$(echo "$jobs_resp" | jq -r '.jobs[]? | select(.name=="Run CI" or .name=="main") | .started_at' | head -n1 || true)
+              once_start=$(echo "$jobs_resp" | jq -r '.jobs[]? | select(.name=="once") | .started_at' | head -n1 || true)
+
+              # Normalize values: if either is empty/null, unset them
+              if [ "$main_start" = "null" ] || [ -z "$main_start" ]; then
+                main_start=""
+              fi
+              if [ "$once_start" = "null" ] || [ -z "$once_start" ]; then
+                once_start=""
+              fi
+
+              # Compute the earliest start timestamp among found jobs
+              earliest_start=""
+              if [ -n "$main_start" ] && [ -n "$once_start" ]; then
+                main_ts=$(date -d "$main_start" +%s)
+                once_ts=$(date -d "$once_start" +%s)
+                if [ "$main_ts" -le "$once_ts" ]; then
+                  earliest_start=$main_ts
+                else
+                  earliest_start=$once_ts
+                fi
+              elif [ -n "$main_start" ]; then
+                earliest_start=$(date -d "$main_start" +%s)
+              elif [ -n "$once_start" ]; then
+                earliest_start=$(date -d "$once_start" +%s)
+              else
+                echo "Could not determine job start times; falling back to 30-day threshold"
+                earliest_start=$(date -d "-30 days" +%s)
+              fi
+
+              echo "Earliest relevant job start (epoch): $earliest_start"
+
+              page=1
+              while :; do
+                response=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/actions/caches?per_page=100&page=$page")
+                entries=$(echo "$response" | jq -r '.actions_caches[]? | @base64')
+                if [ -z "${entries}" ]; then
+                  break
+                fi
+
+                for e in $entries; do
+                  obj=$(echo "$e" | base64 --decode)
+                  id=$(echo "$obj" | jq -r '.id')
+                  key=$(echo "$obj" | jq -r '.key')
+                  last=$(echo "$obj" | jq -r '.last_accessed_at')
+
+                  # If there's no last_accessed_at, delete it (never used)
+                  if [ "$last" = "null" ] || [ -z "$last" ]; then
+                    echo "Deleting cache id=$id key=$key (never accessed)"
+                    curl -s -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/actions/caches/$id" >/dev/null || true
+                    continue
+                  fi
+
+                  last_ts=$(date -d "$last" +%s)
+
+                  # Keep caches that were last accessed at or after the earliest_start time (i.e., used by main/once)
+                  if [ "$last_ts" -lt "$earliest_start" ]; then
+                    echo "Deleting cache id=$id key=$key (last accessed $last, before relevant jobs)"
+                    curl -s -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/actions/caches/$id" >/dev/null || true
+                  else
+                    echo "Keeping cache id=$id key=$key (last accessed $last, used by relevant jobs)"
+                  fi
+                done
+
+                page=$((page+1))
+              done
+
