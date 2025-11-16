@@ -37,7 +37,7 @@ jobs:
             - name: Upload tackc Binary
               uses: actions/upload-artifact@v4
               with:
-                name: ${{ runner.os }}-${{ runner.arch }}-tackc-${{ matrix.toolchain }}-${{ github.triggering_actor }}
+                name: ${{ runner.os }}-${{ runner.arch }}-tackc-${{ matrix.toolchain }}-${{ github.sha }}
                 path: target/release/tackc
             - name: Run Clippy
               run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_fuzz
