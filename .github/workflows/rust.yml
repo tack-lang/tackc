@@ -33,12 +33,12 @@ jobs:
                 components: clippy, rustfmt
                 toolchain: ${{ matrix.toolchain }}
             - name: Build Project
-              run: cargo +${{ steps.install.outputs.name }} build --verbose --release
+              run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_fuzz
             - name: Run Clippy
-              run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release
+              run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_fuzz
             - name: Run `tackc_testing`
               run: cargo +${{ steps.install.outputs.name }} testing --verbose --release
             - name: Run Unit Tests
-              run: cargo +${{ steps.install.outputs.name }} test --verbose --release
+              run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_fuzz
             - name: Check Formatting
               run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
