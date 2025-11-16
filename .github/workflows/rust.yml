@@ -69,7 +69,7 @@ jobs:
                 ~/.cargo/registry/cache/
                 ~/.cargo/git/db/
                 target/
-              key: ${{ runner.os }}-${{ runner.arch }}-cargo-nighly-${{ hashFiles('**/Cargo.lock') }}
+              key: ${{ runner.os }}-${{ runner.arch }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
           - name: Install Nightly
             id: install
             uses: dtolnay/rust-toolchain@master
