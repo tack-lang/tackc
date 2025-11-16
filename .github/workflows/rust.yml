@@ -41,4 +41,4 @@ jobs:
             - name: Run Unit Tests
               run: cargo +${{ steps.install.outputs.name }} test --verbose --release
             - name: Check Formatting
-              run: cargo +${{ steps.install.outputs.name }} fmt --verbose --release --check
+              run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check
