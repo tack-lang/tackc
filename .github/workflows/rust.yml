@@ -109,6 +109,6 @@ jobs:
                 echo "KEEP: $key"
               else
                 echo "DELETE: $key (id=$id)"
-                gh cache delete "$id" --confirm
+                gh cache delete "$id"
               fi
             done
