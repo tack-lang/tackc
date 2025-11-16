@@ -30,8 +30,8 @@ pub enum TestResult {
     Skipped,
 }
 
-mod lexer;
 mod expr;
+mod lexer;
 
 fn exists(manifest_path: &Path, entry_relative_path: impl AsRef<Path>) -> bool {
     let manifest_dir = manifest_path.parent().unwrap();

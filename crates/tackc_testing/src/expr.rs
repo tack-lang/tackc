@@ -1,7 +1,11 @@
 use tackc_error::iter::IteratorExt;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::{Parser, ast::{AstNode, Expr}, error::ParseErrors};
+use tackc_parser::{
+    Parser,
+    ast::{AstNode, Expr},
+    error::ParseErrors,
+};
 
 use super::prelude::*;
 
