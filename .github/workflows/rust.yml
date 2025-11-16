@@ -33,7 +33,7 @@ jobs:
                   ~/.cargo/registry/cache/
                   ~/.cargo/git/db/
                   target/
-                key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('**/Cargo.lock') }}
             - name: Install ${{ matrix.toolchain }}
               id: install
               uses: dtolnay/rust-toolchain@master
@@ -45,7 +45,7 @@ jobs:
             - name: Upload tackc Binary
               uses: actions/upload-artifact@v4
               with:
-                name: ${{ runner.os }}-${{ runner.arch }}-tackc-${{ matrix.toolchain }}-${{ github.sha }}
+                name: ${{ matrix.target }}-${{ matrix.toolchain }}-tackc-${{ github.sha }}
                 path: target/release/tackc${{ env.BIN_EXT }}
               env:
                 BIN_EXT: ${{ env.BIN_EXT }}
@@ -69,7 +69,7 @@ jobs:
                 ~/.cargo/registry/cache/
                 ~/.cargo/git/db/
                 target/
-              key: ${{ runner.os }}-${{ runner.arch }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+              key: ubuntu-latest-nightly-cargo-${{ hashFiles('**/Cargo.lock') }}
           - name: Install Nightly
             id: install
             uses: dtolnay/rust-toolchain@master
