@@ -36,7 +36,7 @@ jobs:
               run: cargo +${{ steps.install.outputs.name }} build --verbose --release
             - name: Run Clippy
               run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release
-            - name: Run tackc_testing
+            - name: Run `tackc_testing`
               run: cargo +${{ steps.install.outputs.name }} testing --verbose --release
             - name: Run Unit Tests
               run: cargo +${{ steps.install.outputs.name }} test --verbose --release
