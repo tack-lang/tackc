@@ -1,11 +1,13 @@
 use std::{
     any::Any,
-    collections::HashMap,
+    fmt::{Debug, Display},
     hash::{BuildHasherDefault, Hash, Hasher},
     marker::PhantomData,
 };
 
-use ahash::AHasher;
+use bumpalo::Bump;
+use dashmap::DashMap;
+use rustc_hash::FxHasher;
 
 pub trait Internable: Any {
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
@@ -26,16 +28,29 @@ impl<T: Any + Hash + PartialEq> Internable for T {
     }
 }
 
-#[derive(Debug)]
-pub struct Interned<T: Internable>(u64, PhantomData<fn() -> T>);
+#[derive(PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
 
-impl<T: Internable> Clone for Interned<T> {
+impl<T: ?Sized> Debug for Interned<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Interned").field(&self.0).finish()
+    }
+}
+
+impl<T: ?Sized> Clone for Interned<T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<T: Internable> Copy for Interned<T> {}
+impl<T: ?Sized> Copy for Interned<T> {}
+
+impl Interned<str> {
+    pub fn display(&self, global: &Global) -> impl Display {
+        global.get_interned_str(*self)
+    }
+}
 
 /// A hasher that just uses the key as the hash.
 #[derive(Default)]
@@ -62,7 +77,9 @@ impl Hasher for IdentityHasher {
 type IdentityHasherBuilder = BuildHasherDefault<IdentityHasher>;
 
 pub struct Global {
-    interned: HashMap<u64, Box<dyn Internable>, IdentityHasherBuilder>,
+    arena: Bump,
+    interned: DashMap<u64, &'static dyn Internable, IdentityHasherBuilder>,
+    interned_strs: DashMap<u64, &'static str, IdentityHasherBuilder>,
 }
 
 impl Global {
@@ -72,7 +89,7 @@ impl Global {
     /// # Panics
     /// If `debug_assertions` is enabled, an extra check will be added.
     /// If this function is called more than once, that function will panic.
-    pub fn new() -> &'static mut Self {
+    pub fn new() -> &'static Self {
         #[cfg(debug_assertions)]
         {
             use std::sync::atomic::{AtomicBool, Ordering};
@@ -80,7 +97,7 @@ impl Global {
             static USED: AtomicBool = AtomicBool::new(false);
             assert!(
                 !USED.swap(true, Ordering::AcqRel),
-                "`Global::new` should only be called once!"
+                "`Global::new` should only be called once! If multiple `Global`s are needed, use `Global::create_heap()`"
             );
         }
 
@@ -91,16 +108,30 @@ impl Global {
     /// If your program will only use one `Global`, and for the entire lifetime, use [`Global::new`].
     pub fn create_heap() -> Box<Self> {
         Box::new(Self {
-            interned: HashMap::with_hasher(IdentityHasherBuilder::new()),
+            arena: Bump::new(),
+            interned: DashMap::with_hasher(IdentityHasherBuilder::new()),
+            interned_strs: DashMap::with_hasher(IdentityHasherBuilder::new()),
         })
+    }
+
+    fn intern_value<T: ?Sized>(
+        val: *const T,
+        hash: u64,
+        map: &DashMap<u64, &'static T, IdentityHasherBuilder>,
+    ) {
+        // SAFETY: The value is allocated in the arena and lives as long as `self`.
+        #[allow(unsafe_code)]
+        let static_ref: &'static T = unsafe { &*val };
+
+        map.insert(hash, static_ref);
     }
 
     /// Interns a value into the global map.
     ///
     /// # Panics
     /// This function will only panic in the event of a hash collision.
-    pub fn intern<T: Internable>(&mut self, val: T) -> Interned<T> {
-        let mut hasher = AHasher::default();
+    pub fn intern<T: Internable>(&self, val: T) -> Interned<T> {
+        let mut hasher = FxHasher::default();
         val.type_id().hash(&mut hasher);
         val.dyn_hash(&mut hasher);
         let hash = hasher.finish();
@@ -108,13 +139,47 @@ impl Global {
         if let Some(interned) = self.interned.get(&hash) {
             assert!(interned.dyn_eq(&val), "Hash collision!");
         }
-        self.interned.insert(hash, Box::new(val));
+
+        let ptr: *mut dyn Internable = self.arena.alloc(val);
+
+        Self::intern_value(ptr, hash, &self.interned);
+
         Interned(hash, PhantomData)
     }
 
     /// Gets a reference to the interned value represented by `interned`.
     #[allow(clippy::missing_panics_doc)]
-    pub fn get_interned<T: Internable>(&self, interned: Interned<T>) -> &T {
+    pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
         <dyn Any>::downcast_ref::<T>(&**self.interned.get(&interned.0).unwrap()).unwrap()
+    }
+
+    /// Interns a string value into the global map.
+    ///
+    /// # Panics
+    /// This function will only panic in the event of a hash collision.
+    pub fn intern_str<S: AsRef<str>>(&self, val: S) -> Interned<str> {
+        let mut hasher = FxHasher::default();
+        val.as_ref().hash(&mut hasher);
+        let hash = hasher.finish();
+
+        if let Some(interned) = self.interned_strs.get(&hash) {
+            assert!(*interned == val.as_ref(), "Hash collision!");
+        }
+
+        let ptr: *mut str = self.arena.alloc_str(val.as_ref());
+
+        Self::intern_value(ptr, hash, &self.interned_strs);
+
+        Interned(hash, PhantomData)
+    }
+
+    /// Gets a reference to the interned string value represented by `interned`.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn get_interned_str(&self, interned: Interned<str>) -> &str {
+        *self.interned_strs.get(&interned.0).unwrap()
+    }
+
+    pub fn alloc<T>(&self, val: T) -> &mut T {
+        self.arena.alloc(val)
     }
 }

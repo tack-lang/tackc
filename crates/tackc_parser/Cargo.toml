@@ -1,0 +1,20 @@
+[package]
+name = "tackc_parser"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bumpalo = { workspace = true, features = ["std"] }
+ecow = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+tackc_file = { workspace = true }
+tackc_global = { workspace = true }
+tackc_lexer = { workspace = true }
+tackc_span = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
+
+[features]
+serde = ["dep:serde", "tackc_file/serde", "tackc_lexer/serde", "tackc_span/serde", "tackc_global/serde"]

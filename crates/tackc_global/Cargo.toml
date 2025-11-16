@@ -4,8 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ahash = { workspace = true }
+bumpalo = { workspace = true, features = ["std"] }
 dashmap = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
 
 [lints]
 workspace = true
+
+[features]
+serde = ["dep:serde"]

@@ -19,6 +19,7 @@ mod prelude {
 pub enum BlessType {
     None,
     Bless,
+    Failing,
     Safe,
 }
 

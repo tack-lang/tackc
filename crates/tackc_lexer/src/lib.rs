@@ -1,27 +1,33 @@
 use std::fmt::Display;
 
-use tackc_span::{Span, SpanValue};
+use tackc_span::Span;
 use thiserror::Error;
 
 use tackc_file::File;
+use tackc_global::{Global, Interned};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'src")))]
-pub struct Token<'src> {
+pub struct Token {
     pub span: Span,
-    pub ty: TokenKind<'src>,
+    pub kind: TokenKind,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TokenKind<'src> {
-    Ident(&'src str),
+pub enum TokenKind {
+    Ident(Interned<str>),
 
     // Literals
     StringLit(Box<str>),
-    IntLit(Box<IntegerLiteral>),
-    FloatLit(Box<FloatLiteral>),
+    IntLit(Box<str>),
+    FloatLit(Box<str>),
 
     Eof,
 
@@ -45,10 +51,10 @@ pub enum TokenKind<'src> {
     Slash,
 }
 
-impl Display for TokenKind<'_> {
+impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenKind::Ident(ident) => write!(f, "{ident}"),
+            TokenKind::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
 
             TokenKind::StringLit(string) => write!(f, "{string}"),
             TokenKind::IntLit(int) => write!(f, "{int}"),
@@ -80,12 +86,12 @@ impl Display for TokenKind<'_> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Error {
     pub span: Span,
-    pub ty: ErrorKind,
+    pub kind: ErrorKind,
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.ty)
+        write!(f, "{}", self.kind)
     }
 }
 
@@ -104,30 +110,17 @@ pub enum ErrorKind {
     MissingExponentDigits,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct IntegerLiteral {
-    pub prefix: IntegerPrefix,
-    pub digits: Box<str>,
-}
-
-impl Display for IntegerLiteral {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}", self.prefix, self.digits)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum IntegerPrefix {
     /// No prefix
-    Decimal,
+    Decimal = 10,
     /// `0b` prefix
-    Binary,
+    Binary = 2,
     /// `0o` prefix
-    Octal,
+    Octal = 8,
     /// `0x` prefix
-    Hex,
+    Hex = 16,
 }
 
 impl Display for IntegerPrefix {
@@ -141,42 +134,18 @@ impl Display for IntegerPrefix {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct FloatLiteral {
-    pub pre_dot_digits: Box<str>,
-    pub post_dot_digits: Option<Box<str>>,
-    // (sign_is_positive, digits)
-    pub post_e: Option<(bool, Box<str>)>,
-}
-
-impl Display for FloatLiteral {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.pre_dot_digits)?;
-        if let Some(post_dot) = &self.post_dot_digits {
-            write!(f, ".{post_dot}")?;
-        }
-        if let Some((sign, post_e)) = &self.post_e {
-            write!(f, "e")?;
-            if !*sign {
-                write!(f, "-")?;
-            }
-            write!(f, "{post_e}")?;
-        }
-        Ok(())
-    }
-}
-
 pub struct Lexer<'src, F: File> {
     src: &'src F,
     span: Span,
+    global: &'src Global,
 }
 
 impl<'src, F: File> Lexer<'src, F> {
-    pub fn new(src: &'src F) -> Self {
+    pub fn new(src: &'src F, global: &'src Global) -> Self {
         Lexer {
             src,
             span: Span::new(),
+            global,
         }
     }
 
@@ -210,10 +179,10 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.reset();
     }
 
-    fn make_token(&mut self, ty: TokenKind<'src>) -> Token<'src> {
+    fn make_token(&mut self, ty: TokenKind) -> Token {
         let span = self.span;
         self.span.reset();
-        Token { span, ty }
+        Token { span, kind: ty }
     }
 
     fn current_lexeme(&self) -> &'src str {
@@ -224,10 +193,10 @@ impl<'src, F: File> Lexer<'src, F> {
         let span = self.span;
         self.span.reset();
 
-        Error { span, ty }
+        Error { span, kind: ty }
     }
 
-    fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token<'src>, Error> {
+    fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token, Error> {
         let ty = match c {
             '(' => TokenKind::OpenParen,
             ')' => TokenKind::CloseParen,
@@ -270,7 +239,7 @@ impl<'src, F: File> Lexer<'src, F> {
         lexeme[lexeme.len() - char_len..].chars().next().unwrap()
     }
 
-    fn handle_string_lit(&mut self) -> Result<Token<'src>, Error> {
+    fn handle_string_lit(&mut self) -> Result<Token, Error> {
         let mut string = String::new();
         loop {
             match self.next_byte() {
@@ -289,23 +258,23 @@ impl<'src, F: File> Lexer<'src, F> {
         Ok(self.make_token(TokenKind::StringLit(string.into_boxed_str())))
     }
 
-    fn handle_digits(&mut self) -> bool {
+    fn handle_digits(&mut self, radix: u32) -> bool {
         #[inline]
-        fn current_is_digit<F: File>(lexer: &mut Lexer<'_, F>) -> bool {
-            matches!(lexer.current_byte(), Some(c) if c.is_ascii_digit())
+        fn current_is_digit<F: File>(lexer: &mut Lexer<'_, F>, radix: u32) -> bool {
+            matches!(lexer.current_byte(), Some(c) if (c as char).is_digit(radix))
         }
         #[inline]
         fn current_is_underscore<F: File>(lexer: &mut Lexer<'_, F>) -> bool {
             lexer.current_byte() == Some(b'_')
         }
 
-        if current_is_digit(self) || current_is_underscore(self) {
+        if current_is_digit(self, radix) || current_is_underscore(self) {
             self.next_byte();
         } else {
             return false;
         }
 
-        while current_is_digit(self) || current_is_underscore(self) {
+        while current_is_digit(self, radix) || current_is_underscore(self) {
             self.next_byte();
         }
         true
@@ -316,26 +285,20 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_int_lit_before_prefix(
-        &mut self,
-        prefix: IntegerPrefix,
-    ) -> Result<Token<'src>, Error> {
+    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerPrefix) -> Result<Token, Error> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
 
         self.next_byte(); // skip prefix char
-        if !self.handle_digits() {
+        if !self.handle_digits(prefix as u32) {
             return Err(self.make_error(ErrorKind::MissingIntegerPrefixDigits));
         }
 
-        let digits = Self::clean_digits(&self.current_lexeme()[2..]);
-        Ok(self.make_token(TokenKind::IntLit(Box::new(IntegerLiteral {
-            prefix,
-            digits: digits.into_boxed_str(),
-        }))))
+        let digits = Self::clean_digits(self.current_lexeme());
+        Ok(self.make_token(TokenKind::IntLit(digits.into_boxed_str())))
     }
 
-    fn handle_num_lit(&mut self, c: u8) -> Result<Token<'src>, Error> {
+    fn handle_num_lit(&mut self, c: u8) -> Result<Token, Error> {
         // Prefixed integer literals (0b, 0o, 0x)
         if let (b'0', Some(prefix)) = (c, self.current_byte()) {
             let prefix = match prefix {
@@ -352,84 +315,53 @@ impl<'src, F: File> Lexer<'src, F> {
         let start = self.span.start;
         // No check needed, the only way this can trigger is if the current lexeme already has at least one digit.
         // If this returns false, there's still a digit in the lexeme, since that's the only way for `handle_num_lit` to be called.
-        self.handle_digits();
+        self.handle_digits(10);
 
-        let digits1 = Self::clean_digits(self.current_lexeme());
         match self.current_byte() {
             Some(b'.') => {
                 // Skip `.`
                 self.next_byte();
-                self.span.reset();
-                let digits2 = if self.handle_digits() {
-                    Self::clean_digits(self.current_lexeme())
-                } else {
-                    // If we don't find any digits, make it zero.
-                    String::from("0")
-                };
+                self.handle_digits(10);
 
                 // No exponent -> simple float
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
-                    return Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
-                        pre_dot_digits: digits1.into_boxed_str(),
-                        post_dot_digits: Some(digits2.into_boxed_str()),
-                        post_e: None,
-                    }))));
+                    return Ok(self.make_token(TokenKind::FloatLit(
+                        Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+                    )));
                 }
 
                 // Exponent part
                 self.next_byte();
-                self.handle_float_with_exponent(start, digits1, Some(digits2.into_boxed_str()))
+                self.handle_float_with_exponent()
             }
             Some(b'e' | b'E') => {
                 self.next_byte();
-                self.handle_float_with_exponent(start, digits1, None)
+                self.handle_float_with_exponent()
             }
-            _ => {
-                let integer = IntegerLiteral {
-                    prefix: IntegerPrefix::Decimal,
-                    digits: digits1.into_boxed_str(),
-                };
-                Ok(self.make_token(TokenKind::IntLit(Box::new(integer))))
-            }
+            _ => Ok(self.make_token(TokenKind::IntLit(
+                Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+            ))),
         }
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_float_with_exponent(
-        &mut self,
-        start: SpanValue,
-        pre_dot_digits: String,
-        post_dot_digits: Option<Box<str>>,
-    ) -> Result<Token<'src>, Error> {
-        let sign = match self.current_byte() {
-            Some(b'-') => {
-                self.next_byte();
-                false
-            }
-            Some(b'+') => {
-                self.next_byte();
-                true
-            }
-            _ => true,
-        };
+    fn handle_float_with_exponent(&mut self) -> Result<Token, Error> {
+        if let Some(b'-' | b'+') = self.current_byte() {
+            self.next_byte();
+        }
 
-        self.span.reset();
-        if !self.handle_digits() {
+        if !self.handle_digits(10) {
             return Err(self.make_error(ErrorKind::MissingExponentDigits));
         }
-        let digits3 = Self::clean_digits(self.current_lexeme());
-        self.span.start = start;
 
-        Ok(self.make_token(TokenKind::FloatLit(Box::new(FloatLiteral {
-            pre_dot_digits: pre_dot_digits.into_boxed_str(),
-            post_dot_digits,
-            post_e: Some((sign, digits3.into_boxed_str())),
-        }))))
+        Ok(self.make_token(TokenKind::FloatLit(
+            Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+        )))
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_ident_or_keyword(&mut self) -> Result<Token<'src>, Error> {
+    fn handle_ident_or_keyword(&mut self) -> Result<Token, Error> {
         while let Some(c) = self.current_byte() {
             match c {
                 b'_' => {}
@@ -442,7 +374,7 @@ impl<'src, F: File> Lexer<'src, F> {
         let ty = match self.current_lexeme() {
             "func" => TokenKind::Func,
             "let" => TokenKind::Let,
-            ident => TokenKind::Ident(ident),
+            ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
 
         Ok(self.make_token(ty))
@@ -453,7 +385,7 @@ impl<'src, F: File> Lexer<'src, F> {
     ///
     /// # Errors
     /// See [`ErrorKind`].
-    pub fn next_token(&mut self) -> Result<Token<'src>, Error> {
+    pub fn next_token(&mut self) -> Result<Token, Error> {
         self.skip_whitespace();
         if self.at_eof() {
             return Ok(self.make_token(TokenKind::Eof));
@@ -463,6 +395,7 @@ impl<'src, F: File> Lexer<'src, F> {
             b'"' => self.handle_string_lit(),
             c if c.is_ascii_digit() => self.handle_num_lit(c),
             c if c.is_ascii_alphabetic() => self.handle_ident_or_keyword(),
+            b'_' => self.handle_ident_or_keyword(),
             c if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
 
@@ -473,14 +406,15 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 }
 
-impl<'src, F: File> Iterator for Lexer<'src, F> {
-    type Item = Result<Token<'src>, Error>;
+impl<F: File> Iterator for Lexer<'_, F> {
+    type Item = Result<Token, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let tok = self.next_token();
         match tok {
             Ok(Token {
-                ty: TokenKind::Eof, ..
+                kind: TokenKind::Eof,
+                ..
             }) => None,
             _ => Some(tok),
         }
@@ -492,6 +426,7 @@ impl<F: File> Clone for Lexer<'_, F> {
         Lexer {
             src: self.src,
             span: self.span,
+            global: self.global,
         }
     }
 }
@@ -499,7 +434,7 @@ impl<F: File> Clone for Lexer<'_, F> {
 #[cfg(test)]
 mod tests {
     #[cfg(test)]
-use tackc_file::OwnedFile;
+    use tackc_file::OwnedFile;
     use tackc_macros::fuzz;
 
     use super::*;
@@ -508,7 +443,9 @@ use tackc_file::OwnedFile;
     #[cfg(test)]
     #[allow(clippy::needless_pass_by_value)]
     fn lexer_fuzz(file: OwnedFile) {
-        let lexer = Lexer::new(&file);
+        let global = Global::create_heap();
+
+        let lexer = Lexer::new(&file, &global);
         for i in lexer {
             drop(std::hint::black_box(i));
         }
