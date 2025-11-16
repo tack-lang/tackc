@@ -15,6 +15,14 @@ jobs:
         runs-on: ${{ matrix.target }}
         name: Main CI Job
         steps:
+            - name: Set BIN_EXT
+              shell: bash
+              run: |
+                if [[ "${RUNNER_OS}" == "Windows" ]]; then
+                  echo "BIN_EXT=.exe" >> "$GITHUB_ENV"
+                else
+                  echo "BIN_EXT=" >> "$GITHUB_ENV"
+                fi
             - name: Checkout Repository
               uses: actions/checkout@v5
             - uses: actions/cache@v4
@@ -38,7 +46,9 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                 name: ${{ runner.os }}-${{ runner.arch }}-tackc-${{ matrix.toolchain }}-${{ github.sha }}
-                path: target/release/tackc
+                path: target/release/tackc${{ env.BIN_EXT }}
+              env:
+                BIN_EXT: ${{ env.BIN_EXT }}
             - name: Run Clippy
               run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_fuzz
             - name: Run `tackc_testing`
