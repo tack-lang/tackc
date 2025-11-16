@@ -35,7 +35,7 @@ pub trait File: Deref<Target = str> {
 }
 
 /// Returns a vector corresponding to the byte indexes of the start of each line.
-/// 
+///
 /// # Panics
 /// This function will panic if the input has a length greater than [`SpanValue::MAX`].
 pub fn line_starts(str: &str) -> Vec<SpanValue> {
