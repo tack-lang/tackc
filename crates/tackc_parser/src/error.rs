@@ -31,9 +31,14 @@ impl ParseErrors {
     #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
         let errors = self.errors.make_mut();
-        let first = errors.last_mut().unwrap();
-        if first.expected.is_none() {
-            first.expected = Some(str.into());
+        let last = errors.last_mut().unwrap();
+        match &mut last.kind {
+            ParseErrorKind::ExpectedFound { expected, found: _ } => {
+                if expected.is_none() {
+                    *expected = Some(str.into());
+                }
+            },
+            ParseErrorKind::Recursion => {},
         }
     }
 
@@ -62,24 +67,34 @@ impl Deref for ParseErrors {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseError {
-    pub expected: Option<Cow<'static, str>>,
-    pub found: Option<Token>,
+    pub kind: ParseErrorKind,
 }
 
 impl ParseError {
     #[must_use]
     pub fn new(expected: Option<&'static str>, found: Token) -> Self {
         ParseError {
-            expected: expected.map(Into::into),
-            found: Some(found),
+            kind: ParseErrorKind::ExpectedFound {
+                expected: expected.map(Into::into),
+                found: Some(found),
+            }
         }
     }
 
     #[must_use]
     pub fn eof(expected: Option<&'static str>) -> Self {
         ParseError {
-            expected: expected.map(Into::into),
-            found: None,
+            kind: ParseErrorKind::ExpectedFound {
+                expected: expected.map(Into::into),
+                found: None,
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn recursion() -> Self {
+        ParseError {
+            kind: ParseErrorKind::Recursion,
         }
     }
 
@@ -88,19 +103,22 @@ impl ParseError {
     /// # Panics
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     pub fn display<F: File>(&self, file: &F) -> impl Display {
-        let Some(expected) = &self.expected else {
-            panic!("expected was never set!");
+        let ParseError { kind: ParseErrorKind::ExpectedFound { expected, found } } = self else {
+            return String::from("recursion limit reached!");
+        };
+
+        let Some(expected) = expected else {
+            panic!("expected() was not called before displaying this error. this is a bug, please open an issue report.");
         };
 
         let mut f = String::new();
 
-        _ = match &self.found {
+        _ = match found {
             Some(found) => write!(f, "expected {expected}, found '{found}'"),
             None => write!(f, "unexpected EOF, expected {expected}"),
         };
 
-        let span = self
-            .found
+        let span = found
             .as_ref()
             .map_or(Span::eof(file.src()), |tok| tok.span);
 
@@ -113,6 +131,16 @@ impl ParseError {
 
         f
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum ParseErrorKind {
+    ExpectedFound {
+        expected: Option<Cow<'static, str>>,
+        found: Option<Token>,
+    },
+    Recursion,
 }
 
 pub trait DiagResult {

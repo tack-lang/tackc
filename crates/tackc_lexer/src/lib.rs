@@ -35,16 +35,18 @@ pub enum TokenKind {
     Func,
     Let,
 
-    // Symbols
+    // Delimeters
     OpenParen,
     CloseParen,
     OpenBrace,
     CloseBrace,
 
+    // Symbols
     Eq,
-
+    Comma,
     Semicolon,
 
+    // Arithmatic symbols
     Plus,
     Dash,
     Star,
@@ -71,7 +73,7 @@ impl Display for TokenKind {
             TokenKind::CloseBrace => write!(f, "}}"),
 
             TokenKind::Eq => write!(f, "="),
-
+            TokenKind::Comma => write!(f, ","),
             TokenKind::Semicolon => write!(f, ";"),
 
             TokenKind::Plus => write!(f, "+"),
@@ -204,7 +206,7 @@ impl<'src, F: File> Lexer<'src, F> {
             '}' => TokenKind::CloseBrace,
 
             '=' => TokenKind::Eq,
-
+            ',' => TokenKind::Comma,
             ';' => TokenKind::Semicolon,
 
             '+' => TokenKind::Plus,

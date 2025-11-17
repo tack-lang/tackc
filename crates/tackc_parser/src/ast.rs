@@ -8,6 +8,8 @@ use tackc_span::Span;
 
 use crate::Parser;
 
+const MAX_RECURSION_DEPTH: u32 = 256;
+
 #[cfg(feature = "serde")]
 pub trait Serde: serde::Serialize + for<'a> serde::Deserialize<'a> {}
 #[cfg(feature = "serde")]
@@ -18,8 +20,6 @@ pub trait Serde {}
 impl<T> Serde for T {}
 
 pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized + Serde {
-    const NAME: &str;
-
     /// Parse the AST node using the given parser.
     ///
     /// # Errors
@@ -43,6 +43,8 @@ pub struct Expr {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExprKind {
     Atomic(Atom),
+
+    Call(Box<Expr>, Vec<Expr>),
 
     Grouping(Box<Expr>),
 
@@ -118,11 +120,11 @@ impl Expr {
         Expr::new(Span::new_from(span.start, tok.span.end), kind)
     }
 
-    fn grouping<I>(p: &mut Parser<I>, opening: Span) -> Result<Self>
+    fn grouping<I>(p: &mut Parser<I>, opening: Span, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let inner = Self::parse_bp(p, 0)?;
+        let inner = Self::parse_bp(p, 0, recursion + 1)?;
         let closing = p.expect_token(Some("')'"))?;
         let Token {
             span: closing_span,
@@ -137,7 +139,7 @@ impl Expr {
         ))
     }
 
-    fn atom<I>(p: &mut Parser<I>) -> Result<Self>
+    fn atom<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -148,7 +150,7 @@ impl Expr {
 
                 let tok = p.expect_token(None)?;
                 if tok.kind == TokenKind::OpenParen {
-                    Self::grouping(p, tok.span)
+                    Self::grouping(p, tok.span, recursion + 1)
                 } else {
                     p.restore(snapshot);
                     Err(ParseErrors::new(ParseError::new(None, tok)))
@@ -156,7 +158,7 @@ impl Expr {
             })
     }
 
-    fn prefix<I>(p: &mut Parser<I>) -> Result<Self>
+    fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -165,17 +167,53 @@ impl Expr {
         let tok = p.expect_token(None)?;
         let Some(((), r_bp)) = Self::prefix_bp(&tok.kind) else {
             p.restore(snapshot);
-            return Self::atom(p);
+            return Self::atom(p, recursion + 1);
         };
-        let rhs = Self::parse_bp(p, r_bp)?;
+        let rhs = Self::parse_bp(p, r_bp, recursion + 1)?;
         Ok(Self::wrap_prefix(&tok, rhs))
     }
 
-    fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32) -> Result<Self>
+    fn call<I>(p: &mut Parser<I>, lhs: Expr, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let mut lhs = Self::prefix(p).expected("expression")?;
+        let tok = p.expect_peek_token(Some("')', or expression"))?;
+
+        if tok.kind == TokenKind::CloseParen {
+            p.next_token();
+            return Ok(Expr::new(Span::new_from(lhs.span.start, tok.span.end), ExprKind::Call(Box::new(lhs), Vec::new())));
+        }
+
+        let snapshot = p.snapshot();
+        let mut args = Vec::new();
+        let closing_span = loop {
+            let arg = Self::parse_bp(p, 0, recursion + 1)?;
+            args.push(arg);
+
+            let tok = p.expect_peek_token(Some("',', or ')'"))?;
+            if tok.kind == TokenKind::CloseParen {
+                p.next_token();
+                break tok.span;
+            } else if tok.kind == TokenKind::Comma {
+                p.next_token();
+            } else {
+                p.restore(snapshot);
+                return Err(ParseErrors::new(ParseError::new(Some("',', or ')'"), tok)));
+            }
+        };
+
+        Ok(Expr::new(Span::new_from(lhs.span.start, closing_span.end), ExprKind::Call(Box::new(lhs), args)))
+    }
+
+    fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        if recursion > MAX_RECURSION_DEPTH {
+            return Err(ParseErrors::new(ParseError::recursion()))
+        }
+
+        let mut lhs = Self::prefix(p, recursion + 1).expected("expression")?;
 
         loop {
             let Some(op) = p.peek_token() else {
@@ -186,24 +224,36 @@ impl Expr {
                 if l_bp < min_bp {
                     break;
                 }
+
                 p.next_token();
 
                 lhs = Self::wrap_postfix(lhs, &op);
+
                 continue;
             }
 
-            let Some((l_bp, r_bp)) = Self::infix_bp(&op.kind) else {
-                break;
-            };
+            if let Some((l_bp, r_bp)) = Self::infix_bp(&op.kind) {
+                if l_bp < min_bp {
+                    break;
+                }
 
-            if l_bp < min_bp {
-                break;
+                p.next_token();
+
+                let rhs = Self::parse_bp(p, r_bp, recursion + 1)?;
+                lhs = Self::wrap_infix(lhs, &op, rhs);
+
+                continue;
             }
 
-            p.next_token();
-            let rhs = Self::parse_bp(p, r_bp)?;
+            match op.kind {
+                TokenKind::OpenParen => {
+                    // Skip OpenParen
+                    p.next_token();
 
-            lhs = Self::wrap_infix(lhs, &op, rhs);
+                    lhs = Self::call(p, lhs, recursion + 1)?;
+                }
+                _ => break,
+            }
         }
 
         Ok(lhs)
@@ -212,6 +262,11 @@ impl Expr {
     pub fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             ExprKind::Atomic(value) => format!("{}", value.display(global)),
+            ExprKind::Call(lhs, args) => format!("{}({})", lhs.display(global), args.iter().map(|arg| arg.display(global).to_string()).fold(String::new(), |mut a, arg| {
+                a += &arg;
+                a += ", ";
+                a
+            }).strip_suffix(", ").unwrap_or_default()),
             ExprKind::Grouping(value) => format!("{}", value.display(global)),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
@@ -234,6 +289,11 @@ impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
             ExprKind::Atomic(value) => write!(f, "{value}"),
+            ExprKind::Call(lhs, args) => write!(f, "{}({})", lhs, args.iter().map(ToString::to_string).fold(String::new(), |mut a, arg| {
+                a += &arg;
+                a += ", ";
+                a
+            }).strip_suffix(", ").unwrap_or_default()),
             ExprKind::Grouping(value) => write!(f, "{value}"),
             ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
             ExprKind::Add(lhs, rhs) => write!(f, "(+ {lhs} {rhs})"),
@@ -245,13 +305,11 @@ impl Display for Expr {
 }
 
 impl AstNode for Expr {
-    const NAME: &str = "expression";
-
     fn parse<I>(p: &mut Parser<I>) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        Self::parse_bp(p, 0)
+        Self::parse_bp(p, 0, 0)
     }
 
     fn span(&self) -> Span {
@@ -274,7 +332,7 @@ impl Atom {
     fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
-            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => format!("{lit:?}"),
+            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => format!("{}", lit.display(global)),
         }
     }
 }
@@ -289,8 +347,6 @@ impl Display for Atom {
 }
 
 impl AstNode for Atom {
-    const NAME: &str = "atomic value";
-
     fn parse<I>(p: &mut Parser<I>) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
