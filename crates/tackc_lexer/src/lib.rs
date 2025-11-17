@@ -327,7 +327,8 @@ impl<'src, F: File> Lexer<'src, F> {
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
                     return Ok(self.make_token(TokenKind::FloatLit(
-                        self.global.intern_str(Self::clean_digits(self.current_lexeme()))
+                        self.global
+                            .intern_str(Self::clean_digits(self.current_lexeme())),
                     )));
                 }
 
@@ -340,7 +341,8 @@ impl<'src, F: File> Lexer<'src, F> {
                 self.handle_float_with_exponent()
             }
             _ => Ok(self.make_token(TokenKind::IntLit(
-                self.global.intern_str(Self::clean_digits(self.current_lexeme())),
+                self.global
+                    .intern_str(Self::clean_digits(self.current_lexeme())),
             ))),
         }
     }
@@ -356,7 +358,8 @@ impl<'src, F: File> Lexer<'src, F> {
         }
 
         Ok(self.make_token(TokenKind::FloatLit(
-            self.global.intern_str(Self::clean_digits(self.current_lexeme())),
+            self.global
+                .intern_str(Self::clean_digits(self.current_lexeme())),
         )))
     }
 
