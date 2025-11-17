@@ -181,7 +181,10 @@ impl Expr {
 
         if tok.kind == TokenKind::CloseParen {
             p.next_token();
-            return Ok(Expr::new(Span::new_from(lhs.span.start, tok.span.end), ExprKind::Call(Box::new(lhs), Vec::new())));
+            return Ok(Expr::new(
+                Span::new_from(lhs.span.start, tok.span.end),
+                ExprKind::Call(Box::new(lhs), Vec::new()),
+            ));
         }
 
         let snapshot = p.snapshot();
@@ -202,7 +205,10 @@ impl Expr {
             }
         };
 
-        Ok(Expr::new(Span::new_from(lhs.span.start, closing_span.end), ExprKind::Call(Box::new(lhs), args)))
+        Ok(Expr::new(
+            Span::new_from(lhs.span.start, closing_span.end),
+            ExprKind::Call(Box::new(lhs), args),
+        ))
     }
 
     fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Self>
@@ -210,7 +216,7 @@ impl Expr {
         I: Iterator<Item = Token> + Clone,
     {
         if recursion > MAX_RECURSION_DEPTH {
-            return Err(ParseErrors::new(ParseError::recursion()))
+            return Err(ParseErrors::new(ParseError::recursion()));
         }
 
         let mut lhs = Self::prefix(p, recursion + 1).expected("expression")?;
@@ -262,11 +268,19 @@ impl Expr {
     pub fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             ExprKind::Atomic(value) => format!("{}", value.display(global)),
-            ExprKind::Call(lhs, args) => format!("{}({})", lhs.display(global), args.iter().map(|arg| arg.display(global).to_string()).fold(String::new(), |mut a, arg| {
-                a += &arg;
-                a += ", ";
-                a
-            }).strip_suffix(", ").unwrap_or_default()),
+            ExprKind::Call(lhs, args) => format!(
+                "{}({})",
+                lhs.display(global),
+                args.iter()
+                    .map(|arg| arg.display(global).to_string())
+                    .fold(String::new(), |mut a, arg| {
+                        a += &arg;
+                        a += ", ";
+                        a
+                    })
+                    .strip_suffix(", ")
+                    .unwrap_or_default()
+            ),
             ExprKind::Grouping(value) => format!("{}", value.display(global)),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
@@ -289,11 +303,20 @@ impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
             ExprKind::Atomic(value) => write!(f, "{value}"),
-            ExprKind::Call(lhs, args) => write!(f, "{}({})", lhs, args.iter().map(ToString::to_string).fold(String::new(), |mut a, arg| {
-                a += &arg;
-                a += ", ";
-                a
-            }).strip_suffix(", ").unwrap_or_default()),
+            ExprKind::Call(lhs, args) => write!(
+                f,
+                "{}({})",
+                lhs,
+                args.iter()
+                    .map(ToString::to_string)
+                    .fold(String::new(), |mut a, arg| {
+                        a += &arg;
+                        a += ", ";
+                        a
+                    })
+                    .strip_suffix(", ")
+                    .unwrap_or_default()
+            ),
             ExprKind::Grouping(value) => write!(f, "{value}"),
             ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
             ExprKind::Add(lhs, rhs) => write!(f, "(+ {lhs} {rhs})"),
