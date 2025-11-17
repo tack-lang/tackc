@@ -274,7 +274,7 @@ impl Atom {
     fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
-            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => format!("{lit}"),
+            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => format!("{lit:?}"),
         }
     }
 }
@@ -283,7 +283,7 @@ impl Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
             AtomKind::Identifier(interned) => write!(f, "{interned:?}"),
-            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => write!(f, "{lit}"),
+            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => write!(f, "{lit:?}"),
         }
     }
 }
@@ -309,10 +309,10 @@ impl AstNode for Atom {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AtomKind {
-    IntLit(Box<str>),
-    FloatLit(Box<str>),
+    IntLit(Interned<str>),
+    FloatLit(Interned<str>),
     Identifier(Interned<str>),
 }

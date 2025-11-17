@@ -19,15 +19,15 @@ impl Display for Token {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenKind {
     Ident(Interned<str>),
 
     // Literals
-    StringLit(Box<str>),
-    IntLit(Box<str>),
-    FloatLit(Box<str>),
+    StringLit(Interned<str>),
+    IntLit(Interned<str>),
+    FloatLit(Interned<str>),
 
     Eof,
 
@@ -56,9 +56,9 @@ impl Display for TokenKind {
         match self {
             TokenKind::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
 
-            TokenKind::StringLit(string) => write!(f, "{string}"),
-            TokenKind::IntLit(int) => write!(f, "{int}"),
-            TokenKind::FloatLit(float) => write!(f, "{float}"),
+            TokenKind::StringLit(string) => write!(f, "<StringLit: {string:?}>"),
+            TokenKind::IntLit(int) => write!(f, "<IntLit: {int:?}>"),
+            TokenKind::FloatLit(float) => write!(f, "<FloatLit: {float:?}>"),
 
             TokenKind::Eof => write!(f, "<EOF>"),
 
@@ -255,7 +255,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 Some(c) => string.push(c as char),
             }
         }
-        Ok(self.make_token(TokenKind::StringLit(string.into_boxed_str())))
+        Ok(self.make_token(TokenKind::StringLit(self.global.intern_str(string))))
     }
 
     fn handle_digits(&mut self, radix: u32) -> bool {
@@ -295,7 +295,7 @@ impl<'src, F: File> Lexer<'src, F> {
         }
 
         let digits = Self::clean_digits(self.current_lexeme());
-        Ok(self.make_token(TokenKind::IntLit(digits.into_boxed_str())))
+        Ok(self.make_token(TokenKind::IntLit(self.global.intern_str(digits))))
     }
 
     fn handle_num_lit(&mut self, c: u8) -> Result<Token, Error> {
@@ -327,7 +327,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
                     return Ok(self.make_token(TokenKind::FloatLit(
-                        Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+                        self.global.intern_str(Self::clean_digits(self.current_lexeme()))
                     )));
                 }
 
@@ -340,7 +340,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 self.handle_float_with_exponent()
             }
             _ => Ok(self.make_token(TokenKind::IntLit(
-                Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+                self.global.intern_str(Self::clean_digits(self.current_lexeme())),
             ))),
         }
     }
@@ -356,7 +356,7 @@ impl<'src, F: File> Lexer<'src, F> {
         }
 
         Ok(self.make_token(TokenKind::FloatLit(
-            Self::clean_digits(self.current_lexeme()).into_boxed_str(),
+            self.global.intern_str(Self::clean_digits(self.current_lexeme())),
         )))
     }
 
