@@ -45,6 +45,7 @@ pub enum TokenKind {
     Eq,
     Comma,
     Semicolon,
+    Dot,
 
     // Arithmatic symbols
     Plus,
@@ -75,6 +76,7 @@ impl Display for TokenKind {
             TokenKind::Eq => write!(f, "="),
             TokenKind::Comma => write!(f, ","),
             TokenKind::Semicolon => write!(f, ";"),
+            TokenKind::Dot => write!(f, "."),
 
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Dash => write!(f, "-"),
@@ -208,6 +210,7 @@ impl<'src, F: File> Lexer<'src, F> {
             '=' => TokenKind::Eq,
             ',' => TokenKind::Comma,
             ';' => TokenKind::Semicolon,
+            '.' => TokenKind::Dot,
 
             '+' => TokenKind::Plus,
             '-' => TokenKind::Dash,
