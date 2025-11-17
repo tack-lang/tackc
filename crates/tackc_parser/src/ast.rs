@@ -56,11 +56,11 @@ pub enum ExprKind {
     Div(Box<Expr>, Box<Expr>),
 }
 
-pub type NudCallback<I> = fn(p: &mut Parser<I>, recursion: u32, tok: Token) -> Result<Expr>;
+pub type NudCallback<I> = fn(p: &mut Parser<I>, tok: Token, recursion: u32) -> Result<Expr>;
 
 macro_rules! wrapping_nud {
     ($fn:expr, $r_bp:expr) => {
-        (|p, recursion, tok| {
+        (|p, tok, recursion| {
             let rhs = parse_bp(p, $r_bp, recursion + 1)?;
             Ok(Expr::new(
                 Span::new_from(tok.span.start, rhs.span.end),
@@ -77,6 +77,7 @@ where
     match tok {
         TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 50)),
         TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 50)),
+        TokenKind::OpenParen => Some(grouping),
         _ => None,
     }
 }
@@ -122,10 +123,13 @@ fn wrap_postfix(lhs: Expr, tok: &Token) -> Expr {
     Expr::new(Span::new_from(span.start, tok.span.end), kind)
 }
 
-fn grouping<I>(p: &mut Parser<I>, opening: Span, recursion: u32) -> Result<Expr>
+#[allow(clippy::needless_pass_by_value)]
+fn grouping<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Expr>
 where
     I: Iterator<Item = Token> + Clone,
 {
+    let opening_span = opening.span;
+
     let inner = parse_bp(p, 0, recursion + 1)?;
     let closing = p.expect_token(Some("')'"))?;
     let Token {
@@ -136,28 +140,9 @@ where
         return Err(ParseErrors::new(ParseError::new(Some("')'"), closing)));
     };
     Ok(Expr::new(
-        Span::new_from(opening.start, closing_span.end),
+        Span::new_from(opening_span.start, closing_span.end),
         ExprKind::Grouping(Box::new(inner)),
     ))
-}
-
-fn atom<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
-where
-    I: Iterator<Item = Token> + Clone,
-{
-    p.try_parse::<Atom>()
-        .map(|v| Expr::new(v.span, ExprKind::Atomic(v)))
-        .or_else(|_| {
-            let snapshot = p.snapshot();
-
-            let tok = p.expect_token(None)?;
-            if tok.kind == TokenKind::OpenParen {
-                grouping(p, tok.span, recursion + 1)
-            } else {
-                p.restore(snapshot);
-                Err(ParseErrors::new(ParseError::new(None, tok)))
-            }
-        })
 }
 
 fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
@@ -169,10 +154,12 @@ where
     let tok = p.expect_token(None)?;
     let Some(nud) = prefix_nud(&tok.kind) else {
         p.restore(snapshot);
-        return atom(p, recursion + 1);
+        let atom = p.try_parse::<Atom>()?;
+        let expr = Expr::new(atom.span, ExprKind::Atomic(atom));
+        return Ok(expr);
     };
 
-    nud(p, recursion + 1, tok)
+    nud(p, tok, recursion + 1)
 }
 
 fn call<I>(p: &mut Parser<I>, lhs: Expr, recursion: u32) -> Result<Expr>
