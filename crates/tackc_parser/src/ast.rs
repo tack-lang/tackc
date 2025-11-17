@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
-use crate::error::{ParseError, ParseErrors, Result};
+use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -123,13 +123,13 @@ impl Expr {
         I: Iterator<Item = Token> + Clone,
     {
         let inner = Self::parse_bp(p, 0)?;
-        let closing = p.expect_token("')'")?;
+        let closing = p.expect_token(Some("')'"))?;
         let Token {
             span: closing_span,
             kind: TokenKind::CloseParen,
         } = closing
         else {
-            return Err(ParseErrors::new(ParseError::new("')'", closing)));
+            return Err(ParseErrors::new(ParseError::new(Some("')'"), closing)));
         };
         Ok(Expr::new(
             Span::new_from(opening.start, closing_span.end),
@@ -146,12 +146,12 @@ impl Expr {
             .or_else(|_| {
                 let snapshot = p.snapshot();
 
-                let tok = p.expect_token("expression")?;
+                let tok = p.expect_token(None)?;
                 if tok.kind == TokenKind::OpenParen {
                     Self::grouping(p, tok.span)
                 } else {
                     p.restore(snapshot);
-                    Err(ParseErrors::new(ParseError::new("expression", tok)))
+                    Err(ParseErrors::new(ParseError::new(None, tok)))
                 }
             })
     }
@@ -162,7 +162,7 @@ impl Expr {
     {
         let snapshot = p.snapshot();
 
-        let tok = p.expect_token("expression")?;
+        let tok = p.expect_token(None)?;
         let Some(((), r_bp)) = Self::prefix_bp(&tok.kind) else {
             p.restore(snapshot);
             return Self::atom(p);
@@ -175,7 +175,7 @@ impl Expr {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let mut lhs = Self::prefix(p)?;
+        let mut lhs = Self::prefix(p).expected("expression")?;
 
         loop {
             let Some(op) = p.peek_token() else {
@@ -295,12 +295,12 @@ impl AstNode for Atom {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let tok = p.expect_token("value")?;
+        let tok = p.expect_token(None)?;
         match tok.kind {
             TokenKind::Ident(ident) => Ok(Atom::new(tok.span, AtomKind::Identifier(ident))),
             TokenKind::IntLit(literal) => Ok(Atom::new(tok.span, AtomKind::IntLit(literal))),
             TokenKind::FloatLit(literal) => Ok(Atom::new(tok.span, AtomKind::FloatLit(literal))),
-            _ => Err(ParseErrors::new(ParseError::new("value", tok))),
+            _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
 
