@@ -148,12 +148,18 @@ impl Global {
     }
 
     /// Gets a reference to the interned value represented by `interned`.
-    /// 
+    ///
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`, or in the event of a hash collision.
     #[allow(clippy::missing_panics_doc)]
     pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
-        <dyn Any>::downcast_ref::<T>(&**self.interned.get(&interned.0).unwrap_or_else(|| panic!("Wrong Global used!"))).unwrap_or_else(|| panic!("Hash collision!"))
+        <dyn Any>::downcast_ref::<T>(
+            &**self
+                .interned
+                .get(&interned.0)
+                .unwrap_or_else(|| panic!("Wrong Global used!")),
+        )
+        .unwrap_or_else(|| panic!("Hash collision!"))
     }
 
     /// Interns a string value into the global map.
@@ -177,11 +183,14 @@ impl Global {
     }
 
     /// Gets a reference to the interned string value represented by `interned`.
-    /// 
+    ///
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`.
     pub fn get_interned_str(&self, interned: Interned<str>) -> &str {
-        *self.interned_strs.get(&interned.0).unwrap_or_else(|| panic!("Wrong Global used!"))
+        *self
+            .interned_strs
+            .get(&interned.0)
+            .unwrap_or_else(|| panic!("Wrong Global used!"))
     }
 
     pub fn alloc<T>(&self, val: T) -> &mut T {
