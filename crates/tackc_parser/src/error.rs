@@ -37,8 +37,8 @@ impl ParseErrors {
                 if expected.is_none() {
                     *expected = Some(str.into());
                 }
-            },
-            ParseErrorKind::Recursion => {},
+            }
+            ParseErrorKind::Recursion => {}
         }
     }
 
@@ -77,7 +77,7 @@ impl ParseError {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
                 found: Some(found),
-            }
+            },
         }
     }
 
@@ -87,7 +87,7 @@ impl ParseError {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
                 found: None,
-            }
+            },
         }
     }
 
@@ -103,12 +103,17 @@ impl ParseError {
     /// # Panics
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     pub fn display<F: File>(&self, file: &F) -> impl Display {
-        let ParseError { kind: ParseErrorKind::ExpectedFound { expected, found } } = self else {
+        let ParseError {
+            kind: ParseErrorKind::ExpectedFound { expected, found },
+        } = self
+        else {
             return String::from("recursion limit reached!");
         };
 
         let Some(expected) = expected else {
-            panic!("expected() was not called before displaying this error. this is a bug, please open an issue report.");
+            panic!(
+                "expected() was not called before displaying this error. this is a bug, please open an issue report."
+            );
         };
 
         let mut f = String::new();
@@ -118,9 +123,7 @@ impl ParseError {
             None => write!(f, "unexpected EOF, expected {expected}"),
         };
 
-        let span = found
-            .as_ref()
-            .map_or(Span::eof(file.src()), |tok| tok.span);
+        let span = found.as_ref().map_or(Span::eof(file.src()), |tok| tok.span);
 
         _ = write!(f, "\n  --> {}", file.path().display());
 
