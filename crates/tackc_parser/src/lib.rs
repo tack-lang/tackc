@@ -56,7 +56,7 @@ where
     }
 
     /// Gets the next token from the lexer, without consuming it.
-    pub fn peek_token(&mut self) -> Option<Token> {
+    pub fn peek_token(&self) -> Option<Token> {
         self.iter.clone().next()
     }
 
@@ -64,7 +64,7 @@ where
     ///
     /// # Errors
     /// This function returns an error if the lexer is at the EOF.
-    pub fn expect_token(&mut self, expected: &'static str) -> Result<Token> {
+    pub fn expect_token(&mut self, expected: Option<&'static str>) -> Result<Token> {
         self.iter
             .next()
             .ok_or_else(|| ParseErrors::new(ParseError::eof(expected)))
@@ -74,7 +74,7 @@ where
     ///
     /// # Errors
     /// This function returns an error if the lexer is at the EOF.
-    pub fn expect_peek_token(&self, expected: &'static str) -> Result<Token> {
+    pub fn expect_peek_token(&self, expected: Option<&'static str>) -> Result<Token> {
         self.iter
             .clone()
             .next()

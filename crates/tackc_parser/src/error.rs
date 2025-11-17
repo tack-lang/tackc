@@ -28,11 +28,13 @@ impl ParseErrors {
         self.errors.push(diag);
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
         let errors = self.errors.make_mut();
-        let first = &mut errors[0];
-
-        first.expected = str.into();
+        let first = errors.last_mut().unwrap();
+        if first.expected.is_none() {
+            first.expected = Some(str.into());
+        }
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -60,23 +62,23 @@ impl Deref for ParseErrors {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseError {
-    pub expected: Cow<'static, str>,
+    pub expected: Option<Cow<'static, str>>,
     pub found: Option<Token>,
 }
 
 impl ParseError {
     #[must_use]
-    pub fn new(expected: &'static str, found: Token) -> Self {
+    pub fn new(expected: Option<&'static str>, found: Token) -> Self {
         ParseError {
-            expected: expected.into(),
+            expected: expected.map(Into::into),
             found: Some(found),
         }
     }
 
     #[must_use]
-    pub fn eof(expected: &'static str) -> Self {
+    pub fn eof(expected: Option<&'static str>) -> Self {
         ParseError {
-            expected: expected.into(),
+            expected: expected.map(Into::into),
             found: None,
         }
     }
@@ -86,11 +88,15 @@ impl ParseError {
     /// # Panics
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     pub fn display<F: File>(&self, file: &F) -> impl Display {
+        let Some(expected) = &self.expected else {
+            panic!("expected was never set!");
+        };
+
         let mut f = String::new();
 
         _ = match &self.found {
-            Some(found) => write!(f, "expected {}, found '{found}'", self.expected),
-            None => write!(f, "unexpected EOF, expected {}", self.expected),
+            Some(found) => write!(f, "expected {expected}, found '{found}'"),
+            None => write!(f, "unexpected EOF, expected {expected}"),
         };
 
         let span = self
