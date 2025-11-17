@@ -56,213 +56,220 @@ pub enum ExprKind {
     Div(Box<Expr>, Box<Expr>),
 }
 
+pub type NudCallback<I> = fn(p: &mut Parser<I>, recursion: u32, tok: Token) -> Result<Expr>;
+
+macro_rules! wrapping_nud {
+    ($fn:expr, $r_bp:expr) => {
+        (|p, recursion, tok| {
+            let rhs = parse_bp(p, $r_bp, recursion + 1)?;
+            Ok(Expr::new(
+                Span::new_from(tok.span.start, rhs.span.end),
+                $fn(Box::new(rhs)),
+            ))
+        })
+    };
+}
+
+const fn prefix_nud<I>(tok: &TokenKind) -> Option<NudCallback<I>>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    match tok {
+        TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 50)),
+        TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 50)),
+        _ => None,
+    }
+}
+
+const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
+    match tok {
+        TokenKind::Plus | TokenKind::Dash => Some((10, 20)),
+        TokenKind::Star | TokenKind::Slash => Some((30, 40)),
+        _ => None,
+    }
+}
+
+#[inline]
+fn wrap_infix(lhs: Expr, tok: &Token, rhs: Expr) -> Expr {
+    let rhs_span = rhs.span;
+    let lhs_span = lhs.span;
+    let kind = match tok.kind {
+        TokenKind::Plus => ExprKind::Add(Box::new(lhs), Box::new(rhs)),
+        TokenKind::Dash => ExprKind::Sub(Box::new(lhs), Box::new(rhs)),
+        TokenKind::Star => ExprKind::Mul(Box::new(lhs), Box::new(rhs)),
+        TokenKind::Slash => ExprKind::Div(Box::new(lhs), Box::new(rhs)),
+        _ => unreachable!("should not be reached, code was written wrong"),
+    };
+    Expr::new(Span::new_from(lhs_span.start, rhs_span.end), kind)
+}
+
+#[allow(clippy::all)]
+const fn postfix_bp(tok: &TokenKind) -> Option<(u32, ())> {
+    match tok {
+        _ => None,
+    }
+}
+
+#[inline]
+#[allow(clippy::all)]
+#[allow(unused)]
+#[allow(clippy::needless_pass_by_value)]
+fn wrap_postfix(lhs: Expr, tok: &Token) -> Expr {
+    let span = lhs.span;
+    let kind = match tok.kind {
+        _ => unreachable!("should not be reached, code was written wrong"),
+    };
+    Expr::new(Span::new_from(span.start, tok.span.end), kind)
+}
+
+fn grouping<I>(p: &mut Parser<I>, opening: Span, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let inner = parse_bp(p, 0, recursion + 1)?;
+    let closing = p.expect_token(Some("')'"))?;
+    let Token {
+        span: closing_span,
+        kind: TokenKind::CloseParen,
+    } = closing
+    else {
+        return Err(ParseErrors::new(ParseError::new(Some("')'"), closing)));
+    };
+    Ok(Expr::new(
+        Span::new_from(opening.start, closing_span.end),
+        ExprKind::Grouping(Box::new(inner)),
+    ))
+}
+
+fn atom<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    p.try_parse::<Atom>()
+        .map(|v| Expr::new(v.span, ExprKind::Atomic(v)))
+        .or_else(|_| {
+            let snapshot = p.snapshot();
+
+            let tok = p.expect_token(None)?;
+            if tok.kind == TokenKind::OpenParen {
+                grouping(p, tok.span, recursion + 1)
+            } else {
+                p.restore(snapshot);
+                Err(ParseErrors::new(ParseError::new(None, tok)))
+            }
+        })
+}
+
+fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let snapshot = p.snapshot();
+
+    let tok = p.expect_token(None)?;
+    let Some(nud) = prefix_nud(&tok.kind) else {
+        p.restore(snapshot);
+        return atom(p, recursion + 1);
+    };
+
+    nud(p, recursion + 1, tok)
+}
+
+fn call<I>(p: &mut Parser<I>, lhs: Expr, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let tok = p.expect_peek_token(Some("')', or expression"))?;
+
+    if tok.kind == TokenKind::CloseParen {
+        p.next_token();
+        return Ok(Expr::new(
+            Span::new_from(lhs.span.start, tok.span.end),
+            ExprKind::Call(Box::new(lhs), Vec::new()),
+        ));
+    }
+
+    let snapshot = p.snapshot();
+    let mut args = Vec::new();
+    let closing_span = loop {
+        let arg = parse_bp(p, 0, recursion + 1)?;
+        args.push(arg);
+
+        let tok = p.expect_peek_token(Some("',', or ')'"))?;
+        if tok.kind == TokenKind::CloseParen {
+            p.next_token();
+            break tok.span;
+        } else if tok.kind == TokenKind::Comma {
+            p.next_token();
+        } else {
+            p.restore(snapshot);
+            return Err(ParseErrors::new(ParseError::new(Some("',', or ')'"), tok)));
+        }
+    };
+
+    Ok(Expr::new(
+        Span::new_from(lhs.span.start, closing_span.end),
+        ExprKind::Call(Box::new(lhs), args),
+    ))
+}
+
+fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    if recursion > MAX_RECURSION_DEPTH {
+        return Err(ParseErrors::new(ParseError::recursion()));
+    }
+
+    let mut lhs = prefix(p, recursion + 1).expected("expression")?;
+
+    loop {
+        let Some(op) = p.peek_token() else {
+            break;
+        };
+
+        if let Some((l_bp, ())) = postfix_bp(&op.kind) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            p.next_token();
+
+            lhs = wrap_postfix(lhs, &op);
+
+            continue;
+        }
+
+        if let Some((l_bp, r_bp)) = infix_bp(&op.kind) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            p.next_token();
+
+            let rhs = parse_bp(p, r_bp, recursion + 1)?;
+            lhs = wrap_infix(lhs, &op, rhs);
+
+            continue;
+        }
+
+        match op.kind {
+            TokenKind::OpenParen => {
+                // Skip OpenParen
+                p.next_token();
+
+                lhs = call(p, lhs, recursion + 1)?;
+            }
+            _ => break,
+        }
+    }
+
+    Ok(lhs)
+}
+
 impl Expr {
     fn new(span: Span, kind: ExprKind) -> Self {
         Expr { span, kind }
-    }
-
-    const fn prefix_bp(tok: &TokenKind) -> Option<((), u32)> {
-        match tok {
-            TokenKind::Plus | TokenKind::Dash => Some(((), 50)),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    fn wrap_prefix(tok: &Token, rhs: Expr) -> Expr {
-        let span = rhs.span;
-        let kind = match tok.kind {
-            TokenKind::Plus => rhs.kind,
-            TokenKind::Dash => ExprKind::Neg(Box::new(rhs)),
-            _ => unreachable!("should not be reached, code was written wrong"),
-        };
-        Expr::new(Span::new_from(tok.span.start, span.end), kind)
-    }
-
-    const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
-        match tok {
-            TokenKind::Plus | TokenKind::Dash => Some((10, 20)),
-            TokenKind::Star | TokenKind::Slash => Some((30, 40)),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    fn wrap_infix(lhs: Expr, tok: &Token, rhs: Expr) -> Expr {
-        let rhs_span = rhs.span;
-        let lhs_span = lhs.span;
-        let kind = match tok.kind {
-            TokenKind::Plus => ExprKind::Add(Box::new(lhs), Box::new(rhs)),
-            TokenKind::Dash => ExprKind::Sub(Box::new(lhs), Box::new(rhs)),
-            TokenKind::Star => ExprKind::Mul(Box::new(lhs), Box::new(rhs)),
-            TokenKind::Slash => ExprKind::Div(Box::new(lhs), Box::new(rhs)),
-            _ => unreachable!("should not be reached, code was written wrong"),
-        };
-        Expr::new(Span::new_from(lhs_span.start, rhs_span.end), kind)
-    }
-
-    #[allow(clippy::all)]
-    const fn postfix_bp(tok: &TokenKind) -> Option<(u32, ())> {
-        match tok {
-            _ => None,
-        }
-    }
-
-    #[inline]
-    #[allow(clippy::all)]
-    #[allow(unused)]
-    #[allow(clippy::needless_pass_by_value)]
-    fn wrap_postfix(lhs: Expr, tok: &Token) -> Expr {
-        let span = lhs.span;
-        let kind = match tok.kind {
-            _ => unreachable!("should not be reached, code was written wrong"),
-        };
-        Expr::new(Span::new_from(span.start, tok.span.end), kind)
-    }
-
-    fn grouping<I>(p: &mut Parser<I>, opening: Span, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        let inner = Self::parse_bp(p, 0, recursion + 1)?;
-        let closing = p.expect_token(Some("')'"))?;
-        let Token {
-            span: closing_span,
-            kind: TokenKind::CloseParen,
-        } = closing
-        else {
-            return Err(ParseErrors::new(ParseError::new(Some("')'"), closing)));
-        };
-        Ok(Expr::new(
-            Span::new_from(opening.start, closing_span.end),
-            ExprKind::Grouping(Box::new(inner)),
-        ))
-    }
-
-    fn atom<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        p.try_parse::<Atom>()
-            .map(|v| Expr::new(v.span, ExprKind::Atomic(v)))
-            .or_else(|_| {
-                let snapshot = p.snapshot();
-
-                let tok = p.expect_token(None)?;
-                if tok.kind == TokenKind::OpenParen {
-                    Self::grouping(p, tok.span, recursion + 1)
-                } else {
-                    p.restore(snapshot);
-                    Err(ParseErrors::new(ParseError::new(None, tok)))
-                }
-            })
-    }
-
-    fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        let snapshot = p.snapshot();
-
-        let tok = p.expect_token(None)?;
-        let Some(((), r_bp)) = Self::prefix_bp(&tok.kind) else {
-            p.restore(snapshot);
-            return Self::atom(p, recursion + 1);
-        };
-        let rhs = Self::parse_bp(p, r_bp, recursion + 1)?;
-        Ok(Self::wrap_prefix(&tok, rhs))
-    }
-
-    fn call<I>(p: &mut Parser<I>, lhs: Expr, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        let tok = p.expect_peek_token(Some("')', or expression"))?;
-
-        if tok.kind == TokenKind::CloseParen {
-            p.next_token();
-            return Ok(Expr::new(
-                Span::new_from(lhs.span.start, tok.span.end),
-                ExprKind::Call(Box::new(lhs), Vec::new()),
-            ));
-        }
-
-        let snapshot = p.snapshot();
-        let mut args = Vec::new();
-        let closing_span = loop {
-            let arg = Self::parse_bp(p, 0, recursion + 1)?;
-            args.push(arg);
-
-            let tok = p.expect_peek_token(Some("',', or ')'"))?;
-            if tok.kind == TokenKind::CloseParen {
-                p.next_token();
-                break tok.span;
-            } else if tok.kind == TokenKind::Comma {
-                p.next_token();
-            } else {
-                p.restore(snapshot);
-                return Err(ParseErrors::new(ParseError::new(Some("',', or ')'"), tok)));
-            }
-        };
-
-        Ok(Expr::new(
-            Span::new_from(lhs.span.start, closing_span.end),
-            ExprKind::Call(Box::new(lhs), args),
-        ))
-    }
-
-    fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        if recursion > MAX_RECURSION_DEPTH {
-            return Err(ParseErrors::new(ParseError::recursion()));
-        }
-
-        let mut lhs = Self::prefix(p, recursion + 1).expected("expression")?;
-
-        loop {
-            let Some(op) = p.peek_token() else {
-                break;
-            };
-
-            if let Some((l_bp, ())) = Self::postfix_bp(&op.kind) {
-                if l_bp < min_bp {
-                    break;
-                }
-
-                p.next_token();
-
-                lhs = Self::wrap_postfix(lhs, &op);
-
-                continue;
-            }
-
-            if let Some((l_bp, r_bp)) = Self::infix_bp(&op.kind) {
-                if l_bp < min_bp {
-                    break;
-                }
-
-                p.next_token();
-
-                let rhs = Self::parse_bp(p, r_bp, recursion + 1)?;
-                lhs = Self::wrap_infix(lhs, &op, rhs);
-
-                continue;
-            }
-
-            match op.kind {
-                TokenKind::OpenParen => {
-                    // Skip OpenParen
-                    p.next_token();
-
-                    lhs = Self::call(p, lhs, recursion + 1)?;
-                }
-                _ => break,
-            }
-        }
-
-        Ok(lhs)
     }
 
     pub fn display(&self, global: &Global) -> impl Display {
@@ -332,7 +339,7 @@ impl AstNode for Expr {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        Self::parse_bp(p, 0, 0)
+        parse_bp(p, 0, 0)
     }
 
     fn span(&self) -> Span {
