@@ -63,7 +63,7 @@ impl Expr {
 
     const fn prefix_bp(tok: &TokenKind) -> Option<((), u32)> {
         match tok {
-            TokenKind::Plus | TokenKind::Dash => Some(((), 5)),
+            TokenKind::Plus | TokenKind::Dash => Some(((), 50)),
             _ => None,
         }
     }
@@ -81,8 +81,8 @@ impl Expr {
 
     const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
         match tok {
-            TokenKind::Plus | TokenKind::Dash => Some((1, 2)),
-            TokenKind::Star | TokenKind::Slash => Some((3, 4)),
+            TokenKind::Plus | TokenKind::Dash => Some((10, 20)),
+            TokenKind::Star | TokenKind::Slash => Some((30, 40)),
             _ => None,
         }
     }
