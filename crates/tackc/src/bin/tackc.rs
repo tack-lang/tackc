@@ -28,7 +28,9 @@ fn main() -> Result<()> {
 
     let res = Expr::parse(&mut parser);
     match res {
-        Ok(expr) => println!("{}", expr.display(global)),
+        Ok(expr) => {
+            println!("{}", expr.display(global));
+        },
         Err(diags) => println!("{}", diags.display(file_ref)),
     }
 
