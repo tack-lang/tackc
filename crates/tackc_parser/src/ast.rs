@@ -58,7 +58,8 @@ pub enum ExprKind {
 
 pub type NudCallback<I> = fn(p: &mut Parser<I>, tok: Token, recursion: u32) -> Result<Expr>;
 pub type InfixLedCallback = fn(lhs: Expr, rhs: Expr) -> Expr;
-pub type PostfixLedCallback<I> = fn(p: &mut Parser<I>, tok: Token, lhs: Expr, recursion: u32) -> Result<Expr>;
+pub type PostfixLedCallback<I> =
+    fn(p: &mut Parser<I>, tok: Token, lhs: Expr, recursion: u32) -> Result<Expr>;
 
 macro_rules! wrapping_nud {
     ($fn:expr, $r_bp:expr) => {
@@ -75,7 +76,10 @@ macro_rules! wrapping_nud {
 macro_rules! infix_led {
     ($fn:expr) => {
         (|lhs, rhs| {
-            Expr::new(Span::new_from(lhs.span.start, rhs.span.end), $fn(Box::new(lhs), Box::new(rhs)))
+            Expr::new(
+                Span::new_from(lhs.span.start, rhs.span.end),
+                $fn(Box::new(lhs), Box::new(rhs)),
+            )
         })
     };
 }
@@ -94,9 +98,9 @@ where
 
 fn infix_led(tok: &TokenKind) -> Option<InfixLedCallback> {
     match tok {
-        TokenKind::Plus =>  Some(infix_led!(ExprKind::Add)),
-        TokenKind::Dash =>  Some(infix_led!(ExprKind::Sub)),
-        TokenKind::Star =>  Some(infix_led!(ExprKind::Mul)),
+        TokenKind::Plus => Some(infix_led!(ExprKind::Add)),
+        TokenKind::Dash => Some(infix_led!(ExprKind::Sub)),
+        TokenKind::Star => Some(infix_led!(ExprKind::Mul)),
         TokenKind::Slash => Some(infix_led!(ExprKind::Div)),
         _ => None,
     }
@@ -120,7 +124,7 @@ const fn postfix_bp(tok: &TokenKind) -> Option<u32> {
 
 fn postfix_led<I>(tok: &TokenKind) -> Option<PostfixLedCallback<I>>
 where
-    I: Iterator<Item = Token> + Clone
+    I: Iterator<Item = Token> + Clone,
 {
     match tok {
         TokenKind::OpenParen => Some(call),
