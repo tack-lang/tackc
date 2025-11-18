@@ -14,6 +14,7 @@ use tackc_span::Span;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseErrors {
+    // Length of errors will always be 1 or greater
     errors: EcoVec<ParseError>,
 }
 
@@ -30,6 +31,8 @@ impl ParseErrors {
 
     #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
+        debug_assert!(!self.errors.is_empty());
+
         let errors = self.errors.make_mut();
         let last = errors.last_mut().unwrap();
         match &mut last.kind {
