@@ -114,7 +114,6 @@ const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
     }
 }
 
-#[allow(clippy::all)]
 const fn postfix_bp(tok: &TokenKind) -> Option<u32> {
     match tok {
         TokenKind::OpenParen => Some(60),
