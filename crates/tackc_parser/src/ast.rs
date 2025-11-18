@@ -57,6 +57,8 @@ pub enum ExprKind {
 }
 
 pub type NudCallback<I> = fn(p: &mut Parser<I>, tok: Token, recursion: u32) -> Result<Expr>;
+pub type InfixLedCallback = fn(lhs: Expr, rhs: Expr) -> Expr;
+pub type PostfixLedCallback<I> = fn(p: &mut Parser<I>, tok: Token, lhs: Expr, recursion: u32) -> Result<Expr>;
 
 macro_rules! wrapping_nud {
     ($fn:expr, $r_bp:expr) => {
@@ -70,7 +72,15 @@ macro_rules! wrapping_nud {
     };
 }
 
-const fn prefix_nud<I>(tok: &TokenKind) -> Option<NudCallback<I>>
+macro_rules! infix_led {
+    ($fn:expr) => {
+        (|lhs, rhs| {
+            Expr::new(Span::new_from(lhs.span.start, rhs.span.end), $fn(Box::new(lhs), Box::new(rhs)))
+        })
+    };
+}
+
+fn prefix_nud<I>(tok: &TokenKind) -> Option<NudCallback<I>>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -78,6 +88,16 @@ where
         TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 50)),
         TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 50)),
         TokenKind::OpenParen => Some(grouping),
+        _ => None,
+    }
+}
+
+fn infix_led(tok: &TokenKind) -> Option<InfixLedCallback> {
+    match tok {
+        TokenKind::Plus =>  Some(infix_led!(ExprKind::Add)),
+        TokenKind::Dash =>  Some(infix_led!(ExprKind::Sub)),
+        TokenKind::Star =>  Some(infix_led!(ExprKind::Mul)),
+        TokenKind::Slash => Some(infix_led!(ExprKind::Div)),
         _ => None,
     }
 }
@@ -90,37 +110,22 @@ const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
     }
 }
 
-#[inline]
-fn wrap_infix(lhs: Expr, tok: &Token, rhs: Expr) -> Expr {
-    let rhs_span = rhs.span;
-    let lhs_span = lhs.span;
-    let kind = match tok.kind {
-        TokenKind::Plus => ExprKind::Add(Box::new(lhs), Box::new(rhs)),
-        TokenKind::Dash => ExprKind::Sub(Box::new(lhs), Box::new(rhs)),
-        TokenKind::Star => ExprKind::Mul(Box::new(lhs), Box::new(rhs)),
-        TokenKind::Slash => ExprKind::Div(Box::new(lhs), Box::new(rhs)),
-        _ => unreachable!("should not be reached, code was written wrong"),
-    };
-    Expr::new(Span::new_from(lhs_span.start, rhs_span.end), kind)
-}
-
 #[allow(clippy::all)]
-const fn postfix_bp(tok: &TokenKind) -> Option<(u32, ())> {
+const fn postfix_bp(tok: &TokenKind) -> Option<u32> {
     match tok {
+        TokenKind::OpenParen => Some(60),
         _ => None,
     }
 }
 
-#[inline]
-#[allow(clippy::all)]
-#[allow(unused)]
-#[allow(clippy::needless_pass_by_value)]
-fn wrap_postfix(lhs: Expr, tok: &Token) -> Expr {
-    let span = lhs.span;
-    let kind = match tok.kind {
-        _ => unreachable!("should not be reached, code was written wrong"),
-    };
-    Expr::new(Span::new_from(span.start, tok.span.end), kind)
+fn postfix_led<I>(tok: &TokenKind) -> Option<PostfixLedCallback<I>>
+where
+    I: Iterator<Item = Token> + Clone
+{
+    match tok {
+        TokenKind::OpenParen => Some(call),
+        _ => None,
+    }
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -162,7 +167,7 @@ where
     nud(p, tok, recursion + 1)
 }
 
-fn call<I>(p: &mut Parser<I>, lhs: Expr, recursion: u32) -> Result<Expr>
+fn call<I>(p: &mut Parser<I>, _: Token, lhs: Expr, recursion: u32) -> Result<Expr>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -215,19 +220,19 @@ where
             break;
         };
 
-        if let Some((l_bp, ())) = postfix_bp(&op.kind) {
+        if let (Some(l_bp), Some(led)) = (postfix_bp(&op.kind), postfix_led(&op.kind)) {
             if l_bp < min_bp {
                 break;
             }
 
             p.next_token();
 
-            lhs = wrap_postfix(lhs, &op);
+            lhs = led(p, op, lhs, recursion + 1).expected("expression")?;
 
             continue;
         }
 
-        if let Some((l_bp, r_bp)) = infix_bp(&op.kind) {
+        if let (Some((l_bp, r_bp)), Some(led)) = (infix_bp(&op.kind), infix_led(&op.kind)) {
             if l_bp < min_bp {
                 break;
             }
@@ -235,19 +240,9 @@ where
             p.next_token();
 
             let rhs = parse_bp(p, r_bp, recursion + 1)?;
-            lhs = wrap_infix(lhs, &op, rhs);
-
-            continue;
-        }
-
-        match op.kind {
-            TokenKind::OpenParen => {
-                // Skip OpenParen
-                p.next_token();
-
-                lhs = call(p, lhs, recursion + 1)?;
-            }
-            _ => break,
+            lhs = led(lhs, rhs);
+        } else {
+            break;
         }
     }
 
@@ -267,13 +262,8 @@ impl Expr {
                 lhs.display(global),
                 args.iter()
                     .map(|arg| arg.display(global).to_string())
-                    .fold(String::new(), |mut a, arg| {
-                        a += &arg;
-                        a += ", ";
-                        a
-                    })
-                    .strip_suffix(", ")
-                    .unwrap_or_default()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             ExprKind::Grouping(value) => format!("{}", value.display(global)),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
@@ -303,13 +293,8 @@ impl Display for Expr {
                 lhs,
                 args.iter()
                     .map(ToString::to_string)
-                    .fold(String::new(), |mut a, arg| {
-                        a += &arg;
-                        a += ", ";
-                        a
-                    })
-                    .strip_suffix(", ")
-                    .unwrap_or_default()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             ExprKind::Grouping(value) => write!(f, "{value}"),
             ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
