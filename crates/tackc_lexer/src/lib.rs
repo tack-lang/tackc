@@ -47,8 +47,14 @@ pub enum TokenKind {
     OpenBrace,
     CloseBrace,
 
-    // Symbols
+    // Assignment operators
     Eq,
+    PlusEq,
+    DashEq,
+    StarEq,
+    SlashEq,
+
+    // Symbols
     Comma,
     Semicolon,
     Dot,
@@ -69,25 +75,7 @@ impl TokenKind {
             TokenKind::IntLit(int) => format!("{}", int.display(global)),
             TokenKind::FloatLit(float) => format!("{}", float.display(global)),
 
-            TokenKind::Eof => "<EOF>".to_string(),
-
-            TokenKind::Func => "func".to_string(),
-            TokenKind::Let => "let".to_string(),
-
-            TokenKind::OpenParen => "(".to_string(),
-            TokenKind::CloseParen => ")".to_string(),
-            TokenKind::OpenBrace => "{".to_string(),
-            TokenKind::CloseBrace => "}".to_string(),
-
-            TokenKind::Eq => "=".to_string(),
-            TokenKind::Comma => ",".to_string(),
-            TokenKind::Semicolon => ";".to_string(),
-            TokenKind::Dot => ".".to_string(),
-
-            TokenKind::Plus => "+".to_string(),
-            TokenKind::Dash => "-".to_string(),
-            TokenKind::Star => "*".to_string(),
-            TokenKind::Slash => "/".to_string(),
+            ty => format!("{ty}"),
         }
     }
 }
@@ -112,6 +100,11 @@ impl Display for TokenKind {
             TokenKind::CloseBrace => write!(f, "}}"),
 
             TokenKind::Eq => write!(f, "="),
+            TokenKind::PlusEq => write!(f, "+="),
+            TokenKind::DashEq => write!(f, "-="),
+            TokenKind::StarEq => write!(f, "*="),
+            TokenKind::SlashEq => write!(f, "/="),
+
             TokenKind::Comma => write!(f, ","),
             TokenKind::Semicolon => write!(f, ";"),
             TokenKind::Dot => write!(f, "."),
@@ -242,24 +235,27 @@ impl<'src, F: File> Lexer<'src, F> {
         Error { span, kind: ty }
     }
 
-    fn handle_single_character_or_unknown(&mut self, c: char) -> Result<Token, Error> {
-        let ty = match c {
-            '(' => TokenKind::OpenParen,
-            ')' => TokenKind::CloseParen,
-            '{' => TokenKind::OpenBrace,
-            '}' => TokenKind::CloseBrace,
+    fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, Error> {
+        let c2 = self.peek_byte();
+        let ty = match (c1, c2) {
+            ('(', _) => TokenKind::OpenParen,
+            (')', _) => TokenKind::CloseParen,
+            ('{', _) => TokenKind::OpenBrace,
+            ('}', _) => TokenKind::CloseBrace,
 
-            '=' => TokenKind::Eq,
-            ',' => TokenKind::Comma,
-            ';' => TokenKind::Semicolon,
-            '.' => TokenKind::Dot,
+            ('+', Some(b'=')) => TokenKind::PlusEq,
+            ('=', _) => TokenKind::Eq,
 
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Dash,
-            '*' => TokenKind::Star,
-            '/' => TokenKind::Slash,
+            (',', _) => TokenKind::Comma,
+            (';', _) => TokenKind::Semicolon,
+            ('.', _) => TokenKind::Dot,
 
-            c => return Err(self.make_error(ErrorKind::UnknownChar(c))),
+            ('+', _) => TokenKind::Plus,
+            ('-', _) => TokenKind::Dash,
+            ('*', _) => TokenKind::Star,
+            ('/', _) => TokenKind::Slash,
+
+            (c, _) => return Err(self.make_error(ErrorKind::UnknownChar(c))),
         };
 
         Ok(self.make_token(ty))
@@ -457,9 +453,9 @@ impl<'src, F: File> Lexer<'src, F> {
             c if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
 
-                self.handle_single_character_or_unknown(char)
+                self.handle_double_character_or_unknown(char)
             }
-            c => self.handle_single_character_or_unknown(c as char),
+            c => self.handle_double_character_or_unknown(c as char),
         }
     }
 }
