@@ -32,7 +32,7 @@ fuzz_target!(|data: &[u8]| {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Expr::parse(&mut parser);
+    let res = Expr::parse(&mut parser, 0);
     match res {
         Ok(s) => {
             s.display(&global);

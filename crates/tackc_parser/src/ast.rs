@@ -8,8 +8,6 @@ use tackc_span::Span;
 
 use crate::Parser;
 
-const MAX_RECURSION_DEPTH: u32 = 256;
-
 #[cfg(feature = "serde")]
 pub trait Serde: serde::Serialize + for<'a> serde::Deserialize<'a> {}
 #[cfg(feature = "serde")]
@@ -26,7 +24,7 @@ pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized + Ser
     /// If the node cannot be parsed from the given parser, this function will return an error.
     /// The parser may be in any state; do not trust it.
     /// If you need to, the parser can be cloned previous to calling this function.
-    fn parse<I>(p: &mut Parser<I>) -> Result<Self>
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone;
     fn span(&self) -> Span;
@@ -165,7 +163,7 @@ where
     let tok = p.expect_token(None)?;
     let Some(nud) = prefix_nud(&tok.kind) else {
         p.restore(snapshot);
-        let atom = p.try_parse::<Atom>()?;
+        let atom = p.try_parse::<Atom>(recursion + 1)?;
         let expr = Expr::new(atom.span, ExprKind::Atomic(atom));
         return Ok(expr);
     };
@@ -235,9 +233,7 @@ fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Expr>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    if recursion > MAX_RECURSION_DEPTH {
-        return Err(ParseErrors::new(ParseError::recursion()));
-    }
+    p.check_recursion(recursion)?;
 
     let mut lhs = prefix(p, recursion + 1).expected("expression")?;
 
@@ -337,11 +333,11 @@ impl Display for Expr {
 }
 
 impl AstNode for Expr {
-    fn parse<I>(p: &mut Parser<I>) -> Result<Self>
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        parse_bp(p, 0, 0)
+        parse_bp(p, 0, recursion + 1)
     }
 
     fn span(&self) -> Span {
@@ -379,10 +375,12 @@ impl Display for Atom {
 }
 
 impl AstNode for Atom {
-    fn parse<I>(p: &mut Parser<I>) -> Result<Self>
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
+        p.check_recursion(recursion)?;
+
         let tok = p.expect_token(None)?;
         match tok.kind {
             TokenKind::Ident(ident) => Ok(Atom::new(tok.span, AtomKind::Identifier(ident))),

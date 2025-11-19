@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     });
     let mut parser = Parser::new(lexer);
 
-    let res = Expr::parse(&mut parser);
+    let res = Expr::parse(&mut parser, 0);
     match res {
         Ok(expr) => {
             println!("{}", expr.display(global));
