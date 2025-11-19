@@ -9,6 +9,7 @@ pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 use ecow::EcoVec;
 use tackc_file::File;
 use tackc_lexer::Token;
+use tackc_lexer::TokenKind;
 use tackc_span::Span;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,7 +37,7 @@ impl ParseErrors {
         let errors = self.errors.make_mut();
         let last = errors.last_mut().unwrap();
         match &mut last.kind {
-            ParseErrorKind::ExpectedFound { expected, found: _ } => {
+            ParseErrorKind::ExpectedFound { expected, found: _, span: _ } => {
                 if expected.is_none() {
                     *expected = Some(str.into());
                 }
@@ -79,7 +80,8 @@ impl ParseError {
         ParseError {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
-                found: Some(found),
+                found: found.kind,
+                span: Some(found.span),
             },
         }
     }
@@ -89,7 +91,8 @@ impl ParseError {
         ParseError {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
-                found: None,
+                found: TokenKind::Eof,
+                span: None,
             },
         }
     }
@@ -107,7 +110,7 @@ impl ParseError {
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     pub fn display<F: File>(&self, file: &F) -> impl Display {
         let ParseError {
-            kind: ParseErrorKind::ExpectedFound { expected, found },
+            kind: ParseErrorKind::ExpectedFound { expected, found, span },
         } = self
         else {
             return String::from("recursion limit reached!");
@@ -121,12 +124,12 @@ impl ParseError {
 
         let mut f = String::new();
 
-        _ = match found {
-            Some(found) => write!(f, "expected {expected}, found '{found}'"),
-            None => write!(f, "unexpected EOF, expected {expected}"),
-        };
+        let span = span.unwrap_or(Span::eof(file.src()));
 
-        let span = found.as_ref().map_or(Span::eof(file.src()), |tok| tok.span);
+        _ = match found {
+            TokenKind::Eof => write!(f, "unexpected EOF, expected {expected}"),
+            _ => write!(f, "expected {expected}, found '{found}'"),
+        };
 
         _ = write!(f, "\n  --> {}", file.path().display());
 
@@ -144,7 +147,8 @@ impl ParseError {
 pub enum ParseErrorKind {
     ExpectedFound {
         expected: Option<Cow<'static, str>>,
-        found: Option<Token>,
+        found: TokenKind,
+        span: Option<Span>,
     },
     Recursion,
 }
