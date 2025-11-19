@@ -37,7 +37,11 @@ impl ParseErrors {
         let errors = self.errors.make_mut();
         let last = errors.last_mut().unwrap();
         match &mut last.kind {
-            ParseErrorKind::ExpectedFound { expected, found: _, span: _ } => {
+            ParseErrorKind::ExpectedFound {
+                expected,
+                found: _,
+                span: _,
+            } => {
                 if expected.is_none() {
                     *expected = Some(str.into());
                 }
@@ -110,7 +114,12 @@ impl ParseError {
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     pub fn display<F: File>(&self, file: &F) -> impl Display {
         let ParseError {
-            kind: ParseErrorKind::ExpectedFound { expected, found, span },
+            kind:
+                ParseErrorKind::ExpectedFound {
+                    expected,
+                    found,
+                    span,
+                },
         } = self
         else {
             return String::from("recursion limit reached!");

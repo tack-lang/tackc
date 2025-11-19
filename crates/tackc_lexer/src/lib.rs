@@ -15,10 +15,7 @@ pub struct Token {
 
 impl Token {
     pub fn new(span: Span, kind: TokenKind) -> Self {
-        Token {
-            span,
-            kind,
-        }
+        Token { span, kind }
     }
 
     pub fn display(&self, global: &Global) -> impl Display {
