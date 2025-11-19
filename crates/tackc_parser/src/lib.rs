@@ -1,20 +1,23 @@
 pub mod ast;
 pub mod error;
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use error::{ParseError, ParseErrors, Result};
 
 use tackc_lexer::Token;
 
 use crate::ast::AstNode;
 
-pub struct ParserSnapshot<I>(I)
-where
-    I: Iterator<Item = Token> + Clone;
+pub static MAX_RECURSION_DEPTH: AtomicU32 = AtomicU32::new(256);
 
-pub struct Parser<I>
-where
-    I: Iterator<Item = Token> + Clone,
-{
+pub fn set_max_recursion_depth(depth: u32) {
+    MAX_RECURSION_DEPTH.store(depth, Ordering::Release);
+}
+
+pub struct ParserSnapshot<I>(I);
+
+pub struct Parser<I> {
     iter: I,
 }
 
@@ -41,9 +44,9 @@ where
     ///
     /// # Errors
     /// This function will return an error when it fails to parse the `AstNode`.
-    pub fn try_parse<N: AstNode>(&mut self) -> Result<N> {
+    pub fn try_parse<N: AstNode>(&mut self, recursion: u32) -> Result<N> {
         let snapshot = self.snapshot();
-        let res = N::parse(self);
+        let res = N::parse(self, recursion + 1);
         if res.is_err() {
             self.restore(snapshot);
         }
@@ -58,6 +61,16 @@ where
     /// Gets the next token from the lexer, without consuming it.
     pub fn peek_token(&self) -> Option<Token> {
         self.iter.clone().next()
+    }
+
+    /// Returns a recursion error if `recursion` is greater than [`MAX_RECURSION_DEPTH`].
+    #[allow(clippy::missing_errors_doc)]
+    pub fn check_recursion(&self, recursion: u32) -> Result<()> {
+        if recursion > MAX_RECURSION_DEPTH.load(Ordering::Acquire) {
+            Err(ParseErrors::new(ParseError::recursion()))
+        } else {
+            Ok(())
+        }
     }
 
     /// Consumes the next token, returning an 'unexpected EOF' error on failure.
