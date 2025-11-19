@@ -45,6 +45,7 @@ pub enum ExprKind {
     Atomic(Atom),
 
     Call(Box<Expr>, Vec<Expr>),
+    Member(Box<Expr>, Interned<str>),
 
     Grouping(Box<Expr>),
 
@@ -117,6 +118,7 @@ const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
 const fn postfix_bp(tok: &TokenKind) -> Option<u32> {
     match tok {
         TokenKind::OpenParen => Some(60),
+        TokenKind::Dot => Some(70),
         _ => None,
     }
 }
@@ -127,6 +129,7 @@ where
 {
     match tok {
         TokenKind::OpenParen => Some(call),
+        TokenKind::Dot => Some(member),
         _ => None,
     }
 }
@@ -168,6 +171,26 @@ where
     };
 
     nud(p, tok, recursion + 1)
+}
+
+fn member<I>(p: &mut Parser<I>, _: Token, lhs: Expr, _: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let tok = p.expect_token(Some("identifier"))?;
+
+    let Token {
+        span,
+        kind: TokenKind::Ident(ident),
+    } = tok
+    else {
+        return Err(ParseErrors::new(ParseError::new(Some("identifier"), tok)));
+    };
+
+    Ok(Expr::new(
+        Span::new_from(lhs.span.start, span.end),
+        ExprKind::Member(Box::new(lhs), ident),
+    ))
 }
 
 fn call<I>(p: &mut Parser<I>, _: Token, lhs: Expr, recursion: u32) -> Result<Expr>
@@ -268,6 +291,9 @@ impl Expr {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            ExprKind::Member(lhs, field) => {
+                format!("{}.{}", lhs.display(global), field.display(global))
+            }
             ExprKind::Grouping(value) => format!("{}", value.display(global)),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
@@ -299,6 +325,7 @@ impl Display for Expr {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            ExprKind::Member(lhs, field) => write!(f, "{lhs}.{field:?}"),
             ExprKind::Grouping(value) => write!(f, "{value}"),
             ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
             ExprKind::Add(lhs, rhs) => write!(f, "(+ {lhs} {rhs})"),
