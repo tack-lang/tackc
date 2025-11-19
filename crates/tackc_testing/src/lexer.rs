@@ -19,11 +19,15 @@ pub fn get() -> &'static TestType {
 pub fn run(manifest_path: &Path, bless: BlessType) -> Result<TestResult> {
     let global = Global::create_heap();
 
+    run_with(manifest_path, bless, &global)
+}
+
+fn run_with(manifest_path: &Path, bless: BlessType, global: &Global) -> Result<TestResult> {
     let manifest = load_manifest::<Manifest>(manifest_path).context("Failed to load manifest")?;
     let src = make_file(manifest_path, &manifest.src).context("Failed to make source file!")?;
     let manifest_name = manifest_name(manifest_path);
 
-    let lexer = Lexer::new(&src, &global);
+    let lexer = Lexer::new(&src, global);
     let tokens = lexer.collect::<Vec<_>>();
 
     let out_path = PathBuf::from(format!("out/{}.bin.gz", manifest_name.display()));
@@ -63,9 +67,11 @@ pub fn run(manifest_path: &Path, bless: BlessType) -> Result<TestResult> {
 }
 
 pub fn view(manifest_path: &Path) -> Result<()> {
+    let global = Global::create_heap();
+
     let manifest_name = manifest_name(manifest_path);
     let out_path = format!("out/{}.bin.gz", manifest_name.display());
-    run(manifest_path, BlessType::None).context("Failed to run test!")?;
+    run_with(manifest_path, BlessType::None, &global).context("Failed to run test!")?;
 
     let bytes = load_src_bytes(manifest_path, &out_path).context("Failed to read output bytes!")?;
     let data = sbof::from_bytes::<Vec<Result<Token, Error>>>(&bytes)
@@ -73,7 +79,7 @@ pub fn view(manifest_path: &Path) -> Result<()> {
 
     for res in data {
         match res {
-            Ok(tok) => println!("{}", tok.kind),
+            Ok(tok) => println!("{}", tok.display(&global)),
             Err(e) => println!("{e}"),
         }
     }

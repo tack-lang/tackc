@@ -13,6 +13,12 @@ pub struct Token {
     pub kind: TokenKind,
 }
 
+impl Token {
+    pub fn display(&self, global: &Global) -> impl Display {
+        self.kind.display(global)
+    }
+}
+
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.kind)
@@ -52,6 +58,38 @@ pub enum TokenKind {
     Dash,
     Star,
     Slash,
+}
+
+impl TokenKind {
+    pub fn display(&self, global: &Global) -> impl Display {
+        match self {
+            TokenKind::Ident(ident) => format!("{}", ident.display(global)),
+
+            TokenKind::StringLit(string) => format!("{}", string.display(global)),
+            TokenKind::IntLit(int) => format!("{}", int.display(global)),
+            TokenKind::FloatLit(float) => format!("{}", float.display(global)),
+
+            TokenKind::Eof => "<EOF>".to_string(),
+
+            TokenKind::Func => "func".to_string(),
+            TokenKind::Let => "let".to_string(),
+
+            TokenKind::OpenParen => "(".to_string(),
+            TokenKind::CloseParen => ")".to_string(),
+            TokenKind::OpenBrace => "{".to_string(),
+            TokenKind::CloseBrace => "}".to_string(),
+
+            TokenKind::Eq => "=".to_string(),
+            TokenKind::Comma => ",".to_string(),
+            TokenKind::Semicolon => ";".to_string(),
+            TokenKind::Dot => ".".to_string(),
+
+            TokenKind::Plus => "+".to_string(),
+            TokenKind::Dash => "-".to_string(),
+            TokenKind::Star => "*".to_string(),
+            TokenKind::Slash => "/".to_string(),
+        }
+    }
 }
 
 impl Display for TokenKind {
@@ -169,6 +207,10 @@ impl<'src, F: File> Lexer<'src, F> {
             self.span.end += 1;
             temp
         }
+    }
+
+    fn peek_byte(&self) -> Option<u8> {
+        self.src.as_bytes().get(self.span.end as usize + 1).copied()
     }
 
     fn skip_whitespace(&mut self) {
@@ -324,6 +366,14 @@ impl<'src, F: File> Lexer<'src, F> {
 
         match self.current_byte() {
             Some(b'.') => {
+                if let Some(c) = self.peek_byte()
+                    && (matches!(c, b'_' | b'.') || c.is_ascii_alphabetic())
+                {
+                    return Ok(self.make_token(TokenKind::IntLit(
+                        self.global.intern_str(self.current_lexeme()),
+                    )));
+                }
+
                 // Skip `.`
                 self.next_byte();
                 self.handle_digits(10);
