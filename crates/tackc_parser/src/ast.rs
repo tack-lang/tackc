@@ -280,7 +280,7 @@ impl Expr {
         match &self.kind {
             ExprKind::Atomic(value) => format!("{}", value.display(global)),
             ExprKind::Call(lhs, args) => format!(
-                "{}({})",
+                "(call {} {})",
                 lhs.display(global),
                 args.iter()
                     .map(|arg| arg.display(global).to_string())
@@ -288,7 +288,7 @@ impl Expr {
                     .join(", ")
             ),
             ExprKind::Member(lhs, field) => {
-                format!("{}.{}", lhs.display(global), field.display(global))
+                format!("(. {} {})", lhs.display(global), field.display(global))
             }
             ExprKind::Grouping(value) => format!("{}", value.display(global)),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
@@ -314,14 +314,14 @@ impl Display for Expr {
             ExprKind::Atomic(value) => write!(f, "{value}"),
             ExprKind::Call(lhs, args) => write!(
                 f,
-                "{}({})",
+                "call ({} {})",
                 lhs,
                 args.iter()
                     .map(ToString::to_string)
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-            ExprKind::Member(lhs, field) => write!(f, "{lhs}.{field:?}"),
+            ExprKind::Member(lhs, field) => write!(f, "(. {lhs} {field:?})"),
             ExprKind::Grouping(value) => write!(f, "{value}"),
             ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
             ExprKind::Add(lhs, rhs) => write!(f, "(+ {lhs} {rhs})"),
