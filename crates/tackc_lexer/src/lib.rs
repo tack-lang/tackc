@@ -6,7 +6,7 @@ use thiserror::Error;
 use tackc_file::File;
 use tackc_global::{Global, Interned};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Token {
     pub span: Span,
@@ -36,7 +36,7 @@ pub enum TokenKind {
 
     // Literals
     StringLit(Interned<str>),
-    IntLit(Interned<str>),
+    IntLit(Interned<str>, IntegerBase),
     FloatLit(Interned<str>),
 
     Eof,
@@ -76,7 +76,7 @@ impl TokenKind {
             TokenKind::Ident(ident) => format!("{}", ident.display(global)),
 
             TokenKind::StringLit(string) => format!("{}", string.display(global)),
-            TokenKind::IntLit(int) => format!("{}", int.display(global)),
+            TokenKind::IntLit(int, base) => format!("{base}{}", int.display(global)),
             TokenKind::FloatLit(float) => format!("{}", float.display(global)),
 
             ty => format!("{ty}"),
@@ -90,7 +90,7 @@ impl Display for TokenKind {
             TokenKind::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
 
             TokenKind::StringLit(string) => write!(f, "<StringLit: {string:?}>"),
-            TokenKind::IntLit(int) => write!(f, "<IntLit: {int:?}>"),
+            TokenKind::IntLit(int, base) => write!(f, "<IntLit: {int:?}, base: {}>", *base as u32),
             TokenKind::FloatLit(float) => write!(f, "<FloatLit: {float:?}>"),
 
             TokenKind::Eof => write!(f, "<EOF>"),
@@ -151,7 +151,7 @@ pub enum ErrorKind {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum IntegerPrefix {
+pub enum IntegerBase {
     /// No prefix
     Decimal = 10,
     /// `0b` prefix
@@ -162,7 +162,7 @@ pub enum IntegerPrefix {
     Hex = 16,
 }
 
-impl Display for IntegerPrefix {
+impl Display for IntegerBase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Decimal => write!(f, ""),
@@ -332,7 +332,7 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerPrefix) -> Result<Token, Error> {
+    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, Error> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
 
@@ -341,17 +341,17 @@ impl<'src, F: File> Lexer<'src, F> {
             return Err(self.make_error(ErrorKind::MissingIntegerPrefixDigits));
         }
 
-        let digits = Self::clean_digits(self.current_lexeme());
-        Ok(self.make_token(TokenKind::IntLit(self.global.intern_str(digits))))
+        let digits = Self::clean_digits(&self.current_lexeme()[2..]);
+        Ok(self.make_token(TokenKind::IntLit(self.global.intern_str(digits), prefix)))
     }
 
     fn handle_num_lit(&mut self, c: u8) -> Result<Token, Error> {
         // Prefixed integer literals (0b, 0o, 0x)
         if let (b'0', Some(prefix)) = (c, self.current_byte()) {
             let prefix = match prefix {
-                b'b' => Some(IntegerPrefix::Binary),
-                b'o' => Some(IntegerPrefix::Octal),
-                b'x' => Some(IntegerPrefix::Hex),
+                b'b' => Some(IntegerBase::Binary),
+                b'o' => Some(IntegerBase::Octal),
+                b'x' => Some(IntegerBase::Hex),
                 _ => None,
             };
             if let Some(p) = prefix {
@@ -370,7 +370,9 @@ impl<'src, F: File> Lexer<'src, F> {
                     && (matches!(c, b'_' | b'.') || c.is_ascii_alphabetic())
                 {
                     return Ok(self.make_token(TokenKind::IntLit(
-                        self.global.intern_str(self.current_lexeme()),
+                        self.global
+                            .intern_str(Self::clean_digits(self.current_lexeme())),
+                        IntegerBase::Decimal,
                     )));
                 }
 
@@ -398,6 +400,7 @@ impl<'src, F: File> Lexer<'src, F> {
             _ => Ok(self.make_token(TokenKind::IntLit(
                 self.global
                     .intern_str(Self::clean_digits(self.current_lexeme())),
+                IntegerBase::Decimal,
             ))),
         }
     }

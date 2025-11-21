@@ -21,6 +21,7 @@ pub enum BlessType {
     Bless,
     Failing,
     Safe,
+    Error,
 }
 
 #[derive(Clone, Copy)]

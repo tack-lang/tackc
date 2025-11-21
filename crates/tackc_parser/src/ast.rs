@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
-use tackc_lexer::{Token, TokenKind};
+use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
 
 use crate::Parser;
@@ -360,7 +360,8 @@ impl Atom {
     fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
-            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => format!("{}", lit.display(global)),
+            AtomKind::FloatLit(lit) => format!("{}", lit.display(global)),
+            AtomKind::IntLit(lit, base) => format!("{base}{}", lit.display(global)),
         }
     }
 }
@@ -368,8 +369,9 @@ impl Atom {
 impl Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.kind {
-            AtomKind::Identifier(interned) => write!(f, "{interned:?}"),
-            AtomKind::FloatLit(lit) | AtomKind::IntLit(lit) => write!(f, "{lit:?}"),
+            AtomKind::Identifier(interned) => write!(f, "<Identifier: {interned:?}>"),
+            AtomKind::FloatLit(lit) => write!(f, "<FloatLit: {lit:?}>"),
+            AtomKind::IntLit(lit, base) => write!(f, "<IntLit: {lit:?}, base: {}>", *base as u32),
         }
     }
 }
@@ -384,7 +386,9 @@ impl AstNode for Atom {
         let tok = p.expect_token(None)?;
         match tok.kind {
             TokenKind::Ident(ident) => Ok(Atom::new(tok.span, AtomKind::Identifier(ident))),
-            TokenKind::IntLit(literal) => Ok(Atom::new(tok.span, AtomKind::IntLit(literal))),
+            TokenKind::IntLit(literal, base) => {
+                Ok(Atom::new(tok.span, AtomKind::IntLit(literal, base)))
+            }
             TokenKind::FloatLit(literal) => Ok(Atom::new(tok.span, AtomKind::FloatLit(literal))),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
@@ -398,7 +402,7 @@ impl AstNode for Atom {
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AtomKind {
-    IntLit(Interned<str>),
+    IntLit(Interned<str>, IntegerBase),
     FloatLit(Interned<str>),
     Identifier(Interned<str>),
 }
