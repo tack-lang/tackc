@@ -57,6 +57,10 @@ struct BlessArgs {
     /// Write expected outputs for failed tests.
     #[arg(long = "bless-failing")]
     failing_bless_flag: bool,
+
+    /// Write expected outputs for tests returning errors.
+    #[arg(long = "bless-error")]
+    error_bless_flag: bool,
 }
 
 impl From<BlessType> for BlessArgs {
@@ -66,21 +70,31 @@ impl From<BlessType> for BlessArgs {
                 bless_flag: true,
                 safe_bless_flag: false,
                 failing_bless_flag: false,
+                error_bless_flag: false,
             },
             BlessType::Safe => BlessArgs {
                 bless_flag: false,
                 safe_bless_flag: true,
                 failing_bless_flag: false,
+                error_bless_flag: false,
             },
             BlessType::Failing => BlessArgs {
                 bless_flag: false,
                 safe_bless_flag: false,
                 failing_bless_flag: true,
+                error_bless_flag: false,
+            },
+            BlessType::Error => BlessArgs {
+                bless_flag: false,
+                safe_bless_flag: false,
+                failing_bless_flag: false,
+                error_bless_flag: true,
             },
             BlessType::None => BlessArgs {
                 bless_flag: false,
                 safe_bless_flag: false,
                 failing_bless_flag: false,
+                error_bless_flag: false,
             },
         }
     }
@@ -94,6 +108,8 @@ impl From<BlessArgs> for BlessType {
             BlessType::Safe
         } else if value.failing_bless_flag {
             BlessType::Failing
+        } else if value.error_bless_flag {
+            BlessType::Error
         } else {
             BlessType::None
         }
