@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::error::{DiagResult, ParseError, ParseErrors, Result};
@@ -268,21 +268,21 @@ impl AstNode for Expr {
         self.span
     }
 
-    fn display(&self, global: &Global) -> impl Display {
+    fn display(&self, global: &Global) -> String {
         match &self.kind {
-            ExprKind::Atomic(value) => format!("{}", value.display(global)),
+            ExprKind::Atomic(value) => value.display(global),
             ExprKind::Call(lhs, args) => format!(
                 "(call {} {})",
                 lhs.display(global),
                 args.iter()
-                    .map(|arg| arg.display(global).to_string())
+                    .map(|arg| arg.display(global))
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
             ExprKind::Member(lhs, field) => {
                 format!("(. {} {})", lhs.display(global), field.display(global))
             }
-            ExprKind::Grouping(value) => format!("{}", value.display(global)),
+            ExprKind::Grouping(value) => value.display(global),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))
@@ -335,7 +335,7 @@ impl AstNode for Atom {
         self.span
     }
 
-    fn display(&self, global: &Global) -> impl Display {
+    fn display(&self, global: &Global) -> String {
         match &self.kind {
             AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
             AtomKind::FloatLit(lit) => format!("{}", lit.display(global)),
