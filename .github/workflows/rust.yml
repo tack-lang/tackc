@@ -33,7 +33,7 @@ jobs:
                   ~/.cargo/registry/cache/
                   ~/.cargo/git/db/
                   target/
-                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
             - name: Install ${{ matrix.toolchain }}
               id: install
               uses: dtolnay/rust-toolchain@master
@@ -69,7 +69,7 @@ jobs:
                 ~/.cargo/registry/cache/
                 ~/.cargo/git/db/
                 target/
-              key: ubuntu-latest-nightly-cargo-${{ hashFiles('**/Cargo.lock') }}
+              key: ubuntu-latest-nightly-cargo-${{ hashFiles('Cargo.lock') }}
           - name: Install Nightly
             id: install
             uses: dtolnay/rust-toolchain@master
@@ -97,7 +97,7 @@ jobs:
 
         - name: Delete old caches
           env:
-            HASH: ${{ hashFiles('**/Cargo.lock') }}
+            HASH: ${{ hashFiles('Cargo.lock') }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             echo "Keeping caches ending with: $HASH"
