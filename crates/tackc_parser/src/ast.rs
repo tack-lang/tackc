@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::error::Result;
@@ -28,7 +28,7 @@ pub trait AstNode: Debug + PartialEq + Eq + Hash + Clone + Sized + Serde {
     where
         I: Iterator<Item = Token> + Clone;
     fn span(&self) -> Span;
-    fn display(&self, global: &Global) -> impl Display;
+    fn display(&self, global: &Global) -> String;
 }
 
 mod expr;
