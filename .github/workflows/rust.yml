@@ -9,6 +9,7 @@ on:
 jobs:
     main:
         strategy:
+            fail-fast: false
             matrix:
                 target: [ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm, macos-15-intel, windows-11-arm]
                 toolchain: [stable, beta, nightly]
@@ -62,6 +63,8 @@ jobs:
                 BIN_EXT: ${{ env.BIN_EXT }}
             - name: Run Clippy
               run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_fuzz
+              env:
+                RUSTFLAGS: "-D warnings"
             - name: Run `tackc_testing`
               run: cargo +${{ steps.install.outputs.name }} testing --verbose --release
             - name: Run Unit Tests
