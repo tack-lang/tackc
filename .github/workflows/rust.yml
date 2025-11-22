@@ -25,6 +25,20 @@ jobs:
                 fi
             - name: Checkout Repository
               uses: actions/checkout@v5
+            
+            - name: Compute Cargo.lock hash
+              id: cargo-hash
+              # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
+              run: |
+                if command -v sha256sum >/dev/null 2>&1; then
+                  HASH=$(sha256sum Cargo.lock | awk '{print $1}')
+                elif command -v shasum >/dev/null 2>&1; then
+                  HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
+                else
+                  # Windows runner (uses PowerShell)
+                  HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
+                fi
+                echo "hash=$HASH" >> "$GITHUB_OUTPUT"
             - uses: actions/cache@v4
               with:
                 path: |
@@ -33,7 +47,7 @@ jobs:
                   ~/.cargo/registry/cache/
                   ~/.cargo/git/db/
                   target/
-                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ hashFiles('Cargo.lock') }}
+                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ steps.cargo-hash.outputs.hash }}
             - name: Install ${{ matrix.toolchain }}
               id: install
               uses: dtolnay/rust-toolchain@master
@@ -61,6 +75,20 @@ jobs:
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v5
+          
+          - name: Compute Cargo.lock hash
+            id: cargo-hash
+            # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
+            run: |
+              if command -v sha256sum >/dev/null 2>&1; then
+                HASH=$(sha256sum Cargo.lock | awk '{print $1}')
+              elif command -v shasum >/dev/null 2>&1; then
+                HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
+              else
+                # Windows runner (uses PowerShell)
+                HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
+              fi
+              echo "hash=$HASH" >> "$GITHUB_OUTPUT"
           - uses: actions/cache@v4
             with:
               path: |
@@ -69,7 +97,7 @@ jobs:
                 ~/.cargo/registry/cache/
                 ~/.cargo/git/db/
                 target/
-              key: ubuntu-latest-nightly-cargo-${{ hashFiles('Cargo.lock') }}
+              key: ubuntu-latest-nightly-cargo-${{ steps.cargo-hash.outputs.hash }}
           - name: Install Nightly
             id: install
             uses: dtolnay/rust-toolchain@master
@@ -87,6 +115,19 @@ jobs:
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v5
+        - name: Compute Cargo.lock hash
+          id: cargo-hash
+          # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
+          run: |
+            if command -v sha256sum >/dev/null 2>&1; then
+              HASH=$(sha256sum Cargo.lock | awk '{print $1}')
+            elif command -v shasum >/dev/null 2>&1; then
+              HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
+            else
+              # Windows runner (uses PowerShell)
+              HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
+            fi
+            echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
         - name: List caches
           id: list
@@ -97,7 +138,7 @@ jobs:
 
         - name: Delete old caches
           env:
-            HASH: ${{ hashFiles('Cargo.lock') }}
+            HASH: ${{ steps.cargo-hash.outputs.hash }}
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             echo "Keeping caches ending with: $HASH"
