@@ -8,7 +8,7 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::{
     Parser,
-    ast::{AstNode, Expr},
+    ast::{AstNode, Program},
 };
 
 fn main() -> Result<()> {
@@ -21,17 +21,27 @@ fn main() -> Result<()> {
     let file_interned = global.intern(file);
     let file_ref = global.get_interned(file_interned);
 
+    let mut errors = Vec::new();
     let lexer = Lexer::new(file_ref, global).consume_reporter(|e| {
-        println!("{e}");
+        errors.push(e);
     });
-    let mut parser = Parser::new(lexer);
+    let tokens = lexer.collect::<Vec<_>>();
 
-    let res = Expr::parse(&mut parser, 0);
-    match res {
-        Ok(expr) => {
-            println!("{}", expr.display(global));
+    if !errors.is_empty() {
+        for e in errors {
+            println!("{e}");
         }
-        Err(diags) => println!("{}", diags.display(file_ref)),
+        return Ok(());
+    }
+
+    let mut parser = Parser::new(tokens.iter().copied());
+
+    let res = Program::parse(&mut parser, 0);
+    match res {
+        Ok(prog) => {
+            println!("{}", prog.display(global));
+        }
+        Err(diags) => println!("{}", diags.display(file_ref, global)),
     }
 
     Ok(())

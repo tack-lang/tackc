@@ -1,6 +1,6 @@
 use std::{
     any::Any,
-    fmt::{Debug, Display},
+    fmt::Debug,
     hash::{BuildHasherDefault, Hash, Hasher},
     marker::PhantomData,
 };
@@ -47,7 +47,7 @@ impl<T: ?Sized> Clone for Interned<T> {
 impl<T: ?Sized> Copy for Interned<T> {}
 
 impl Interned<str> {
-    pub fn display(&self, global: &Global) -> impl Display {
+    pub fn display<'a>(&self, global: &'a Global) -> &'a str {
         global.get_interned_str(*self)
     }
 }

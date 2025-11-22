@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::error::{DiagResult, ParseError, ParseErrors, Result};
+use crate::error::{ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
@@ -119,16 +119,10 @@ where
     let opening_span = opening.span;
 
     let inner = parse_bp(p, 0, recursion + 1)?;
-    let closing = p.expect_token(Some("')'"))?;
-    let Token {
-        span: closing_span,
-        kind: TokenKind::CloseParen,
-    } = closing
-    else {
-        return Err(ParseErrors::new(ParseError::new(Some("')'"), closing)));
-    };
+    let closing_span = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
+
     Ok(Expr::new(
-        Span::new_from(opening_span.start, closing_span.end),
+        Span::new_from(opening_span.start, closing_span.span.end),
         ExprKind::Grouping(Box::new(inner)),
     ))
 }
@@ -154,15 +148,7 @@ fn member<I>(p: &mut Parser<I>, _: Token, lhs: Expr, _: u32) -> Result<Expr>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let tok = p.expect_token(Some("identifier"))?;
-
-    let Token {
-        span,
-        kind: TokenKind::Ident(ident),
-    } = tok
-    else {
-        return Err(ParseErrors::new(ParseError::new(Some("identifier"), tok)));
-    };
+    let (ident, span) = p.identifier()?;
 
     Ok(Expr::new(
         Span::new_from(lhs.span.start, span.end),
@@ -184,7 +170,6 @@ where
         ));
     }
 
-    let snapshot = p.snapshot();
     let mut args = Vec::new();
     let closing_span = loop {
         let arg = parse_bp(p, 0, recursion + 1)?;
@@ -197,7 +182,6 @@ where
         } else if tok.kind == TokenKind::Comma {
             p.next_token();
         } else {
-            p.restore(snapshot);
             return Err(ParseErrors::new(ParseError::new(Some("',', or ')'"), tok)));
         }
     };
@@ -214,7 +198,7 @@ where
 {
     p.check_recursion(recursion)?;
 
-    let mut lhs = prefix(p, recursion + 1).expected("expression")?;
+    let mut lhs = prefix(p, recursion + 1)?;
 
     loop {
         let Some(op) = p.peek_token() else {
@@ -228,7 +212,7 @@ where
 
             p.next_token();
 
-            lhs = led(p, op, lhs, recursion + 1).expected("expression")?;
+            lhs = led(p, op, lhs, recursion + 1)?;
 
             continue;
         }
@@ -337,8 +321,8 @@ impl AstNode for Atom {
 
     fn display(&self, global: &Global) -> String {
         match &self.kind {
-            AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
-            AtomKind::FloatLit(lit) => format!("{}", lit.display(global)),
+            AtomKind::Identifier(interned) => interned.display(global).to_string(),
+            AtomKind::FloatLit(lit) => lit.display(global).to_string(),
             AtomKind::IntLit(lit, base) => format!("{base}{}", lit.display(global)),
         }
     }

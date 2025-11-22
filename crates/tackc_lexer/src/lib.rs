@@ -18,7 +18,7 @@ impl Token {
         Token { span, kind }
     }
 
-    pub fn display(&self, global: &Global) -> impl Display {
+    pub fn display(&self, global: &Global) -> String {
         self.kind.display(global)
     }
 }
@@ -44,6 +44,7 @@ pub enum TokenKind {
     // Keywords
     Func,
     Let,
+    Const,
 
     // Delimeters
     OpenParen,
@@ -62,6 +63,7 @@ pub enum TokenKind {
     Comma,
     Semicolon,
     Dot,
+    Colon,
 
     // Arithmatic symbols
     Plus,
@@ -71,13 +73,13 @@ pub enum TokenKind {
 }
 
 impl TokenKind {
-    pub fn display(&self, global: &Global) -> impl Display {
+    pub fn display(&self, global: &Global) -> String {
         match self {
-            TokenKind::Ident(ident) => format!("{}", ident.display(global)),
+            TokenKind::Ident(ident) => ident.display(global).to_string(),
 
-            TokenKind::StringLit(string) => format!("{}", string.display(global)),
+            TokenKind::StringLit(string) => string.display(global).to_string(),
             TokenKind::IntLit(int, base) => format!("{base}{}", int.display(global)),
-            TokenKind::FloatLit(float) => format!("{}", float.display(global)),
+            TokenKind::FloatLit(float) => float.display(global).to_string(),
 
             ty => format!("{ty}"),
         }
@@ -97,6 +99,7 @@ impl Display for TokenKind {
 
             TokenKind::Func => write!(f, "func"),
             TokenKind::Let => write!(f, "let"),
+            TokenKind::Const => write!(f, "const"),
 
             TokenKind::OpenParen => write!(f, "("),
             TokenKind::CloseParen => write!(f, ")"),
@@ -112,6 +115,7 @@ impl Display for TokenKind {
             TokenKind::Comma => write!(f, ","),
             TokenKind::Semicolon => write!(f, ";"),
             TokenKind::Dot => write!(f, "."),
+            TokenKind::Colon => write!(f, ":"),
 
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Dash => write!(f, "-"),
@@ -253,6 +257,7 @@ impl<'src, F: File> Lexer<'src, F> {
             (',', _) => TokenKind::Comma,
             (';', _) => TokenKind::Semicolon,
             ('.', _) => TokenKind::Dot,
+            (':', _) => TokenKind::Colon,
 
             ('+', _) => TokenKind::Plus,
             ('-', _) => TokenKind::Dash,
@@ -435,6 +440,7 @@ impl<'src, F: File> Lexer<'src, F> {
         let ty = match self.current_lexeme() {
             "func" => TokenKind::Func,
             "let" => TokenKind::Let,
+            "const" => TokenKind::Const,
             ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
 
