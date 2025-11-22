@@ -89,7 +89,7 @@ pub fn view(manifest_path: &Path) -> Result<()> {
 
     match data {
         Ok(expr) => println!("{}", expr.display(&global)),
-        Err(e) => println!("{}", e.display(&src)),
+        Err(e) => println!("{}", e.display(&src, &global)),
     }
 
     Ok(())
@@ -104,12 +104,9 @@ pub fn view_expected(manifest_path: &Path) -> Result<()> {
     let data = sbof::from_bytes::<Result<Expr, ParseErrors>>(&bytes)
         .context("Failed to deserialize expected bytes!")?;
 
-    let manifest = load_manifest::<Manifest>(manifest_path).context("Failed to load manifest")?;
-    let src = make_file(manifest_path, &manifest.src).context("Failed to make source file!")?;
-
     match data {
         Ok(expr) => println!("{expr:?}"),
-        Err(e) => println!("{}", e.display(&src)),
+        Err(e) => println!("{e:?}"),
     }
 
     Ok(())

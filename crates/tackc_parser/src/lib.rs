@@ -5,7 +5,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use error::{ParseError, ParseErrors, Result};
 
-use tackc_lexer::Token;
+use tackc_global::Interned;
+use tackc_lexer::{Token, TokenKind};
+use tackc_span::Span;
 
 use crate::ast::AstNode;
 
@@ -40,6 +42,18 @@ where
         Parser { iter }
     }
 
+    fn is_eof(&self) -> bool {
+        self.peek_token().is_none()
+    }
+
+    /// Attempts to parse an `AstNode` from the given parser.
+    ///
+    /// # Errors
+    /// This function will return an error when it fails to parse the `AstNode`.
+    pub fn parse<N: AstNode>(&mut self, recursion: u32) -> Result<N> {
+        N::parse(self, recursion + 1)
+    }
+
     /// Attempts to parse an `AstNode` from the given parser. On failure, the parser will backtrack to before the failed node.
     ///
     /// # Errors
@@ -71,6 +85,58 @@ where
         } else {
             Ok(())
         }
+    }
+
+    /// Peeks a token, and if `callback(token.kind) == true`, consumes the token and returns true. Otherwise, returns false.
+    pub fn consume<F>(&mut self, callback: F) -> bool
+    where
+        F: FnOnce(TokenKind) -> bool,
+    {
+        let tok = self.peek_token();
+        if let Some(tok) = tok
+            && callback(tok.kind)
+        {
+            self.next_token();
+            return true;
+        }
+
+        false
+    }
+
+    /// Consumes the next token, returning an 'unexpected EOF' error on failure. If `callback(token.kind) == false`, return an error where expected = `expected`.
+    ///
+    /// # Errors
+    /// This function returns an error if the lexer is at the EOF, or if `callback(token.kind) == false`.
+    pub fn expect_token_kind<F>(
+        &mut self,
+        expected: Option<&'static str>,
+        callback: F,
+    ) -> Result<Token>
+    where
+        F: FnOnce(TokenKind) -> bool,
+    {
+        let tok = self.expect_token(expected)?;
+
+        if callback(tok.kind) {
+            Ok(tok)
+        } else {
+            Err(ParseErrors::new(ParseError::new(expected, tok)))
+        }
+    }
+
+    /// Consumes the next token, and if it's not an identifier, return an error.
+    ///
+    /// # Errors
+    /// This function returns an error if the next token isn't an identifier.
+    pub fn identifier(&mut self) -> Result<(Interned<str>, Span)> {
+        let Token {
+            span,
+            kind: TokenKind::Ident(ident),
+        } = self.expect_token_kind(Some("identifier"), token_kind!(TokenKind::Ident(_)))?
+        else {
+            unreachable!()
+        };
+        Ok((ident, span))
     }
 
     /// Consumes the next token, returning an 'unexpected EOF' error on failure.

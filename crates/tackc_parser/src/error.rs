@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::fmt::Display;
 use std::fmt::Write;
 use std::ops::Deref;
 use std::result::Result as StdResult;
@@ -8,6 +7,7 @@ pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 
 use ecow::EcoVec;
 use tackc_file::File;
+use tackc_global::Global;
 use tackc_lexer::Token;
 use tackc_lexer::TokenKind;
 use tackc_span::Span;
@@ -51,16 +51,21 @@ impl ParseErrors {
     }
 
     #[allow(clippy::missing_panics_doc)]
-    pub fn display<F: File>(&self, file: &F) -> impl Display {
-        let mut f = String::new();
+    pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
+        let mut str = String::new();
         let mut errors = self.errors.iter();
-        _ = write!(f, "{}", errors.next().unwrap().display(file));
+        _ = write!(str, "{}", errors.next().unwrap().display(file, global));
 
         for i in errors {
-            _ = write!(f, "\n\n{}", i.display(file));
+            _ = write!(str, "\n\n{}", i.display(file, global));
         }
 
-        f
+        str
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn merge(&mut self, other: ParseErrors) {
+        self.errors.extend_from_slice(&other);
     }
 }
 
@@ -112,7 +117,7 @@ impl ParseError {
     ///
     /// # Panics
     /// This function will panic if the file supplied is too short to contain the token used for the error.
-    pub fn display<F: File>(&self, file: &F) -> impl Display {
+    pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
         let ParseError {
             kind:
                 ParseErrorKind::ExpectedFound {
@@ -137,7 +142,7 @@ impl ParseError {
 
         _ = match found {
             TokenKind::Eof => write!(f, "unexpected EOF, expected {expected}"),
-            _ => write!(f, "expected {expected}, found '{found}'"),
+            _ => write!(f, "expected {expected}, found '{}'", found.display(global)),
         };
 
         _ = write!(f, "\n  --> {}", file.path().display());
