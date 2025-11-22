@@ -41,24 +41,24 @@ pub type PostfixLedCallback<I> =
 
 macro_rules! wrapping_nud {
     ($fn:expr, $r_bp:expr) => {
-        (|p, tok, recursion| {
+        |p, tok, recursion| {
             let rhs = parse_bp(p, $r_bp, recursion + 1)?;
             Ok(Expr::new(
                 Span::new_from(tok.span.start, rhs.span.end),
                 $fn(Box::new(rhs)),
             ))
-        })
+        }
     };
 }
 
 macro_rules! infix_led {
     ($fn:expr) => {
-        (|lhs, rhs| {
+        |lhs, rhs| {
             Expr::new(
                 Span::new_from(lhs.span.start, rhs.span.end),
                 $fn(Box::new(lhs), Box::new(rhs)),
             )
-        })
+        }
     };
 }
 
