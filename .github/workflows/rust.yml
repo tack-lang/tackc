@@ -28,16 +28,9 @@ jobs:
             
             - name: Compute Cargo.lock hash
               id: cargo-hash
-              # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
+              shell: bash
               run: |
-                if command -v sha256sum >/dev/null 2>&1; then
-                  HASH=$(sha256sum Cargo.lock | awk '{print $1}')
-                elif command -v shasum >/dev/null 2>&1; then
-                  HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
-                else
-                  # Windows runner (uses PowerShell)
-                  HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
-                fi
+                HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
                 echo "hash=$HASH" >> "$GITHUB_OUTPUT"
             - uses: actions/cache@v4
               with:
@@ -80,14 +73,7 @@ jobs:
             id: cargo-hash
             # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
             run: |
-              if command -v sha256sum >/dev/null 2>&1; then
-                HASH=$(sha256sum Cargo.lock | awk '{print $1}')
-              elif command -v shasum >/dev/null 2>&1; then
-                HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
-              else
-                # Windows runner (uses PowerShell)
-                HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
-              fi
+              HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
               echo "hash=$HASH" >> "$GITHUB_OUTPUT"
           - uses: actions/cache@v4
             with:
@@ -119,14 +105,7 @@ jobs:
           id: cargo-hash
           # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
           run: |
-            if command -v sha256sum >/dev/null 2>&1; then
-              HASH=$(sha256sum Cargo.lock | awk '{print $1}')
-            elif command -v shasum >/dev/null 2>&1; then
-              HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
-            else
-              # Windows runner (uses PowerShell)
-              HASH=$(Get-FileHash Cargo.lock -Algorithm SHA256 | ForEach-Object -ExpandProperty Hash)
-            fi
+            HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
             echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
         - name: List caches
