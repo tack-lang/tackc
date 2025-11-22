@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 
 use crate::error::Result;
+use tackc_global::Global;
 use tackc_lexer::Token;
 use tackc_span::Span;
 
@@ -16,7 +17,7 @@ pub trait Serde {}
 #[cfg(not(feature = "serde"))]
 impl<T> Serde for T {}
 
-pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized + Serde {
+pub trait AstNode: Debug + PartialEq + Eq + Hash + Clone + Sized + Serde {
     /// Parse the AST node using the given parser.
     ///
     /// # Errors
@@ -27,6 +28,7 @@ pub trait AstNode: Debug + Display + PartialEq + Eq + Hash + Clone + Sized + Ser
     where
         I: Iterator<Item = Token> + Clone;
     fn span(&self) -> Span;
+    fn display(&self, global: &Global) -> impl Display;
 }
 
 mod expr;

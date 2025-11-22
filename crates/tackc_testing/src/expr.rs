@@ -108,7 +108,7 @@ pub fn view_expected(manifest_path: &Path) -> Result<()> {
     let src = make_file(manifest_path, &manifest.src).context("Failed to make source file!")?;
 
     match data {
-        Ok(expr) => println!("{expr}"),
+        Ok(expr) => println!("{expr:?}"),
         Err(e) => println!("{}", e.display(&src)),
     }
 

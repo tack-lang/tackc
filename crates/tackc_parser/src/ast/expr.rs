@@ -254,8 +254,21 @@ impl Expr {
     fn new(span: Span, kind: ExprKind) -> Self {
         Expr { span, kind }
     }
+}
 
-    pub fn display(&self, global: &Global) -> impl Display {
+impl AstNode for Expr {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        parse_bp(p, 0, recursion + 1)
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn display(&self, global: &Global) -> impl Display {
         match &self.kind {
             ExprKind::Atomic(value) => format!("{}", value.display(global)),
             ExprKind::Call(lhs, args) => format!(
@@ -287,43 +300,6 @@ impl Expr {
     }
 }
 
-impl Display for Expr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
-            ExprKind::Atomic(value) => write!(f, "{value}"),
-            ExprKind::Call(lhs, args) => write!(
-                f,
-                "call ({} {})",
-                lhs,
-                args.iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-            ExprKind::Member(lhs, field) => write!(f, "(. {lhs} {field:?})"),
-            ExprKind::Grouping(value) => write!(f, "{value}"),
-            ExprKind::Neg(rhs) => write!(f, "(- {rhs})"),
-            ExprKind::Add(lhs, rhs) => write!(f, "(+ {lhs} {rhs})"),
-            ExprKind::Sub(lhs, rhs) => write!(f, "(- {lhs} {rhs})"),
-            ExprKind::Mul(lhs, rhs) => write!(f, "(* {lhs} {rhs})"),
-            ExprKind::Div(lhs, rhs) => write!(f, "(/ {lhs} {rhs})"),
-        }
-    }
-}
-
-impl AstNode for Expr {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
-    where
-        I: Iterator<Item = Token> + Clone,
-    {
-        parse_bp(p, 0, recursion + 1)
-    }
-
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Atom {
@@ -334,24 +310,6 @@ pub struct Atom {
 impl Atom {
     fn new(span: Span, kind: AtomKind) -> Self {
         Atom { span, kind }
-    }
-
-    fn display(&self, global: &Global) -> impl Display {
-        match &self.kind {
-            AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
-            AtomKind::FloatLit(lit) => format!("{}", lit.display(global)),
-            AtomKind::IntLit(lit, base) => format!("{base}{}", lit.display(global)),
-        }
-    }
-}
-
-impl Display for Atom {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
-            AtomKind::Identifier(interned) => write!(f, "<Identifier: {interned:?}>"),
-            AtomKind::FloatLit(lit) => write!(f, "<FloatLit: {lit:?}>"),
-            AtomKind::IntLit(lit, base) => write!(f, "<IntLit: {lit:?}, base: {}>", *base as u32),
-        }
     }
 }
 
@@ -375,6 +333,14 @@ impl AstNode for Atom {
 
     fn span(&self) -> Span {
         self.span
+    }
+
+    fn display(&self, global: &Global) -> impl Display {
+        match &self.kind {
+            AtomKind::Identifier(interned) => format!("{}", interned.display(global)),
+            AtomKind::FloatLit(lit) => format!("{}", lit.display(global)),
+            AtomKind::IntLit(lit, base) => format!("{base}{}", lit.display(global)),
+        }
     }
 }
 
