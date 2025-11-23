@@ -80,6 +80,7 @@ impl AstNode for Constant {
         }
         str.push_str(" = ");
         str.push_str(&self.expr.display(global));
+        str.push(';');
 
         str
     }
