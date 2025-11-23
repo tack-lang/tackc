@@ -73,16 +73,17 @@ impl AstNode for Program {
                         }
                     }
 
-                    // Synchronize parser
-                    while !matches!(
-                        p.next_token(),
-                        Some(Token {
-                            span: _,
-                            kind: TokenKind::Semicolon | TokenKind::CloseBrace
-                        })
-                    ) {
-                        if p.is_eof() {
-                            break;
+                    // Synchronize parser by consuming tokens until reaching declaration or statement start.
+                    while let Some(tok) = p.peek_token() {
+                        match tok.kind {
+                            TokenKind::Const | TokenKind::Func => break,
+                            TokenKind::Semicolon => {
+                                p.next_token();
+                                break;
+                            }
+                            _ => {
+                                p.next_token();
+                            }
                         }
                     }
                 }
