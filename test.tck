@@ -1,1 +1,5 @@
-const s: u32 = 5;
+const s: u32 = {
+    f();
+    s
+    5
+};

@@ -25,6 +25,7 @@ pub enum ExprKind {
     Member(Box<Expr>, Interned<str>),
 
     Grouping(Box<Expr>),
+    Block(Vec<Expr>),
 
     Neg(Box<Expr>),
 
@@ -70,6 +71,7 @@ where
         TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 80)),
         TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 80)),
         TokenKind::OpenParen => Some(grouping),
+        TokenKind::OpenBrace => Some(block),
         _ => None,
     }
 }
@@ -123,6 +125,33 @@ where
     Ok(Expr::new(
         Span::new_from(opening_span.start, closing_span.span.end),
         ExprKind::Grouping(Box::new(inner)),
+    ))
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn block<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Expr>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let opening_span = opening.span;
+    let mut exprs = Vec::new();
+
+    while !p.is_eof() {
+        if p.peek_is(token_kind!(TokenKind::CloseBrace)) {
+            break;
+        }
+
+        let expr = parse_bp(p, 0, recursion + 1)?;
+        exprs.push(expr);
+        if !p.consume(token_kind!(TokenKind::Semicolon)) {
+            break;
+        }
+    }
+    let closing_span = p.expect_token_kind(Some("'}'"), token_kind!(TokenKind::CloseBrace))?;
+
+    Ok(Expr::new(
+        Span::new_from(opening_span.start, closing_span.span.end),
+        ExprKind::Block(exprs),
     ))
 }
 
@@ -266,6 +295,19 @@ impl AstNode for Expr {
                 format!("(. {} {})", lhs.display(global), field.display(global))
             }
             ExprKind::Grouping(value) => value.display(global),
+            ExprKind::Block(exprs) => match &exprs[..] {
+                [] => "()".to_string(),
+                [expr] => format!("({})", expr.display(global)),
+                [exprs @ .., last] => format!(
+                    "{{{}; {}}}",
+                    exprs
+                        .iter()
+                        .map(|arg| arg.display(global))
+                        .collect::<Vec<_>>()
+                        .join("; "),
+                    last.display(global)
+                ),
+            },
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))

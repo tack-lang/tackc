@@ -3,6 +3,7 @@ pub mod error;
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
+use ecow::EcoVec;
 use error::{ParseError, ParseErrors, Result};
 
 use tackc_global::Interned;
@@ -17,10 +18,14 @@ pub fn set_max_recursion_depth(depth: u32) {
     MAX_RECURSION_DEPTH.store(depth, Ordering::Release);
 }
 
-pub struct ParserSnapshot<I>(I);
+#[derive(Clone, Copy)]
+pub enum ParseState {}
+
+pub struct ParserSnapshot<I>(I, EcoVec<ParseState>);
 
 pub struct Parser<I> {
     iter: I,
+    parse_state: EcoVec<ParseState>,
 }
 
 impl<I> Parser<I>
@@ -29,17 +34,23 @@ where
 {
     #[inline]
     pub fn snapshot(&self) -> ParserSnapshot<I> {
-        ParserSnapshot(self.iter.clone())
+        ParserSnapshot(self.iter.clone(), self.parse_state.clone())
     }
 
     #[inline]
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
-        self.iter = snapshot.0;
+        *self = Parser {
+            iter: snapshot.0,
+            parse_state: snapshot.1,
+        };
     }
 
     #[inline]
     pub fn new(iter: I) -> Self {
-        Parser { iter }
+        Parser {
+            iter,
+            parse_state: EcoVec::new(),
+        }
     }
 
     fn is_eof(&self) -> bool {
@@ -92,11 +103,23 @@ where
     where
         F: FnOnce(TokenKind) -> bool,
     {
+        if self.peek_is(callback) {
+            self.next_token();
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Peeks a token, and if `callback(token.kind) == true`, returns true. Otherwise, returns false.
+    pub fn peek_is<F>(&mut self, callback: F) -> bool
+    where
+        F: FnOnce(TokenKind) -> bool,
+    {
         let tok = self.peek_token();
         if let Some(tok) = tok
             && callback(tok.kind)
         {
-            self.next_token();
             return true;
         }
 
