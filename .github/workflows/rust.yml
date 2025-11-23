@@ -78,7 +78,6 @@ jobs:
           
           - name: Compute Cargo.lock hash
             id: cargo-hash
-            # portable hashing: sha256sum on Linux, shasum on macOS, fallback to PowerShell on Windows
             run: |
               HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
               echo "hash=$HASH" >> "$GITHUB_OUTPUT"
