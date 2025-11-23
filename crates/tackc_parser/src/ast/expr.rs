@@ -67,8 +67,8 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     match tok {
-        TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 50)),
-        TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 50)),
+        TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 80)),
+        TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 80)),
         TokenKind::OpenParen => Some(grouping),
         _ => None,
     }
@@ -86,16 +86,15 @@ fn infix_led(tok: &TokenKind) -> Option<InfixLedCallback> {
 
 const fn infix_bp(tok: &TokenKind) -> Option<(u32, u32)> {
     match tok {
-        TokenKind::Plus | TokenKind::Dash => Some((10, 20)),
-        TokenKind::Star | TokenKind::Slash => Some((30, 40)),
+        TokenKind::Plus | TokenKind::Dash => Some((59, 60)),
+        TokenKind::Star | TokenKind::Slash => Some((69, 70)),
         _ => None,
     }
 }
 
 const fn postfix_bp(tok: &TokenKind) -> Option<u32> {
     match tok {
-        TokenKind::OpenParen => Some(60),
-        TokenKind::Dot => Some(70),
+        TokenKind::OpenParen | TokenKind::Dot => Some(90),
         _ => None,
     }
 }
