@@ -64,12 +64,16 @@ pub enum TokenKind {
     Semicolon,
     Dot,
     Colon,
+    Pipe,
 
-    // Arithmatic symbols
+    // Arithmatic operators
     Plus,
     Dash,
     Star,
     Slash,
+
+    // Bitwise operators
+    DoublePipe,
 }
 
 impl TokenKind {
@@ -116,11 +120,14 @@ impl Display for TokenKind {
             TokenKind::Semicolon => write!(f, ";"),
             TokenKind::Dot => write!(f, "."),
             TokenKind::Colon => write!(f, ":"),
+            TokenKind::Pipe => write!(f, "|"),
 
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Dash => write!(f, "-"),
             TokenKind::Star => write!(f, "*"),
             TokenKind::Slash => write!(f, "/"),
+
+            TokenKind::DoublePipe => write!(f, "||"),
         }
     }
 }
@@ -251,6 +258,8 @@ impl<'src, F: File> Lexer<'src, F> {
             ('{', _) => TokenKind::OpenBrace,
             ('}', _) => TokenKind::CloseBrace,
 
+            ('|', Some(b'|')) => TokenKind::DoublePipe,
+
             ('+', Some(b'=')) => TokenKind::PlusEq,
             ('=', _) => TokenKind::Eq,
 
@@ -258,6 +267,7 @@ impl<'src, F: File> Lexer<'src, F> {
             (';', _) => TokenKind::Semicolon,
             ('.', _) => TokenKind::Dot,
             (':', _) => TokenKind::Colon,
+            ('|', _) => TokenKind::Pipe,
 
             ('+', _) => TokenKind::Plus,
             ('-', _) => TokenKind::Dash,
