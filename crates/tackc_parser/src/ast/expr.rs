@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::error::{ParseError, ParseErrors, Result};
+use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
@@ -26,6 +26,7 @@ pub enum ExprKind {
 
     Grouping(Box<Expr>),
     Block(Block),
+    Closure(Closure),
 
     Neg(Box<Expr>),
 
@@ -73,6 +74,9 @@ where
         TokenKind::OpenParen => Some(grouping),
         TokenKind::OpenBrace => Some(|p, tok, recursion| {
             block(p, tok, recursion).map(|b| Expr::new(b.span, ExprKind::Block(b)))
+        }),
+        TokenKind::Pipe | TokenKind::DoublePipe => Some(|p, tok, recursion| {
+            closure(p, tok, recursion).map(|b| Expr::new(b.span, ExprKind::Closure(b)))
         }),
         _ => None,
     }
@@ -128,6 +132,42 @@ where
         Span::new_from(opening_span.start, closing_span.span.end),
         ExprKind::Grouping(Box::new(inner)),
     ))
+}
+
+fn closure<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Closure>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let args = match opening.kind {
+        TokenKind::DoublePipe => Vec::new(),
+        TokenKind::Pipe => {
+            let mut args = Vec::new();
+            loop {
+                let (ident, _span) = p.identifier()?;
+
+                if p.consume(token_kind!(TokenKind::Colon)) {
+                    let ty = p.parse::<Expr>(recursion + 1).expected("type")?;
+                    args.push((ident, Some(ty)));
+                } else {
+                    args.push((ident, None));
+                }
+
+                if !p.consume(token_kind!(TokenKind::Comma)) {
+                    break;
+                }
+            }
+
+            args
+        }
+        _ => return Err(ParseErrors::new(ParseError::new(None, opening))),
+    };
+
+    let code = p.parse::<Expr>(recursion + 1).expected("expression")?;
+    Ok(Closure {
+        args,
+        span: Span::new_from(opening.span.start, code.span.end),
+        code: Box::new(code),
+    })
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -301,7 +341,7 @@ impl AstNode for Expr {
             ExprKind::Grouping(value) => value.display(global),
             ExprKind::Block(b) => match &b.exprs[..] {
                 [] => "()".to_string(),
-                [expr] => format!("({})", expr.display(global)),
+                [expr] => format!("{{ {} }}", expr.display(global)),
                 [exprs @ .., last] => format!(
                     "{{{}; {}}}",
                     exprs
@@ -312,6 +352,7 @@ impl AstNode for Expr {
                     last.display(global)
                 ),
             },
+            ExprKind::Closure(closure) => closure.display(global),
             ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
             ExprKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))
@@ -404,9 +445,9 @@ impl AstNode for Block {
     fn display(&self, global: &Global) -> String {
         match &self.exprs[..] {
             [] => "()".to_string(),
-            [expr] => format!("({})", expr.display(global)),
+            [expr] => format!("{{ {} }}", expr.display(global)),
             [exprs @ .., last] => format!(
-                "{{{}; {}}}",
+                "{{ {}; {} }}",
                 exprs
                     .iter()
                     .map(|arg| arg.display(global))
@@ -415,5 +456,43 @@ impl AstNode for Block {
                 last.display(global)
             ),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Closure {
+    pub args: Vec<(Interned<str>, Option<Expr>)>,
+    pub code: Box<Expr>,
+    pub span: Span,
+}
+
+impl AstNode for Closure {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        let closure_head = p.expect_token(None)?;
+        closure(p, closure_head, recursion)
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn display(&self, global: &Global) -> String {
+        let mut str = String::from("|");
+        str.push_str(&self.args.iter().map(|(ident, ty)| {
+            let mut ident = ident.display(global).to_string();
+            if let Some(ty) = ty {
+                ident.push_str(": ");
+                ident.push_str(&ty.display(global));
+            }
+            ident
+        }).collect::<Vec<_>>().join(", "));
+        str.push_str("| ");
+        str.push_str(&self.code.display(global));
+
+        str
     }
 }
