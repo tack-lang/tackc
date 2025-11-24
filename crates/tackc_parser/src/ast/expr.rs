@@ -11,41 +11,41 @@ use crate::Parser;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Expr {
+pub struct Expression {
     pub span: Span,
-    pub kind: ExprKind,
+    pub kind: ExpressionKind,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExprKind {
+pub enum ExpressionKind {
     Atomic(Atom),
 
-    Call(Box<Expr>, Vec<Expr>),
-    Member(Box<Expr>, Interned<str>),
+    Call(Box<Expression>, Vec<Expression>),
+    Member(Box<Expression>, Interned<str>),
 
-    Grouping(Box<Expr>),
+    Grouping(Box<Expression>),
     Block(Block),
     Closure(Closure),
 
-    Neg(Box<Expr>),
+    Neg(Box<Expression>),
 
-    Add(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
-    Div(Box<Expr>, Box<Expr>),
+    Add(Box<Expression>, Box<Expression>),
+    Sub(Box<Expression>, Box<Expression>),
+    Mul(Box<Expression>, Box<Expression>),
+    Div(Box<Expression>, Box<Expression>),
 }
 
-pub type NudCallback<I> = fn(p: &mut Parser<I>, tok: Token, recursion: u32) -> Result<Expr>;
-pub type InfixLedCallback = fn(lhs: Expr, rhs: Expr) -> Expr;
+pub type NudCallback<I> = fn(p: &mut Parser<I>, tok: Token, recursion: u32) -> Result<Expression>;
+pub type InfixLedCallback = fn(lhs: Expression, rhs: Expression) -> Expression;
 pub type PostfixLedCallback<I> =
-    fn(p: &mut Parser<I>, tok: Token, lhs: Expr, recursion: u32) -> Result<Expr>;
+    fn(p: &mut Parser<I>, tok: Token, lhs: Expression, recursion: u32) -> Result<Expression>;
 
 macro_rules! wrapping_nud {
     ($fn:expr, $r_bp:expr) => {
         |p, tok, recursion| {
             let rhs = parse_bp(p, $r_bp, recursion + 1)?;
-            Ok(Expr::new(
+            Ok(Expression::new(
                 Span::new_from(tok.span.start, rhs.span.end),
                 $fn(Box::new(rhs)),
             ))
@@ -56,7 +56,7 @@ macro_rules! wrapping_nud {
 macro_rules! infix_led {
     ($fn:expr) => {
         |lhs, rhs| {
-            Expr::new(
+            Expression::new(
                 Span::new_from(lhs.span.start, rhs.span.end),
                 $fn(Box::new(lhs), Box::new(rhs)),
             )
@@ -69,14 +69,14 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     match tok {
-        TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 80)),
-        TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 80)),
+        TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expression>| { x.kind }, 80)),
+        TokenKind::Dash => Some(wrapping_nud!(ExpressionKind::Neg, 80)),
         TokenKind::OpenParen => Some(grouping),
         TokenKind::OpenBrace => Some(|p, tok, recursion| {
-            block(p, tok, recursion).map(|b| Expr::new(b.span, ExprKind::Block(b)))
+            block(p, tok, recursion).map(|b| Expression::new(b.span, ExpressionKind::Block(b)))
         }),
         TokenKind::Pipe | TokenKind::DoublePipe => Some(|p, tok, recursion| {
-            closure(p, tok, recursion).map(|b| Expr::new(b.span, ExprKind::Closure(b)))
+            closure(p, tok, recursion).map(|b| Expression::new(b.span, ExpressionKind::Closure(b)))
         }),
         _ => None,
     }
@@ -84,10 +84,10 @@ where
 
 fn infix_led(tok: &TokenKind) -> Option<InfixLedCallback> {
     match tok {
-        TokenKind::Plus => Some(infix_led!(ExprKind::Add)),
-        TokenKind::Dash => Some(infix_led!(ExprKind::Sub)),
-        TokenKind::Star => Some(infix_led!(ExprKind::Mul)),
-        TokenKind::Slash => Some(infix_led!(ExprKind::Div)),
+        TokenKind::Plus => Some(infix_led!(ExpressionKind::Add)),
+        TokenKind::Dash => Some(infix_led!(ExpressionKind::Sub)),
+        TokenKind::Star => Some(infix_led!(ExpressionKind::Mul)),
+        TokenKind::Slash => Some(infix_led!(ExpressionKind::Div)),
         _ => None,
     }
 }
@@ -119,7 +119,7 @@ where
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn grouping<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Expr>
+fn grouping<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -128,9 +128,9 @@ where
     let inner = parse_bp(p, 0, recursion + 1)?;
     let closing_span = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
 
-    Ok(Expr::new(
+    Ok(Expression::new(
         Span::new_from(opening_span.start, closing_span.span.end),
-        ExprKind::Grouping(Box::new(inner)),
+        ExpressionKind::Grouping(Box::new(inner)),
     ))
 }
 
@@ -146,7 +146,7 @@ where
                 let (ident, _span) = p.identifier()?;
 
                 if p.consume(token_kind!(TokenKind::Colon)) {
-                    let ty = p.parse::<Expr>(recursion + 1).expected("type")?;
+                    let ty = p.parse::<Expression>(recursion + 1).expected("type")?;
                     args.push((ident, Some(ty)));
                 } else {
                     args.push((ident, None));
@@ -162,7 +162,7 @@ where
         _ => return Err(ParseErrors::new(ParseError::new(None, opening))),
     };
 
-    let code = p.parse::<Expr>(recursion + 1).expected("expression")?;
+    let code = p.parse::<Expression>(recursion + 1).expected("expression")?;
     Ok(Closure {
         args,
         span: Span::new_from(opening.span.start, code.span.end),
@@ -199,7 +199,7 @@ where
     Ok(block)
 }
 
-fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
+fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -209,26 +209,26 @@ where
     let Some(nud) = prefix_nud(&tok.kind) else {
         p.restore(snapshot);
         let atom = p.try_parse::<Atom>(recursion + 1)?;
-        let expr = Expr::new(atom.span, ExprKind::Atomic(atom));
+        let expr = Expression::new(atom.span, ExpressionKind::Atomic(atom));
         return Ok(expr);
     };
 
     nud(p, tok, recursion + 1)
 }
 
-fn member<I>(p: &mut Parser<I>, _: Token, lhs: Expr, _: u32) -> Result<Expr>
+fn member<I>(p: &mut Parser<I>, _: Token, lhs: Expression, _: u32) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
     let (ident, span) = p.identifier()?;
 
-    Ok(Expr::new(
+    Ok(Expression::new(
         Span::new_from(lhs.span.start, span.end),
-        ExprKind::Member(Box::new(lhs), ident),
+        ExpressionKind::Member(Box::new(lhs), ident),
     ))
 }
 
-fn call<I>(p: &mut Parser<I>, _: Token, lhs: Expr, recursion: u32) -> Result<Expr>
+fn call<I>(p: &mut Parser<I>, _: Token, lhs: Expression, recursion: u32) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -236,9 +236,9 @@ where
 
     if tok.kind == TokenKind::CloseParen {
         p.next_token();
-        return Ok(Expr::new(
+        return Ok(Expression::new(
             Span::new_from(lhs.span.start, tok.span.end),
-            ExprKind::Call(Box::new(lhs), Vec::new()),
+            ExpressionKind::Call(Box::new(lhs), Vec::new()),
         ));
     }
 
@@ -258,13 +258,13 @@ where
         }
     };
 
-    Ok(Expr::new(
+    Ok(Expression::new(
         Span::new_from(lhs.span.start, closing_span.end),
-        ExprKind::Call(Box::new(lhs), args),
+        ExpressionKind::Call(Box::new(lhs), args),
     ))
 }
 
-fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Expr>
+fn parse_bp<I>(p: &mut Parser<I>, min_bp: u32, recursion: u32) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -306,13 +306,13 @@ where
     Ok(lhs)
 }
 
-impl Expr {
-    fn new(span: Span, kind: ExprKind) -> Self {
-        Expr { span, kind }
+impl Expression {
+    fn new(span: Span, kind: ExpressionKind) -> Self {
+        Expression { span, kind }
     }
 }
 
-impl AstNode for Expr {
+impl AstNode for Expression {
     fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
@@ -326,8 +326,8 @@ impl AstNode for Expr {
 
     fn display(&self, global: &Global) -> String {
         match &self.kind {
-            ExprKind::Atomic(value) => value.display(global),
-            ExprKind::Call(lhs, args) => format!(
+            ExpressionKind::Atomic(value) => value.display(global),
+            ExpressionKind::Call(lhs, args) => format!(
                 "(call {} {})",
                 lhs.display(global),
                 args.iter()
@@ -335,11 +335,11 @@ impl AstNode for Expr {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-            ExprKind::Member(lhs, field) => {
+            ExpressionKind::Member(lhs, field) => {
                 format!("(. {} {})", lhs.display(global), field.display(global))
             }
-            ExprKind::Grouping(value) => value.display(global),
-            ExprKind::Block(b) => match &b.exprs[..] {
+            ExpressionKind::Grouping(value) => value.display(global),
+            ExpressionKind::Block(b) => match &b.exprs[..] {
                 [] => "()".to_string(),
                 [expr] => format!("{{ {} }}", expr.display(global)),
                 [exprs @ .., last] => format!(
@@ -352,18 +352,18 @@ impl AstNode for Expr {
                     last.display(global)
                 ),
             },
-            ExprKind::Closure(closure) => closure.display(global),
-            ExprKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
-            ExprKind::Add(lhs, rhs) => {
+            ExpressionKind::Closure(closure) => closure.display(global),
+            ExpressionKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
+            ExpressionKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))
             }
-            ExprKind::Sub(lhs, rhs) => {
+            ExpressionKind::Sub(lhs, rhs) => {
                 format!("(- {} {})", lhs.display(global), rhs.display(global))
             }
-            ExprKind::Mul(lhs, rhs) => {
+            ExpressionKind::Mul(lhs, rhs) => {
                 format!("(* {} {})", lhs.display(global), rhs.display(global))
             }
-            ExprKind::Div(lhs, rhs) => {
+            ExpressionKind::Div(lhs, rhs) => {
                 format!("(/ {} {})", lhs.display(global), rhs.display(global))
             }
         }
@@ -425,7 +425,7 @@ pub enum AtomKind {
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
-    pub exprs: Vec<Expr>,
+    pub exprs: Vec<Expression>,
     pub span: Span,
 }
 
@@ -462,8 +462,8 @@ impl AstNode for Block {
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Closure {
-    pub args: Vec<(Interned<str>, Option<Expr>)>,
-    pub code: Box<Expr>,
+    pub args: Vec<(Interned<str>, Option<Expression>)>,
+    pub code: Box<Expression>,
     pub span: Span,
 }
 
