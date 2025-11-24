@@ -251,16 +251,16 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, Error> {
-        let c2 = self.peek_byte();
+        let c2 = self.current_byte();
         let ty = match (c1, c2) {
             ('(', _) => TokenKind::OpenParen,
             (')', _) => TokenKind::CloseParen,
             ('{', _) => TokenKind::OpenBrace,
             ('}', _) => TokenKind::CloseBrace,
 
-            ('|', Some(b'|')) => TokenKind::DoublePipe,
+            ('|', Some(b'|')) => {self.next_byte(); TokenKind::DoublePipe},
 
-            ('+', Some(b'=')) => TokenKind::PlusEq,
+            ('+', Some(b'=')) => {self.next_byte(); TokenKind::PlusEq},
             ('=', _) => TokenKind::Eq,
 
             (',', _) => TokenKind::Comma,
