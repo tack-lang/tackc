@@ -56,7 +56,9 @@ impl AstNode for Constant {
             None
         };
         let _eq = p.expect_token_kind(Some("'='"), token_kind!(TokenKind::Eq))?;
-        let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
+        let expr = p
+            .parse::<Expression>(recursion + 1)
+            .expected("expression")?;
         let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
 
         Ok(Constant {

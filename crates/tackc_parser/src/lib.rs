@@ -34,16 +34,12 @@ where
 
     #[inline]
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
-        *self = Parser {
-            iter: snapshot.0,
-        };
+        *self = Parser { iter: snapshot.0 };
     }
 
     #[inline]
     pub fn new(iter: I) -> Self {
-        Parser {
-            iter,
-        }
+        Parser { iter }
     }
 
     fn is_eof(&self) -> bool {
