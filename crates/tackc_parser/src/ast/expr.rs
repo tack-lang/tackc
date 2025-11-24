@@ -25,7 +25,7 @@ pub enum ExprKind {
     Member(Box<Expr>, Interned<str>),
 
     Grouping(Box<Expr>),
-    Block(Vec<Expr>),
+    Block(Block),
 
     Neg(Box<Expr>),
 
@@ -71,7 +71,9 @@ where
         TokenKind::Plus => Some(wrapping_nud!(|x: Box<Expr>| { x.kind }, 80)),
         TokenKind::Dash => Some(wrapping_nud!(ExprKind::Neg, 80)),
         TokenKind::OpenParen => Some(grouping),
-        TokenKind::OpenBrace => Some(block),
+        TokenKind::OpenBrace => Some(|p, tok, recursion| {
+            block(p, tok, recursion).map(|b| Expr::new(b.span, ExprKind::Block(b)))
+        }),
         _ => None,
     }
 }
@@ -129,7 +131,7 @@ where
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn block<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Expr>
+fn block<I>(p: &mut Parser<I>, opening: Token, recursion: u32) -> Result<Block>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -149,10 +151,12 @@ where
     }
     let closing_span = p.expect_token_kind(Some("'}'"), token_kind!(TokenKind::CloseBrace))?;
 
-    Ok(Expr::new(
-        Span::new_from(opening_span.start, closing_span.span.end),
-        ExprKind::Block(exprs),
-    ))
+    let block = Block {
+        exprs,
+        span: Span::new_from(opening_span.start, closing_span.span.end),
+    };
+
+    Ok(block)
 }
 
 fn prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expr>
@@ -295,7 +299,7 @@ impl AstNode for Expr {
                 format!("(. {} {})", lhs.display(global), field.display(global))
             }
             ExprKind::Grouping(value) => value.display(global),
-            ExprKind::Block(exprs) => match &exprs[..] {
+            ExprKind::Block(b) => match &b.exprs[..] {
                 [] => "()".to_string(),
                 [expr] => format!("({})", expr.display(global)),
                 [exprs @ .., last] => format!(
@@ -375,4 +379,41 @@ pub enum AtomKind {
     IntLit(Interned<str>, IntegerBase),
     FloatLit(Interned<str>),
     Identifier(Interned<str>),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Block {
+    pub exprs: Vec<Expr>,
+    pub span: Span,
+}
+
+impl AstNode for Block {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        let opening = p.expect_token_kind(None, token_kind!(TokenKind::OpenBrace))?;
+        block(p, opening, recursion + 1)
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn display(&self, global: &Global) -> String {
+        match &self.exprs[..] {
+            [] => "()".to_string(),
+            [expr] => format!("({})", expr.display(global)),
+            [exprs @ .., last] => format!(
+                "{{{}; {}}}",
+                exprs
+                    .iter()
+                    .map(|arg| arg.display(global))
+                    .collect::<Vec<_>>()
+                    .join("; "),
+                last.display(global)
+            ),
+        }
+    }
 }
