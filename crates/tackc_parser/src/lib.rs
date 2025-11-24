@@ -61,8 +61,10 @@ where
     ///
     /// # Errors
     /// This function will return an error when it fails to parse the `AstNode`.
+    #[inline]
     pub fn parse<N: AstNode>(&mut self, recursion: u32) -> Result<N> {
-        N::parse(self, recursion + 1)
+        // Don't add one, inlined
+        N::parse(self, recursion)
     }
 
     /// Attempts to parse an `AstNode` from the given parser. On failure, the parser will backtrack to before the failed node.
