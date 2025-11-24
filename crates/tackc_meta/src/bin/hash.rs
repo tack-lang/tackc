@@ -62,9 +62,8 @@ fn main() {
             let p = e.path();
             p.is_file()
                 && p.extension().map(|x| x == "rs").unwrap_or(false)
-                && p.components().any(|c| {
-                    c.as_os_str().to_string_lossy().starts_with("tackc_")
-                })
+                && p.components()
+                    .any(|c| c.as_os_str().to_string_lossy().starts_with("tackc_"))
         })
         .map(|e| e.path().to_owned())
         .collect();
