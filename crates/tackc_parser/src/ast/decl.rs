@@ -3,7 +3,7 @@ use tackc_lexer::TokenKind;
 use tackc_span::Span;
 
 use crate::{
-    ast::{AstNode, Expr},
+    ast::{AstNode, Expression},
     error::{DiagResult, Result},
 };
 
@@ -38,8 +38,8 @@ impl AstNode for Declaration {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Constant {
     pub identifier: Interned<str>,
-    pub ty: Option<Expr>,
-    pub expr: Expr,
+    pub ty: Option<Expression>,
+    pub expr: Expression,
     pub span: Span,
 }
 
@@ -51,12 +51,12 @@ impl AstNode for Constant {
         let const_key = p.expect_token_kind(None, token_kind!(TokenKind::Const))?;
         let (identifier, _) = p.identifier()?;
         let ty = if p.consume(token_kind!(TokenKind::Colon)) {
-            Some(p.parse::<Expr>(recursion + 1).expected("type")?)
+            Some(p.parse::<Expression>(recursion + 1).expected("type")?)
         } else {
             None
         };
         let _eq = p.expect_token_kind(Some("'='"), token_kind!(TokenKind::Eq))?;
-        let expr = p.parse::<Expr>(recursion + 1).expected("expression")?;
+        let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
         let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
 
         Ok(Constant {

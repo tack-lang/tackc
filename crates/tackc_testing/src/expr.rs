@@ -3,7 +3,7 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::{
     Parser,
-    ast::{AstNode, Expr},
+    ast::{AstNode, Expression},
     error::ParseErrors,
 };
 
@@ -35,7 +35,7 @@ fn run_with(manifest_path: &Path, bless: BlessType, global: &Global) -> Result<T
 
     let lexer = Lexer::new(&src, global).consume_reporter(drop);
     let mut p = Parser::new(lexer);
-    let expr = Expr::parse(&mut p, 0);
+    let expr = Expression::parse(&mut p, 0);
 
     let out_path = PathBuf::from(format!("out/{}.bin.gz", manifest_name.display()));
     let expected_path = PathBuf::from(format!("expected/{}.bin.gz", manifest_name.display()));
@@ -54,7 +54,7 @@ fn run_with(manifest_path: &Path, bless: BlessType, global: &Global) -> Result<T
         Ok(TestResult::Skipped)
     } else {
         let expected_bytes = load_src_bytes(manifest_path, &expected_path).context("Failed to load bytes from expected file! If there is no expected file, try running with --bless!")?;
-        let expected = sbof::from_bytes::<Result<Expr, ParseErrors>>(&expected_bytes)
+        let expected = sbof::from_bytes::<Result<Expression, ParseErrors>>(&expected_bytes)
             .context("Failed to deserialize expected file!")?;
 
         if expected != expr {
@@ -81,7 +81,7 @@ pub fn view(manifest_path: &Path) -> Result<()> {
     run_with(manifest_path, BlessType::None, &global).context("Failed to run test!")?;
 
     let bytes = load_src_bytes(manifest_path, &out_path).context("Failed to read output bytes!")?;
-    let data = sbof::from_bytes::<Result<Expr, ParseErrors>>(&bytes)
+    let data = sbof::from_bytes::<Result<Expression, ParseErrors>>(&bytes)
         .context("Failed to deserialize output bytes!")?;
 
     let manifest = load_manifest::<Manifest>(manifest_path).context("Failed to load manifest")?;
@@ -101,7 +101,7 @@ pub fn view_expected(manifest_path: &Path) -> Result<()> {
 
     let bytes =
         load_src_bytes(manifest_path, &expected_path).context("Failed to read expected bytes!")?;
-    let data = sbof::from_bytes::<Result<Expr, ParseErrors>>(&bytes)
+    let data = sbof::from_bytes::<Result<Expression, ParseErrors>>(&bytes)
         .context("Failed to deserialize expected bytes!")?;
 
     match data {
