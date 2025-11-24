@@ -258,9 +258,15 @@ impl<'src, F: File> Lexer<'src, F> {
             ('{', _) => TokenKind::OpenBrace,
             ('}', _) => TokenKind::CloseBrace,
 
-            ('|', Some(b'|')) => {self.next_byte(); TokenKind::DoublePipe},
+            ('|', Some(b'|')) => {
+                self.next_byte();
+                TokenKind::DoublePipe
+            }
 
-            ('+', Some(b'=')) => {self.next_byte(); TokenKind::PlusEq},
+            ('+', Some(b'=')) => {
+                self.next_byte();
+                TokenKind::PlusEq
+            }
             ('=', _) => TokenKind::Eq,
 
             (',', _) => TokenKind::Comma,
