@@ -1,5 +1,8 @@
 name: Compute comphash
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: ["**"]
