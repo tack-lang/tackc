@@ -55,16 +55,28 @@ fn main() {
 
     let mut hasher = Sha256::new();
 
-    // --- Hash source files (normalized) ---
-    for entry in WalkDir::new("crates")
+    let mut files: Vec<_> = WalkDir::new("crates")
         .into_iter()
         .filter_map(Result::ok)
-        .filter(|e| e.path().extension().is_some_and(|x| x == "rs"))
-    {
-        let path = entry.path();
+        .filter(|e| {
+            let p = e.path();
+            p.is_file()
+                && p.extension().map(|x| x == "rs").unwrap_or(false)
+                && p.components().any(|c| {
+                    c.as_os_str().to_string_lossy().starts_with("tackc_")
+                })
+        })
+        .map(|e| e.path().to_owned())
+        .collect();
+
+    // Deterministic ordering
+    files.sort();
+
+    // --- Hash source files (normalized) ---
+    for path in files {
         if let Ok(src) = fs::read_to_string(path) {
             let normalized = normalize(&src);
-            hasher.update(normalized.as_bytes());
+            hasher.update(normalized.as_slice());
         }
     }
 
@@ -81,15 +93,16 @@ fn main() {
     println!("{short}");
 }
 
-/// Remove comments + whitespace-only lines.
-fn normalize(src: &str) -> String {
+fn normalize(src: &str) -> Vec<u8> {
     let mut out = String::new();
 
-    for line in src.lines() {
-        // Strip trailing // comments
-        let line = line.split_once("//").map_or(line, |x| x.0).trim_end();
+    for mut line in src.replace('\r', "").lines() {
+        // strip comments
+        if let Some((base, _)) = line.split_once("//") {
+            line = base;
+        }
 
-        // Skip empty/whitespace-only lines
+        let line = line.trim_end();
         if line.trim().is_empty() {
             continue;
         }
@@ -98,5 +111,5 @@ fn normalize(src: &str) -> String {
         out.push('\n');
     }
 
-    out
+    out.into_bytes()
 }
