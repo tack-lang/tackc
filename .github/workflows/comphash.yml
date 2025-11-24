@@ -1,0 +1,53 @@
+name: Compute comphash
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  comphash:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # IMPORTANT: we need full history so notes attach cleanly
+          fetch-depth: 0
+
+      - name: Install stable
+        id: install
+        uses: dtolnay/rust-toolchain@master
+        with: 
+          components: clippy
+          toolchain: stable
+
+      - name: Build tackc_meta
+        run: cargo build --release -p tackc_meta
+
+      - name: Compute comphash
+        id: comp
+        run: |
+          HASH=$(cargo hash)
+          echo "comphash=$HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Git
+        run: |
+          git config user.name "tack-ci"
+          git config user.email "ci@tack-lang"
+
+      - name: Fetch existing notes
+        run: |
+          # Pull any already-pushed notes so we force-update accurately
+          git fetch origin "refs/notes/*:refs/notes/*" || true
+
+      - name: Attach comphash note to HEAD
+        run: |
+          git notes add -f -m "${{ steps.comp.outputs.comphash }}" HEAD
+
+      - name: Push notes back to repo
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          # For PRs, do not push notes. Only pushes to branches should publish them.
+          git push origin refs/notes/commits
