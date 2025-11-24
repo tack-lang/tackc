@@ -162,7 +162,9 @@ where
         _ => return Err(ParseErrors::new(ParseError::new(None, opening))),
     };
 
-    let code = p.parse::<Expression>(recursion + 1).expected("expression")?;
+    let code = p
+        .parse::<Expression>(recursion + 1)
+        .expected("expression")?;
     Ok(Closure {
         args,
         span: Span::new_from(opening.span.start, code.span.end),
