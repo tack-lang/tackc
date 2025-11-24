@@ -482,14 +482,21 @@ impl AstNode for Closure {
 
     fn display(&self, global: &Global) -> String {
         let mut str = String::from("|");
-        str.push_str(&self.args.iter().map(|(ident, ty)| {
-            let mut ident = ident.display(global).to_string();
-            if let Some(ty) = ty {
-                ident.push_str(": ");
-                ident.push_str(&ty.display(global));
-            }
-            ident
-        }).collect::<Vec<_>>().join(", "));
+        str.push_str(
+            &self
+                .args
+                .iter()
+                .map(|(ident, ty)| {
+                    let mut ident = ident.display(global).to_string();
+                    if let Some(ty) = ty {
+                        ident.push_str(": ");
+                        ident.push_str(&ty.display(global));
+                    }
+                    ident
+                })
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
         str.push_str("| ");
         str.push_str(&self.code.display(global));
 
