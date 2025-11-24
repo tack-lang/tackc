@@ -3,7 +3,6 @@ pub mod error;
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use ecow::EcoVec;
 use error::{ParseError, ParseErrors, Result};
 
 use tackc_global::Interned;
@@ -18,14 +17,10 @@ pub fn set_max_recursion_depth(depth: u32) {
     MAX_RECURSION_DEPTH.store(depth, Ordering::Release);
 }
 
-#[derive(Clone, Copy)]
-pub enum ParseState {}
-
-pub struct ParserSnapshot<I>(I, EcoVec<ParseState>);
+pub struct ParserSnapshot<I>(I);
 
 pub struct Parser<I> {
     iter: I,
-    parse_state: EcoVec<ParseState>,
 }
 
 impl<I> Parser<I>
@@ -34,14 +29,13 @@ where
 {
     #[inline]
     pub fn snapshot(&self) -> ParserSnapshot<I> {
-        ParserSnapshot(self.iter.clone(), self.parse_state.clone())
+        ParserSnapshot(self.iter.clone())
     }
 
     #[inline]
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
         *self = Parser {
             iter: snapshot.0,
-            parse_state: snapshot.1,
         };
     }
 
@@ -49,7 +43,6 @@ where
     pub fn new(iter: I) -> Self {
         Parser {
             iter,
-            parse_state: EcoVec::new(),
         }
     }
 
