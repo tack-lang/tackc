@@ -58,7 +58,7 @@ jobs:
               name: Calculate compiler hash
               shell: bash
               run: |
-                HASH=cargo +${{ steps.install.outputs.name }} run --quiet -p tackc_meta --bin lock-hash
+                HASH=$(cargo +${{ steps.install.outputs.name }} hash)
                 echo "hash=$HASH" >> "$GITHUB_OUTPUT"
             - name: Upload tackc Binary
               uses: actions/upload-artifact@v4
