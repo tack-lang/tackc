@@ -29,6 +29,7 @@ tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
 ecow = "0.2.6"
 libfuzzer-sys = "0.4"
 rustc-hash = "2.1.1"
+sha2 = "0.10.9"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

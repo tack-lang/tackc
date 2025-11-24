@@ -1,6 +1,7 @@
 [alias]
 tackc = "run -p tackc --bin tackc"
 testing = "run -p tackc_testing --bin test"
+hash = "run -p tackc_meta --bin hash --quiet"
 
 [build]
 rustflags = ["--force-warn=clippy::todo"]

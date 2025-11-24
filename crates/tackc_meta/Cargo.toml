@@ -1,0 +1,12 @@
+[package]
+name = "tackc_meta"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sha2 = { workspace = true }
+walkdir.workspace = true
+
+# Don't use workspace lints on binaries
+#[lints]
+#workspace = true
