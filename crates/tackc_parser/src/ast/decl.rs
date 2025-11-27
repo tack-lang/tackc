@@ -4,7 +4,7 @@ use tackc_span::Span;
 
 use crate::{
     ast::{AstNode, Expression},
-    error::{DiagResult, Result},
+    error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -18,7 +18,12 @@ impl AstNode for Declaration {
     where
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
-        p.parse::<Constant>(recursion).map(Declaration::Constant)
+        let tok = p.expect_peek_token(None)?;
+
+        match tok.kind {
+            TokenKind::Const => Ok(Declaration::Constant(p.parse::<Constant>(recursion + 1)?)),
+            _ => Err(ParseErrors::new(ParseError::new(None, tok)))
+        }
     }
 
     fn span(&self) -> Span {
