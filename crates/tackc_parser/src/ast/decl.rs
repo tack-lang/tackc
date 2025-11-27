@@ -3,6 +3,7 @@ use tackc_lexer::TokenKind;
 use tackc_span::Span;
 
 use crate::{
+    Parser,
     ast::{AstNode, Expression},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
@@ -14,7 +15,7 @@ pub enum Declaration {
 }
 
 impl AstNode for Declaration {
-    fn parse<I>(p: &mut crate::Parser<I>, recursion: u32) -> crate::error::Result<Self>
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
@@ -22,7 +23,7 @@ impl AstNode for Declaration {
 
         match tok.kind {
             TokenKind::Const => Ok(Declaration::Constant(p.parse::<Constant>(recursion + 1)?)),
-            _ => Err(ParseErrors::new(ParseError::new(None, tok)))
+            _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
 
