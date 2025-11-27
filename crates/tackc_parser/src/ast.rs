@@ -73,14 +73,10 @@ impl AstNode for Program {
                         }
                     }
 
-                    // Synchronize parser by consuming tokens until reaching declaration or statement start.
+                    // Synchronize parser by consuming tokens until reaching declaration start.
                     while let Some(tok) = p.peek_token() {
                         match tok.kind {
-                            TokenKind::Const | TokenKind::Func => break,
-                            TokenKind::Semicolon => {
-                                p.next_token();
-                                break;
-                            }
+                            TokenKind::Const => break,
                             _ => {
                                 p.next_token();
                             }
