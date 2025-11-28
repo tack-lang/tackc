@@ -1,0 +1,96 @@
+name: Fuzz
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  fuzz:
+    name: Fuzzing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compute Cargo.lock hash
+        id: cargo-hash
+        shell: bash
+        run: |
+          HASH=$(sha256sum Cargo.lock | awk '{print $1}')
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ubuntu-latest-nightly-cargo-fuzz-${{ steps.cargo-hash.outputs.hash }}
+
+      - name: Install nightly Rust
+        id: install
+        uses: dtolnay/rust-toolchain@master
+        with:
+          components: clippy
+          toolchain: nightly
+
+      - name: Build Project
+        run: cargo +${{ steps.install.outputs.name }} build --release --workspace --verbose
+
+      - name: Install cargo-fuzz
+        run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz
+
+      - name: Run cargo-fuzz for 1 hour
+        id: fuzz
+        run: |
+          set -euo pipefail
+
+          FUZZ_TARGET=full
+          OUTPUT_DIR=fuzz/artifacts/$FUZZ_TARGET
+
+          echo "Starting fuzzing for 1 hour..."
+
+          # Start cargo-fuzz in background
+          cargo fuzz run $FUZZ_TARGET & 
+          FUZZ_PID=$!
+
+          # Start 1-hour timer
+          (
+            sleep 3600
+            echo "⏱️ 1 hour reached, killing fuzzer..."
+            kill $FUZZ_PID 2>/dev/null || true
+          ) &
+          TIMER_PID=$!
+
+          # Wait for fuzz process
+          wait $FUZZ_PID
+          STATUS=$?
+
+          # Kill timer if fuzz exited early
+          kill $TIMER_PID 2>/dev/null || true
+
+          echo "FUZZ_EXIT_STATUS=$STATUS" >> "$GITHUB_OUTPUT"
+
+          if [[ $STATUS -eq 0 ]]; then
+            echo "ℹ️ Fuzzer exited cleanly without crashes."
+            exit 0
+          elif [[ $STATUS -eq 143 || $STATUS -eq 137 ]]; then
+            echo "✅ Fuzzing ran full hour with no crashes."
+            exit 0
+          else
+            echo "❌ Fuzzer crashed with exit code $STATUS."
+            exit 1
+          fi
+
+      - name: Upload crash artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz-crashes
+          path: fuzz/artifacts/full/crashes/**/*
+
