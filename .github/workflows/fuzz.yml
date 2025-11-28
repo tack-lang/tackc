@@ -41,6 +41,13 @@ jobs:
 
       - name: Build Project
         run: cargo +${{ steps.install.outputs.name }} build --release --workspace --verbose
+    
+      - id: comphash
+        name: Calculate compiler hash
+        shell: bash
+        run: |
+            HASH=$(cargo +${{ steps.install.outputs.name }} hash)
+            echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
       - name: Install cargo-fuzz
         run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz
@@ -91,6 +98,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-crashes
+          name: fuzz-crashes-${{ steps.comphash.outputs.hash }}
           path: fuzz/artifacts/full/crashes/**/*
 
