@@ -1,9 +1,9 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use tackc_parser::error::DiagResult;
 use std::path::Path;
 use tackc_parser::ast::Expression;
+use tackc_parser::error::DiagResult;
 
 // Bring in the compiler pieces we want to fuzz
 use tackc_error::iter::IteratorExt;

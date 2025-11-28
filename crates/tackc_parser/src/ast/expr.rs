@@ -18,10 +18,7 @@ pub struct Expression {
 
 impl Expression {
     fn new(kind: ExpressionKind, span: Span) -> Self {
-        Expression {
-            kind,
-            span,
-        }
+        Expression { kind, span }
     }
 }
 
@@ -53,10 +50,18 @@ impl AstNode for Expression {
 
     fn display(&self, global: &Global) -> String {
         match &self.kind {
-            ExpressionKind::Add(lhs, rhs) => format!("(+ {} {})", lhs.display(global), rhs.display(global)),
-            ExpressionKind::Sub(lhs, rhs) => format!("(- {} {})", lhs.display(global), rhs.display(global)),
-            ExpressionKind::Mul(lhs, rhs) => format!("(* {} {})", lhs.display(global), rhs.display(global)),
-            ExpressionKind::Div(lhs, rhs) => format!("(/ {} {})", lhs.display(global), rhs.display(global)),
+            ExpressionKind::Add(lhs, rhs) => {
+                format!("(+ {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Sub(lhs, rhs) => {
+                format!("(- {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Mul(lhs, rhs) => {
+                format!("(* {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Div(lhs, rhs) => {
+                format!("(/ {} {})", lhs.display(global), rhs.display(global))
+            }
             ExpressionKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
 
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
@@ -86,7 +91,9 @@ where
     let tok = p.expect_token(None)?;
     match tok.kind {
         TokenKind::Ident(ident) => Ok(Expression::new(ExpressionKind::Binding(ident), tok.span)),
-        TokenKind::IntLit(str, base) => Ok(Expression::new(ExpressionKind::IntLit(str, base), tok.span)),
+        TokenKind::IntLit(str, base) => {
+            Ok(Expression::new(ExpressionKind::IntLit(str, base), tok.span))
+        }
         TokenKind::FloatLit(str) => Ok(Expression::new(ExpressionKind::FloatLit(str), tok.span)),
         _ => Err(ParseErrors::new(ParseError::new(None, tok))),
     }
@@ -104,12 +111,15 @@ where
             let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1)?;
             rhs.span.start = tok.span.start;
             Ok(rhs)
-        },
+        }
         TokenKind::Dash => {
             let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1)?;
             let rhs_span = rhs.span;
-            Ok(Expression::new(ExpressionKind::Neg(Box::new(rhs)), Span::new_from(tok.span.start, rhs_span.end)))
-        },
+            Ok(Expression::new(
+                ExpressionKind::Neg(Box::new(rhs)),
+                Span::new_from(tok.span.start, rhs_span.end),
+            ))
+        }
         TokenKind::OpenParen => {
             let mut rhs = parse_expression(p, BindingPower::None, recursion + 1)?;
             let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
@@ -120,7 +130,7 @@ where
         _ => {
             p.restore(snapshot);
             parse_primary(p)
-        },
+        }
     }
 }
 
@@ -133,14 +143,23 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     }
 }
 
-fn led_binary<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32, rbp: BindingPower, construct: impl Fn(Box<Expression>, Box<Expression>) -> ExpressionKind) -> Result<OperatorResult>
+fn led_binary<I>(
+    p: &mut Parser<I>,
+    lhs: Expression,
+    recursion: u32,
+    rbp: BindingPower,
+    construct: impl Fn(Box<Expression>, Box<Expression>) -> ExpressionKind,
+) -> Result<OperatorResult>
 where
-    I: Iterator<Item = Token> + Clone
+    I: Iterator<Item = Token> + Clone,
 {
     let rhs = parse_expression(p, rbp, recursion + 1)?;
     let lhs_span = lhs.span;
     let rhs_span = rhs.span;
-    Ok(OperatorResult::Continue(Expression::new(construct(Box::new(lhs), Box::new(rhs)), Span::new_from(lhs_span.start, rhs_span.end))))
+    Ok(OperatorResult::Continue(Expression::new(
+        construct(Box::new(lhs), Box::new(rhs)),
+        Span::new_from(lhs_span.start, rhs_span.end),
+    )))
 }
 
 enum OperatorResult {
@@ -148,13 +167,19 @@ enum OperatorResult {
     Break(Expression),
 }
 
-fn parse_postfix_or_infix<I>(p: &mut Parser<I>, lhs: Expression, tok: Token, min_bp: BindingPower, recursion: u32) -> Result<OperatorResult>
+fn parse_postfix_or_infix<I>(
+    p: &mut Parser<I>,
+    lhs: Expression,
+    tok: Token,
+    min_bp: BindingPower,
+    recursion: u32,
+) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
     // find infix binding power for this operator
     let Some(lbp) = infix_and_postfix_binding_power(tok.kind) else {
-        return Ok(OperatorResult::Break(lhs))
+        return Ok(OperatorResult::Break(lhs));
     };
     if lbp < min_bp {
         return Ok(OperatorResult::Break(lhs));
@@ -163,15 +188,43 @@ where
     p.next_token(); // now consume the operator
 
     match tok.kind {
-        TokenKind::Plus => led_binary(p, lhs, recursion, BindingPower::TermRight, ExpressionKind::Add),
-        TokenKind::Dash => led_binary(p, lhs, recursion, BindingPower::TermRight, ExpressionKind::Sub),
-        TokenKind::Star => led_binary(p, lhs, recursion, BindingPower::FactorRight, ExpressionKind::Mul),
-        TokenKind::Slash => led_binary(p, lhs, recursion, BindingPower::FactorRight, ExpressionKind::Div),
+        TokenKind::Plus => led_binary(
+            p,
+            lhs,
+            recursion,
+            BindingPower::TermRight,
+            ExpressionKind::Add,
+        ),
+        TokenKind::Dash => led_binary(
+            p,
+            lhs,
+            recursion,
+            BindingPower::TermRight,
+            ExpressionKind::Sub,
+        ),
+        TokenKind::Star => led_binary(
+            p,
+            lhs,
+            recursion,
+            BindingPower::FactorRight,
+            ExpressionKind::Mul,
+        ),
+        TokenKind::Slash => led_binary(
+            p,
+            lhs,
+            recursion,
+            BindingPower::FactorRight,
+            ExpressionKind::Div,
+        ),
         _ => unreachable!(),
     }
 }
 
-fn parse_expression<I>(p: &mut Parser<I>, min_bp: BindingPower, recursion: u32) -> Result<Expression>
+fn parse_expression<I>(
+    p: &mut Parser<I>,
+    min_bp: BindingPower,
+    recursion: u32,
+) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -182,7 +235,7 @@ where
 
     // --- infix/postfix loop ---
     loop {
-        let tok = p.peek_token();       // lookahead, do NOT consume yet
+        let tok = p.peek_token(); // lookahead, do NOT consume yet
         let Some(tok) = tok else { break Ok(lhs) };
 
         match parse_postfix_or_infix(p, lhs, tok, min_bp, recursion + 1)? {
