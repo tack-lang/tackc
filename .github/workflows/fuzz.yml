@@ -63,41 +63,8 @@ jobs:
           set -euo pipefail
 
           FUZZ_TARGET=full
-          OUTPUT_DIR=fuzz/artifacts/$FUZZ_TARGET
 
-          echo "Starting fuzzing for 10 minutes..."
-
-          # Start cargo-fuzz in background
-          cargo fuzz run $FUZZ_TARGET & 
-          FUZZ_PID=$!
-
-          # Start 10-minute timer
-          (
-            sleep 10m
-            echo "10 minutes reached, killing fuzzer..."
-            kill $FUZZ_PID 2>/dev/null || true
-          ) &
-          TIMER_PID=$!
-
-          # Wait for fuzz process
-          wait $FUZZ_PID
-          STATUS=$?
-
-          # Kill timer if fuzz exited early
-          kill $TIMER_PID 2>/dev/null || true
-
-          echo "FUZZ_EXIT_STATUS=$STATUS" >> "$GITHUB_OUTPUT"
-
-          if [[ $STATUS -eq 0 ]]; then
-            echo "Fuzzer exited cleanly without crashes."
-            exit 0
-          elif [[ $STATUS -eq 143 || $STATUS -eq 137 ]]; then
-            echo "Fuzzing ran full 10 minutes with no crashes."
-            exit 0
-          else
-            echo "Fuzzer crashed with exit code $STATUS."
-            exit 1
-          fi
+          cargo fuzz run $FUZZ_TARGET -- -max_total_time=600 -timeout=10
 
       - name: Upload crash artifacts
         if: always()
