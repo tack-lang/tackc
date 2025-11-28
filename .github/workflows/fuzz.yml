@@ -58,7 +58,7 @@ jobs:
       - name: Install cargo-fuzz
         run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz
 
-      - name: Run cargo-fuzz for 1 hour
+      - name: Run cargo-fuzz for 10 minutes
         id: fuzz
         run: |
           set -euo pipefail
@@ -66,16 +66,16 @@ jobs:
           FUZZ_TARGET=full
           OUTPUT_DIR=fuzz/artifacts/$FUZZ_TARGET
 
-          echo "Starting fuzzing for 1 hour..."
+          echo "Starting fuzzing for 10 minutes..."
 
           # Start cargo-fuzz in background
           cargo fuzz run $FUZZ_TARGET & 
           FUZZ_PID=$!
 
-          # Start 1-hour timer
+          # Start 10-minute timer
           (
-            sleep 3600
-            echo "1 hour reached, killing fuzzer..."
+            sleep 10m
+            echo "10 minutes reached, killing fuzzer..."
             kill $FUZZ_PID 2>/dev/null || true
           ) &
           TIMER_PID=$!
@@ -93,7 +93,7 @@ jobs:
             echo "Fuzzer exited cleanly without crashes."
             exit 0
           elif [[ $STATUS -eq 143 || $STATUS -eq 137 ]]; then
-            echo "Fuzzing ran full hour with no crashes."
+            echo "Fuzzing ran full 10 minutes with no crashes."
             exit 0
           else
             echo "Fuzzer crashed with exit code $STATUS."

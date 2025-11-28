@@ -83,7 +83,7 @@ jobs:
               run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_fuzz
     once:
         name: One-time Job
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-slim
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v5
@@ -112,7 +112,7 @@ jobs:
             run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
     cleanup-caches:
       name: Cleanup Old Caches
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-slim
       permissions:
         actions: write
       steps:
