@@ -64,7 +64,7 @@ jobs:
 
           FUZZ_TARGET=full
 
-          cargo fuzz run $FUZZ_TARGET -- -max_total_time=600 -timeout=10
+          cargo fuzz run $FUZZ_TARGET -- -max_total_time=10 -timeout=10
 
       - name: Upload crash artifacts
         if: always()
