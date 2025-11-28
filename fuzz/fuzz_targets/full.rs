@@ -1,8 +1,9 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
+use tackc_parser::error::DiagResult;
 use std::path::Path;
-use tackc_parser::ast::Program;
+use tackc_parser::ast::Expression;
 
 // Bring in the compiler pieces we want to fuzz
 use tackc_error::iter::IteratorExt;
@@ -42,7 +43,7 @@ fuzz_target!(|data: &[u8]| {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Program::parse(&mut parser, 0);
+    let res = Expression::parse(&mut parser, 0).expected("expression");
     match res {
         Ok(s) => {
             s.display(&global);
