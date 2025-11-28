@@ -89,7 +89,7 @@ jobs:
 
       - name: Upload crash artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fuzz-crashes
           path: fuzz/artifacts/full/crashes/**/*
