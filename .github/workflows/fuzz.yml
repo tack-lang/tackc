@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           LATEST=$(ls -t fuzz/corpus/full 2>/dev/null | awk 'NR==1 {print $0}')
-          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "latest=fuzz/corpus/full/$LATEST" >> "$GITHUB_OUTPUT"
       
       - name: Upload corpus
         if: always()
