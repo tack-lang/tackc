@@ -1,0 +1,16 @@
+Expression = Primary
+    | Expression ( PLUS | DASH | STAR | SLASH ) Expression
+    | ( PLUS | DASH ) Expression
+    | OPEN_PAREN Expression CLOSE_PAREN
+    | Expression DOT IDENTIFIER
+    ;
+
+Primary = Literal
+    | IDENTIFIER
+    ;
+
+Literal = INT_LIT
+    | FLOAT_LIT
+    ;
+
+Path = IDENTIFIER ( DOT IDENTIFIER )* ;

@@ -4,7 +4,7 @@ use tackc_lexer::Lexer;
 use tackc_parser::{
     Parser,
     ast::{AstNode, Expression},
-    error::ParseErrors,
+    error::{DiagResult, ParseErrors},
 };
 
 use super::prelude::*;
@@ -35,7 +35,7 @@ fn run_with(manifest_path: &Path, bless: BlessType, global: &Global) -> Result<T
 
     let lexer = Lexer::new(&src, global).consume_reporter(drop);
     let mut p = Parser::new(lexer);
-    let expr = Expression::parse(&mut p, 0);
+    let expr = Expression::parse(&mut p, 0).expected("expression");
 
     let out_path = PathBuf::from(format!("out/{}.bin.gz", manifest_name.display()));
     let expected_path = PathBuf::from(format!("expected/{}.bin.gz", manifest_name.display()));

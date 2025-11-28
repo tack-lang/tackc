@@ -90,15 +90,14 @@ where
     }
 
     /// Peeks a token, and if `callback(token.kind) == true`, consumes the token and returns true. Otherwise, returns false.
-    pub fn consume<F>(&mut self, callback: F) -> bool
+    pub fn consume<F>(&mut self, callback: F) -> Option<Token>
     where
         F: FnOnce(TokenKind) -> bool,
     {
         if self.peek_is(callback) {
-            self.next_token();
-            true
+            self.next_token()
         } else {
-            false
+            None
         }
     }
 
