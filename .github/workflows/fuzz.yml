@@ -80,7 +80,7 @@ jobs:
         id: corpus
         shell: bash
         run: |
-          LATEST=fuzz/corpus/full/$(ls -t fuzz/corpus/full | head -n 1)
+          LATEST="fuzz/corpus/full/$(printf '%s\n' fuzz/corpus/full/* | xargs -I{} stat -c '%Y {}' {} | sort -rn | head -n1 | cut -d' ' -f2-)"
           echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
       
       - name: Upload corpus
