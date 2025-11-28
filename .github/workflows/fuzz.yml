@@ -72,7 +72,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-crashes-${{ steps.comphash.outputs.hash }}
+          name: fuzz-crashes-${{ steps.comphash.outputs.hash }}-${{ matrix.target }}
           path: fuzz/artifacts/full/crashes/**/*
       
       - name: Get latest corpus
@@ -87,6 +87,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-corpus-${{ steps.comphash.outputs.hash }}
+          name: fuzz-corpus-${{ steps.comphash.outputs.hash }}-${{ matrix.target }}
           path: ${{ steps.corpus.outputs.latest }}
 
