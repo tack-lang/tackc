@@ -83,7 +83,7 @@ jobs:
           LATEST=$(find fuzz/corpus/full -type f -print0 \
             | xargs -0 stat -f '%m %N' \
             | sort -rn \
-            | head -n1 \
+            | head -n1 || true \
             | cut -d' ' -f2-)
           echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
       
