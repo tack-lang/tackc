@@ -8,7 +8,8 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::{
     Parser,
-    ast::{AstNode, Expression}, error::DiagResult,
+    ast::{AstNode, Expression},
+    error::DiagResult,
 };
 
 fn main() -> Result<()> {
