@@ -124,11 +124,11 @@ where
     }
 }
 
-fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<(BindingPower, BindingPower)> {
+fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
-        TokenKind::Plus | TokenKind::Dash => Some((P::TermLeft, P::TermRight)),
-        TokenKind::Star | TokenKind::Slash => Some((P::FactorLeft, P::FactorRight)),
+        TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
+        TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
         _ => None,
     }
 }
@@ -153,7 +153,7 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     // find infix binding power for this operator
-    let Some((lbp, rbp)) = infix_and_postfix_binding_power(tok.kind) else {
+    let Some(lbp) = infix_and_postfix_binding_power(tok.kind) else {
         return Ok(OperatorResult::Break(lhs))
     };
     if lbp < min_bp {
@@ -163,10 +163,10 @@ where
     p.next_token(); // now consume the operator
 
     match tok.kind {
-        TokenKind::Plus => led_binary(p, lhs, recursion, rbp, ExpressionKind::Add),
-        TokenKind::Dash => led_binary(p, lhs, recursion, rbp, ExpressionKind::Sub),
-        TokenKind::Star => led_binary(p, lhs, recursion, rbp, ExpressionKind::Mul),
-        TokenKind::Slash => led_binary(p, lhs, recursion, rbp, ExpressionKind::Div),
+        TokenKind::Plus => led_binary(p, lhs, recursion, BindingPower::TermRight, ExpressionKind::Add),
+        TokenKind::Dash => led_binary(p, lhs, recursion, BindingPower::TermRight, ExpressionKind::Sub),
+        TokenKind::Star => led_binary(p, lhs, recursion, BindingPower::FactorRight, ExpressionKind::Mul),
+        TokenKind::Slash => led_binary(p, lhs, recursion, BindingPower::FactorRight, ExpressionKind::Div),
         _ => unreachable!(),
     }
 }
