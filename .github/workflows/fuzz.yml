@@ -59,14 +59,7 @@ jobs:
 
       - name: Run cargo-fuzz for 10 minutes
         id: fuzz
-        run: |
-          set -euo pipefail
-
-          FUZZ_TARGET=full
-
-          cargo fuzz run $FUZZ_TARGET -- -max_total_time=600 -timeout=10
-
-          ls -t fuzz/corpus/full
+        run: cargo fuzz run full -- -max_total_time=600 -timeout=10
 
       - name: Upload crash artifacts
         if: always()
