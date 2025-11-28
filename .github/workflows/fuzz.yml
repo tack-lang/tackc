@@ -23,11 +23,7 @@ jobs:
         id: cargo-hash
         shell: bash
         run: |
-            if [ "$RUNNER_OS" = "Windows" ]; then
-                HASH=$(powershell -Command "(Get-FileHash Cargo.lock -Algorithm SHA256).Hash.ToLower()")
-            else
-                HASH=$(sha256sum Cargo.lock | awk '{print $1}')
-            fi
+            HASH=$(sha256sum Cargo.lock | awk '{print $1}')
             echo "hash=$HASH" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
@@ -46,6 +42,13 @@ jobs:
 
       - name: Build Project
         run: cargo +${{ steps.install.outputs.name }} build --release --workspace --verbose
+      
+      - name: Restore corpora from cache 
+        if: always()
+        uses: actions/cache/restore@v4
+        with:
+          path: fuzz/corpus/full
+          key: fuzz-corpora-${{ matrix.target }}
     
       - id: comphash
         name: Calculate compiler hash
@@ -57,9 +60,9 @@ jobs:
       - name: Install cargo-fuzz
         run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz || true
 
-      - name: Run cargo-fuzz for 10 minutes
+      - name: Run cargo-fuzz
         id: fuzz
-        run: cargo fuzz run full -- -max_total_time=600 -timeout=10
+        run: cargo fuzz run full -- -timeout=10
 
       - name: Upload crash artifacts
         if: always()
@@ -68,18 +71,9 @@ jobs:
           name: fuzz-crashes-${{ steps.comphash.outputs.hash }}-${{ matrix.target }}
           path: fuzz/artifacts/full/crashes/**/*
       
-      - name: Get latest corpus
+      - name: Cache corpora
         if: always()
-        id: corpus
-        shell: bash
-        run: |
-          LATEST=$(ls -t fuzz/corpus/full 2>/dev/null | awk 'NR==1 {print $0}')
-          echo "latest=fuzz/corpus/full/$LATEST" >> "$GITHUB_OUTPUT"
-      
-      - name: Upload corpus
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/cache/save@v4
         with:
-          name: fuzz-corpus-${{ steps.comphash.outputs.hash }}-${{ matrix.target }}
-          path: ${{ steps.corpus.outputs.latest }}
-
+          path: fuzz/corpus/full
+          key: fuzz-corpora-${{ matrix.target }}
