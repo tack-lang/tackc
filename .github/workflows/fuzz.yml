@@ -55,7 +55,7 @@ jobs:
             echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
       - name: Install cargo-fuzz
-        run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz
+        run: cargo +${{ steps.install.outputs.name }} install cargo-fuzz || true
 
       - name: Run cargo-fuzz for 10 minutes
         id: fuzz
