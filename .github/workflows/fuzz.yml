@@ -66,6 +66,8 @@ jobs:
 
           cargo fuzz run $FUZZ_TARGET -- -max_total_time=10 -timeout=10
 
+          ls -t fuzz/corpus/full
+
       - name: Upload crash artifacts
         if: always()
         uses: actions/upload-artifact@v4
