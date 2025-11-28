@@ -42,9 +42,9 @@ where
         Parser { iter }
     }
 
-    fn is_eof(&self) -> bool {
+    /*fn is_eof(&self) -> bool {
         self.peek_token().is_none()
-    }
+    }*/
 
     /// Attempts to parse an `AstNode` from the given parser.
     ///
