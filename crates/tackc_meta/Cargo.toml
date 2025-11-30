@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 sha2 = { workspace = true }
-walkdir.workspace = true
+walkdir = { workspace = true }
 
 # Don't use workspace lints on binaries
 #[lints]
