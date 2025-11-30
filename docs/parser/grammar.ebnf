@@ -1,20 +1,45 @@
-Expression = Primary
-    | InfixExpression
-    | PrefixExpression
-    | GroupingExpression
-    | MemberAccessExpression
-    | CallExpression
-    | IndexExpression
+(*
+    NOTE: This is a spec grammar, not a parsing grammar. 
+    This grammar does not encode precedence or associativity, and is heavily ambiguous.
+*)
+
+Expr = Primary
+    | Infix
+    | Prefix
+    | Grouping
+    | Postfix
     ;
 
-InfixExpression = Expression ( PLUS | DASH | STAR | SLASH ) Expression ;
-PrefixExpression = ( PLUS | DASH ) Expression ;
-GroupingExpression = OPEN_PAREN Expression CLOSE_PAREN ;
-MemberAccessExpression = Expression DOT IDENTIFIER ;
-CallExpression = Expression OPEN_PAREN ArgumentList? CLOSE_PAREN ;
-IndexExpression = Expression OPEN_BRACKET Expression CLOSE_BRACKET ;
+Postfix = MemberAccess
+    | Call
+    | Index
+    ;
+Infix = Expr ( PLUS | DASH | STAR | SLASH ) Expr ;
+Prefix = ( PLUS | DASH ) Expr ;
+Grouping = OPEN_PAREN Expr CLOSE_PAREN ;
+MemberAccess = Expr DOT IDENTIFIER ;
+Call = Expr OPEN_PAREN ArgumentList? CLOSE_PAREN ;
+Index = Expr OPEN_BRACKET Expr CLOSE_BRACKET ;
 
-ArgumentList = Expression ( COMMA Expression )* ;
+ArgumentList = Expr ( COMMA Expr )* ;
+
+(* Expressions that can't be ambiguous to expressions followed by blocks *)
+ExprNB = Primary
+    | InfixNB
+    | PrefixNB
+    | Grouping (* Can contain blocks *)
+    | PostfixNB
+
+PostfixNB = MemberAccessNB
+    | CallNB
+    | IndexNB
+    ;
+InfixNB = ExprNB ( PLUS | DASH | STAR | SLASH ) ExprNB ;
+PrefixNB = ( PLUS | DASH ) ExprNB ;
+(* No GroupingNB *)
+MemberAccessNB = ExprNB DOT IDENTIFIER ;
+CallNB = ExprNB OPEN_PAREN ArgumentList? CLOSE_PAREN ; (* No ArgumentListNB *)
+IndexNB = ExprNB OPEN_BRACKET Expr CLOSE_BRACKET ; (* Uses Expr inside brackets *)
 
 Primary = Literal
     | IDENTIFIER
