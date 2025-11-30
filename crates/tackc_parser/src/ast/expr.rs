@@ -32,6 +32,7 @@ pub enum ExpressionKind {
     Neg(Box<Expression>),
 
     Call(Box<Expression>, Vec<Expression>),
+    Index(Box<Expression>, Box<Expression>),
 
     Binding(Interned<str>),
     IntLit(Interned<str>, IntegerBase),
@@ -83,6 +84,9 @@ impl AstNode for Expression {
                     )
                 }
             },
+            ExpressionKind::Index(lhs, rhs) => {
+                format!("(index {} {})", lhs.display(global), rhs.display(global))
+            }
 
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
             ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
@@ -103,7 +107,7 @@ enum BindingPower {
 
     Prefix = 50,
 
-    Call = 60,
+    Postfix = 60,
 }
 
 fn parse_primary<I>(p: &mut Parser<I>) -> Result<Expression>
@@ -161,7 +165,7 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     match kind {
         TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
-        TokenKind::OpenParen => Some(P::Call),
+        TokenKind::OpenParen | TokenKind::OpenBracket => Some(P::Postfix),
         _ => None,
     }
 }
@@ -188,6 +192,21 @@ where
 enum OperatorResult {
     Continue(Expression),
     Break(Expression),
+}
+
+fn index<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let lhs_span = lhs.span;
+    let rhs = p
+        .parse::<Expression>(recursion + 1)
+        .expected("expression")?;
+    let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::CloseBracket))?;
+    Ok(OperatorResult::Continue(Expression::new(
+        ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
+        Span::new_from(lhs_span.start, closing.span.end),
+    )))
 }
 
 fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
@@ -278,6 +297,7 @@ where
             ExpressionKind::Div,
         ),
         TokenKind::OpenParen => call(p, lhs, recursion + 1),
+        TokenKind::OpenBracket => index(p, lhs, recursion + 1),
         _ => unreachable!(),
     }
 }
