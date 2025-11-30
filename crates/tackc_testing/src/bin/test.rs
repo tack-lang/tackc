@@ -1,7 +1,7 @@
 use std::{
     env,
     ffi::OsStr,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, process::exit,
 };
 
 use anyhow::{Context, Result};
@@ -164,7 +164,10 @@ fn main() -> Result<()> {
                 }
                 run_test_ty(ty, normalized, bless.into());
             } else {
-                run_test_tys(bless.into());
+                let failed = run_test_tys(bless.into());
+                if failed != 0 {
+                    exit(1);
+                }
             }
         }
         SubArgs::View { test, expected } => {
@@ -212,20 +215,29 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_test_tys(bless: BlessType) {
-    run_test_ty(TestType::lexer(), "data/lexer", bless);
-    run_test_ty(TestType::expr(), "data/expr", bless);
+fn run_test_tys(bless: BlessType) -> u32 {
+    let mut failed = 0;
+    failed += run_test_ty(TestType::lexer(), "data/lexer", bless);
+    failed += run_test_ty(TestType::expr(), "data/expr", bless);
+    failed
 }
 
-fn run_test_ty(ty: &TestType, path: impl AsRef<Path>, bless: BlessType) {
+// Returns the failure count
+fn run_test_ty(ty: &TestType, path: impl AsRef<Path>, bless: BlessType) -> u32 {
+    let mut failed = 0;
+
     println!("Running all tests in {}", path.as_ref().display());
 
     for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
         if entry.file_type().is_file() && entry.path().extension() == Some(OsStr::new("toml")) {
             let manifest_path = entry.path();
-            run_test(ty, manifest_path, bless);
+            if let Some(TestResult::Failure) = run_test(ty, manifest_path, bless) {
+                failed += 1;
+            }
         }
     }
+
+    failed
 }
 
 fn run_test(ty: &TestType, manifest_path: &Path, bless: BlessType) -> Option<TestResult> {
