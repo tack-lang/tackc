@@ -83,23 +83,18 @@ impl AstNode for Expression {
             }
             ExpressionKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
 
-            ExpressionKind::Call(lhs, args) => match &args[..] {
-                [] => format!("(call {})", lhs.display(global)),
-                [arg] => format!("(call {} {})", lhs.display(global), arg.display(global)),
-                [arg, args @ ..] => {
-                    let mut out = String::new();
-                    for arg in args {
-                        out.push_str(", ");
-                        out.push_str(&arg.display(global));
-                    }
-                    format!(
-                        "(call {} {}{})",
-                        lhs.display(global),
-                        arg.display(global),
-                        out
-                    )
+            ExpressionKind::Call(lhs, args) => {
+                let mut parts = Vec::with_capacity(args.len());
+                for a in args {
+                    parts.push(a.display(global));
                 }
-            },
+                if parts.is_empty() {
+                    format!("(call {})", lhs.display(global))
+                } else {
+                    format!("(call {} {})", lhs.display(global), parts.join(", "))
+                }
+            }
+
             ExpressionKind::Index(lhs, rhs) => {
                 format!("(index {} {})", lhs.display(global), rhs.display(global))
             }
