@@ -1,7 +1,8 @@
 use std::{
     env,
     ffi::OsStr,
-    path::{Path, PathBuf}, process::exit,
+    path::{Path, PathBuf},
+    process::exit,
 };
 
 use anyhow::{Context, Result};
