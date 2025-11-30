@@ -107,7 +107,7 @@ impl AstNode for Expression {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-enum BindingPower {
+pub enum BindingPower {
     None = 0,
 
     TermLeft = 10,
@@ -326,7 +326,11 @@ where
     }
 }
 
-fn parse_expression<I>(
+/// Parses an expression using the given parser, minimum binding power, and parsing mode.
+/// 
+/// # Errors
+/// This function will return an error if it fails to parse an expression.
+pub fn parse_expression<I>(
     p: &mut Parser<I>,
     min_bp: BindingPower,
     recursion: u32,
