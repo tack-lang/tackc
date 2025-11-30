@@ -29,6 +29,7 @@ ExprNB = Primary
     | PrefixNB
     | Grouping (* Can contain blocks *)
     | PostfixNB
+    ;
 
 PostfixNB = MemberAccessNB
     | CallNB
