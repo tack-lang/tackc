@@ -9,6 +9,22 @@ use tackc_span::Span;
 use super::AstNode;
 use crate::Parser;
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum ParseMode {
+    Normal,
+    NoBlocks,
+}
+
+impl ParseMode {
+    pub fn is_normal(self) -> bool {
+        matches!(self, Self::Normal)
+    }
+
+    pub fn is_no_blocks(self) -> bool {
+        matches!(self, Self::NoBlocks)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Expression {
@@ -44,7 +60,7 @@ impl AstNode for Expression {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        parse_expression(p, BindingPower::None, recursion + 1)
+        parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
     }
 
     fn span(&self) -> Span {
@@ -125,7 +141,7 @@ where
     }
 }
 
-fn parse_prefix<I>(p: &mut Parser<I>, recursion: u32) -> Result<Expression>
+fn parse_prefix<I>(p: &mut Parser<I>, recursion: u32, mode: ParseMode) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -134,12 +150,12 @@ where
     match tok.kind {
         TokenKind::Plus => {
             // Drop unary `+`, does nothing
-            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1)?;
+            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
             rhs.span.start = tok.span.start;
             Ok(rhs)
         }
         TokenKind::Dash => {
-            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1)?;
+            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
             let rhs_span = rhs.span;
             Ok(Expression::new(
                 ExpressionKind::Neg(Box::new(rhs)),
@@ -147,7 +163,9 @@ where
             ))
         }
         TokenKind::OpenParen => {
-            let mut rhs = parse_expression(p, BindingPower::None, recursion + 1)?;
+            // Ignore parse mode
+            let mut rhs =
+                parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
             let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
             rhs.span.start = tok.span.start;
             rhs.span.end = closing.span.end;
@@ -176,11 +194,12 @@ fn led_binary<I>(
     recursion: u32,
     rbp: BindingPower,
     construct: impl Fn(Box<Expression>, Box<Expression>) -> ExpressionKind,
+    mode: ParseMode,
 ) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let rhs = parse_expression(p, rbp, recursion + 1)?;
+    let rhs = parse_expression(p, rbp, recursion + 1, mode)?;
     let lhs_span = lhs.span;
     let rhs_span = rhs.span;
     Ok(OperatorResult::Continue(Expression::new(
@@ -199,8 +218,8 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     let lhs_span = lhs.span;
-    let rhs = p
-        .parse::<Expression>(recursion + 1)
+    // Ignore parse mode
+    let rhs = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
         .expected("expression")?;
     let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::CloseBracket))?;
     Ok(OperatorResult::Continue(Expression::new(
@@ -209,7 +228,12 @@ where
     )))
 }
 
-fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
+fn call<I>(
+    p: &mut Parser<I>,
+    lhs: Expression,
+    recursion: u32,
+    mode: ParseMode,
+) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -225,17 +249,16 @@ where
     }
 
     let mut args = Vec::new();
-    let expr = p
-        .parse::<Expression>(recursion + 1)
-        .expected("expression")?;
+    let expr =
+        parse_expression(p, BindingPower::None, recursion + 1, mode).expected("expression")?;
     args.push(expr);
 
     while let Some(tok) = p.peek_token()
         && tok.kind != TokenKind::CloseParen
     {
         let _comma = p.expect_token_kind(Some("',' or ')'"), token_kind!(TokenKind::Comma))?;
-        let expr = p
-            .parse::<Expression>(recursion + 1)
+        // Ignore parse mode
+        let expr = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
             .expected("expression")?;
         args.push(expr);
     }
@@ -254,6 +277,7 @@ fn parse_postfix_or_infix<I>(
     tok: Token,
     min_bp: BindingPower,
     recursion: u32,
+    mode: ParseMode,
 ) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
@@ -275,6 +299,7 @@ where
             recursion + 1,
             BindingPower::TermRight,
             ExpressionKind::Add,
+            mode,
         ),
         TokenKind::Dash => led_binary(
             p,
@@ -282,6 +307,7 @@ where
             recursion + 1,
             BindingPower::TermRight,
             ExpressionKind::Sub,
+            mode,
         ),
         TokenKind::Star => led_binary(
             p,
@@ -289,6 +315,7 @@ where
             recursion + 1,
             BindingPower::FactorRight,
             ExpressionKind::Mul,
+            mode,
         ),
         TokenKind::Slash => led_binary(
             p,
@@ -296,9 +323,10 @@ where
             recursion + 1,
             BindingPower::FactorRight,
             ExpressionKind::Div,
+            mode,
         ),
-        TokenKind::OpenParen => call(p, lhs, recursion + 1),
-        TokenKind::OpenBracket => index(p, lhs, recursion + 1),
+        TokenKind::OpenParen => call(p, lhs, recursion + 1, mode),
+        TokenKind::OpenBracket => index(p, lhs, recursion + 1), // Parse mode is not passed, since `index` only parses value inside brackets
         _ => unreachable!(),
     }
 }
@@ -307,6 +335,7 @@ fn parse_expression<I>(
     p: &mut Parser<I>,
     min_bp: BindingPower,
     recursion: u32,
+    mode: ParseMode,
 ) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
@@ -314,14 +343,14 @@ where
     p.check_recursion(recursion)?;
 
     // --- prefix / nud ---
-    let mut lhs = parse_prefix(p, recursion + 1)?;
+    let mut lhs = parse_prefix(p, recursion + 1, mode)?;
 
     // --- infix/postfix loop ---
     loop {
         let tok = p.peek_token(); // lookahead, do NOT consume yet
         let Some(tok) = tok else { break Ok(lhs) };
 
-        match parse_postfix_or_infix(p, lhs, tok, min_bp, recursion + 1)? {
+        match parse_postfix_or_infix(p, lhs, tok, min_bp, recursion + 1, mode)? {
             OperatorResult::Continue(new) => lhs = new,
             OperatorResult::Break(new) => break Ok(new),
         }
