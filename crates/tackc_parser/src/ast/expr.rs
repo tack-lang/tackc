@@ -216,7 +216,8 @@ where
     let tok = p.expect_peek_token(Some("')' or expression"))?;
     let lhs_span = lhs.span;
 
-    if tok.kind == TokenKind::OpenParen {
+    if tok.kind == TokenKind::CloseParen {
+        p.next_token();
         return Ok(OperatorResult::Continue(Expression::new(
             ExpressionKind::Call(Box::new(lhs), Vec::new()),
             Span::new_from(lhs_span.start, tok.span.end),
