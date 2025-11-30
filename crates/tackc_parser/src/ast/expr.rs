@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::error::{ParseError, ParseErrors, Result};
+use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
@@ -30,6 +30,8 @@ pub enum ExpressionKind {
     Mul(Box<Expression>, Box<Expression>),
     Div(Box<Expression>, Box<Expression>),
     Neg(Box<Expression>),
+
+    Call(Box<Expression>, Vec<Expression>),
 
     Binding(Interned<str>),
     IntLit(Interned<str>, IntegerBase),
@@ -64,6 +66,21 @@ impl AstNode for Expression {
             }
             ExpressionKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
 
+            ExpressionKind::Call(lhs, args) => {
+                match &args[..] {
+                    [] => format!("(call {})", lhs.display(global)),
+                    [arg] => format!("(call {} {})", lhs.display(global), arg.display(global)),
+                    [arg, args @ ..] => {
+                        let mut out = String::new();
+                        for arg in args {
+                            out.push_str(", ");
+                            out.push_str(&arg.display(global));
+                        }
+                        format!("(call {} {}{})", lhs.display(global), arg.display(global), out)
+                    }
+                }
+            }
+
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
             ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
             ExpressionKind::FloatLit(str) => str.display(global).to_string(),
@@ -82,6 +99,8 @@ enum BindingPower {
     FactorRight = 21,
 
     Prefix = 50,
+
+    Call = 60,
 }
 
 fn parse_primary<I>(p: &mut Parser<I>) -> Result<Expression>
@@ -139,6 +158,7 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     match kind {
         TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
+        TokenKind::OpenParen => Some(P::Call),
         _ => None,
     }
 }
@@ -165,6 +185,37 @@ where
 enum OperatorResult {
     Continue(Expression),
     Break(Expression),
+}
+
+fn call<I>(
+    p: &mut Parser<I>,
+    lhs: Expression,
+    recursion: u32,
+) -> Result<OperatorResult>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let tok = p.expect_peek_token(Some("')' or expression"))?;
+    let lhs_span = lhs.span;
+
+    if tok.kind == TokenKind::OpenParen {
+        return Ok(OperatorResult::Continue(Expression::new(ExpressionKind::Call(Box::new(lhs), Vec::new()), Span::new_from(lhs_span.start, tok.span.end))));
+    }
+
+    let mut args = Vec::new();
+    let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
+    args.push(expr);
+
+    while let Some(tok) = p.peek_token()
+    && tok.kind != TokenKind::CloseParen {
+        let _comma = p.expect_token_kind(Some("',' or ')'"), token_kind!(TokenKind::Comma))?;
+        let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
+        args.push(expr);
+    }
+
+    let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
+
+    Ok(OperatorResult::Continue(Expression::new(ExpressionKind::Call(Box::new(lhs), args), Span::new_from(lhs_span.start, tok.span.end))))
 }
 
 fn parse_postfix_or_infix<I>(
@@ -216,6 +267,7 @@ where
             BindingPower::FactorRight,
             ExpressionKind::Div,
         ),
+        TokenKind::OpenParen => call(p, lhs, recursion + 1),
         _ => unreachable!(),
     }
 }

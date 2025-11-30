@@ -1,9 +1,18 @@
 Expression = Primary
-    | Expression ( PLUS | DASH | STAR | SLASH ) Expression
-    | ( PLUS | DASH ) Expression
-    | OPEN_PAREN Expression CLOSE_PAREN
-    | Expression DOT IDENTIFIER
+    | InfixExpression
+    | PrefixExpression
+    | Grouping
+    | MemberAccess
+    | Call
     ;
+
+InfixExpression = Expression ( PLUS | DASH | STAR | SLASH ) Expression ;
+PrefixExpression = ( PLUS | DASH ) Expression ;
+Grouping = OPEN_PAREN Expression CLOSE_PAREN ;
+MemberAccess = Expression DOT IDENTIFIER ;
+
+Call = Expression OPEN_PAREN ArgumentList? CLOSE_PAREN ;
+ArgumentList = Expression ( COMMA Expression )* ;
 
 Primary = Literal
     | IDENTIFIER
