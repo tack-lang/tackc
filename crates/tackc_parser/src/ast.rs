@@ -24,7 +24,7 @@ pub trait Serde {}
 #[cfg(not(feature = "serde"))]
 impl<T> Serde for T {}
 
-pub trait AstNode: Debug + PartialEq + Eq + Hash + Clone + Sized + Serde {
+pub trait AstNode: Debug + PartialEq + Eq + Hash + Sized + Serde {
     /// Parse the AST node using the given parser.
     ///
     /// # Errors
