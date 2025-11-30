@@ -1,17 +1,19 @@
 Expression = Primary
     | InfixExpression
     | PrefixExpression
-    | Grouping
-    | MemberAccess
-    | Call
+    | GroupingExpression
+    | MemberAccessExpression
+    | CallExpression
+    | IndexExpression
     ;
 
 InfixExpression = Expression ( PLUS | DASH | STAR | SLASH ) Expression ;
 PrefixExpression = ( PLUS | DASH ) Expression ;
-Grouping = OPEN_PAREN Expression CLOSE_PAREN ;
-MemberAccess = Expression DOT IDENTIFIER ;
+GroupingExpression = OPEN_PAREN Expression CLOSE_PAREN ;
+MemberAccessExpression = Expression DOT IDENTIFIER ;
+CallExpression = Expression OPEN_PAREN ArgumentList? CLOSE_PAREN ;
+IndexExpression = Expression OPEN_BRACKET Expression CLOSE_BRACKET ;
 
-Call = Expression OPEN_PAREN ArgumentList? CLOSE_PAREN ;
 ArgumentList = Expression ( COMMA Expression )* ;
 
 Primary = Literal

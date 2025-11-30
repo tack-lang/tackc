@@ -51,6 +51,8 @@ pub enum TokenKind {
     CloseParen,
     OpenBrace,
     CloseBrace,
+    OpenBracket,
+    CloseBracket,
 
     // Assignment operators
     Eq,
@@ -109,6 +111,8 @@ impl Display for TokenKind {
             TokenKind::CloseParen => write!(f, ")"),
             TokenKind::OpenBrace => write!(f, "{{"),
             TokenKind::CloseBrace => write!(f, "}}"),
+            TokenKind::OpenBracket => write!(f, "["),
+            TokenKind::CloseBracket => write!(f, "]"),
 
             TokenKind::Eq => write!(f, "="),
             TokenKind::PlusEq => write!(f, "+="),
@@ -257,6 +261,8 @@ impl<'src, F: File> Lexer<'src, F> {
             (')', _) => TokenKind::CloseParen,
             ('{', _) => TokenKind::OpenBrace,
             ('}', _) => TokenKind::CloseBrace,
+            ('[', _) => TokenKind::OpenBracket,
+            (']', _) => TokenKind::CloseBracket,
 
             ('|', Some(b'|')) => {
                 self.next_byte();
