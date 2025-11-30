@@ -66,20 +66,23 @@ impl AstNode for Expression {
             }
             ExpressionKind::Neg(rhs) => format!("(- {})", rhs.display(global)),
 
-            ExpressionKind::Call(lhs, args) => {
-                match &args[..] {
-                    [] => format!("(call {})", lhs.display(global)),
-                    [arg] => format!("(call {} {})", lhs.display(global), arg.display(global)),
-                    [arg, args @ ..] => {
-                        let mut out = String::new();
-                        for arg in args {
-                            out.push_str(", ");
-                            out.push_str(&arg.display(global));
-                        }
-                        format!("(call {} {}{})", lhs.display(global), arg.display(global), out)
+            ExpressionKind::Call(lhs, args) => match &args[..] {
+                [] => format!("(call {})", lhs.display(global)),
+                [arg] => format!("(call {} {})", lhs.display(global), arg.display(global)),
+                [arg, args @ ..] => {
+                    let mut out = String::new();
+                    for arg in args {
+                        out.push_str(", ");
+                        out.push_str(&arg.display(global));
                     }
+                    format!(
+                        "(call {} {}{})",
+                        lhs.display(global),
+                        arg.display(global),
+                        out
+                    )
                 }
-            }
+            },
 
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
             ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
@@ -187,11 +190,7 @@ enum OperatorResult {
     Break(Expression),
 }
 
-fn call<I>(
-    p: &mut Parser<I>,
-    lhs: Expression,
-    recursion: u32,
-) -> Result<OperatorResult>
+fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -199,23 +198,34 @@ where
     let lhs_span = lhs.span;
 
     if tok.kind == TokenKind::OpenParen {
-        return Ok(OperatorResult::Continue(Expression::new(ExpressionKind::Call(Box::new(lhs), Vec::new()), Span::new_from(lhs_span.start, tok.span.end))));
+        return Ok(OperatorResult::Continue(Expression::new(
+            ExpressionKind::Call(Box::new(lhs), Vec::new()),
+            Span::new_from(lhs_span.start, tok.span.end),
+        )));
     }
 
     let mut args = Vec::new();
-    let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
+    let expr = p
+        .parse::<Expression>(recursion + 1)
+        .expected("expression")?;
     args.push(expr);
 
     while let Some(tok) = p.peek_token()
-    && tok.kind != TokenKind::CloseParen {
+        && tok.kind != TokenKind::CloseParen
+    {
         let _comma = p.expect_token_kind(Some("',' or ')'"), token_kind!(TokenKind::Comma))?;
-        let expr = p.parse::<Expression>(recursion + 1).expected("expression")?;
+        let expr = p
+            .parse::<Expression>(recursion + 1)
+            .expected("expression")?;
         args.push(expr);
     }
 
     let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
 
-    Ok(OperatorResult::Continue(Expression::new(ExpressionKind::Call(Box::new(lhs), args), Span::new_from(lhs_span.start, tok.span.end))))
+    Ok(OperatorResult::Continue(Expression::new(
+        ExpressionKind::Call(Box::new(lhs), args),
+        Span::new_from(lhs_span.start, tok.span.end),
+    )))
 }
 
 fn parse_postfix_or_infix<I>(
