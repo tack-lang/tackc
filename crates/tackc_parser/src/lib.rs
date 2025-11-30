@@ -102,7 +102,7 @@ where
     }
 
     /// Peeks a token, and if `callback(token.kind) == true`, returns true. Otherwise, returns false.
-    pub fn peek_is<F>(&mut self, callback: F) -> bool
+    pub fn peek_is<F>(&self, callback: F) -> bool
     where
         F: FnOnce(TokenKind) -> bool,
     {
