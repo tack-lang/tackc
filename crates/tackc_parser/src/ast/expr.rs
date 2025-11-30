@@ -327,7 +327,7 @@ where
 }
 
 /// Parses an expression using the given parser, minimum binding power, and parsing mode.
-/// 
+///
 /// # Errors
 /// This function will return an error if it fails to parse an expression.
 pub fn parse_expression<I>(
