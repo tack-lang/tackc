@@ -49,6 +49,7 @@ pub enum ExpressionKind {
 
     Call(Box<Expression>, Vec<Expression>),
     Index(Box<Expression>, Box<Expression>),
+    Member(Box<Expression>, Interned<str>),
 
     Binding(Interned<str>),
     IntLit(Interned<str>, IntegerBase),
@@ -94,9 +95,11 @@ impl AstNode for Expression {
                     format!("(call {} {})", lhs.display(global), parts.join(", "))
                 }
             }
-
             ExpressionKind::Index(lhs, rhs) => {
                 format!("(index {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Member(lhs, name) => {
+                format!("(. {} {})", lhs.display(global), name.display(global))
             }
 
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
@@ -178,7 +181,7 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     match kind {
         TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
-        TokenKind::OpenParen | TokenKind::OpenBracket => Some(P::Postfix),
+        TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::Dot => Some(P::Postfix),
         _ => None,
     }
 }
@@ -206,6 +209,19 @@ where
 enum OperatorResult {
     Continue(Expression),
     Break(Expression),
+}
+
+fn member<I>(p: &mut Parser<I>, lhs: Expression) -> Result<OperatorResult>
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let (ident, span) = p.identifier()?;
+    let lhs_span = lhs.span;
+
+    Ok(OperatorResult::Continue(Expression::new(
+        ExpressionKind::Member(Box::new(lhs), ident),
+        Span::new_from(lhs_span.start, span.end),
+    )))
 }
 
 fn index<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
@@ -322,6 +338,7 @@ where
         ),
         TokenKind::OpenParen => call(p, lhs, recursion + 1, mode),
         TokenKind::OpenBracket => index(p, lhs, recursion + 1), // Parse mode is not passed, since `index` only parses value inside brackets
+        TokenKind::Dot => member(p, lhs), // Parse mode is not passed, since `member` never parses expressions
         _ => unreachable!(),
     }
 }
