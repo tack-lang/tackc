@@ -57,7 +57,7 @@ pub enum TokenKind {
     // Assignment operators
     Eq,
     PlusEq,
-    DashEq,
+    MinusEq,
     StarEq,
     SlashEq,
 
@@ -70,16 +70,16 @@ pub enum TokenKind {
 
     // Arithmatic operators
     Plus,
-    Dash,
+    Minus,
     Star,
     Slash,
 
     // Comparison operators
-    DoubleEq,
+    EqEq,
     BangEq,
 
     // Bitwise operators
-    DoublePipe,
+    PipePipe,
 }
 
 impl TokenKind {
@@ -120,7 +120,7 @@ impl Display for TokenKind {
 
             TokenKind::Eq => write!(f, "="),
             TokenKind::PlusEq => write!(f, "+="),
-            TokenKind::DashEq => write!(f, "-="),
+            TokenKind::MinusEq => write!(f, "-="),
             TokenKind::StarEq => write!(f, "*="),
             TokenKind::SlashEq => write!(f, "/="),
 
@@ -131,14 +131,14 @@ impl Display for TokenKind {
             TokenKind::Pipe => write!(f, "|"),
 
             TokenKind::Plus => write!(f, "+"),
-            TokenKind::Dash => write!(f, "-"),
+            TokenKind::Minus => write!(f, "-"),
             TokenKind::Star => write!(f, "*"),
             TokenKind::Slash => write!(f, "/"),
 
-            TokenKind::DoubleEq => write!(f, "=="),
+            TokenKind::EqEq => write!(f, "=="),
             TokenKind::BangEq => write!(f, "!="),
 
-            TokenKind::DoublePipe => write!(f, "||"),
+            TokenKind::PipePipe => write!(f, "||"),
         }
     }
 }
@@ -273,7 +273,7 @@ impl<'src, F: File> Lexer<'src, F> {
 
             ('=', Some(b'=')) => {
                 self.next_byte();
-                TokenKind::DoubleEq
+                TokenKind::EqEq
             }
             ('!', Some(b'=')) => {
                 self.next_byte();
@@ -282,7 +282,7 @@ impl<'src, F: File> Lexer<'src, F> {
 
             ('|', Some(b'|')) => {
                 self.next_byte();
-                TokenKind::DoublePipe
+                TokenKind::PipePipe
             }
 
             ('+', Some(b'=')) => {
@@ -298,7 +298,7 @@ impl<'src, F: File> Lexer<'src, F> {
             ('|', _) => TokenKind::Pipe,
 
             ('+', _) => TokenKind::Plus,
-            ('-', _) => TokenKind::Dash,
+            ('-', _) => TokenKind::Minus,
             ('*', _) => TokenKind::Star,
             ('/', _) => TokenKind::Slash,
 

@@ -181,7 +181,7 @@ where
             rhs.span.start = tok.span.start;
             Ok(rhs)
         }
-        TokenKind::Dash => {
+        TokenKind::Minus => {
             let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
             let rhs_span = rhs.span;
             Ok(Expression::new(
@@ -208,8 +208,8 @@ where
 fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
-        TokenKind::DoubleEq | TokenKind::BangEq => Some(P::EqualityLeft),
-        TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
+        TokenKind::EqEq | TokenKind::BangEq => Some(P::EqualityLeft),
+        TokenKind::Plus | TokenKind::Minus => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
         TokenKind::LParen | TokenKind::LBracket | TokenKind::Dot => Some(P::Postfix),
         _ => None,
@@ -342,7 +342,7 @@ where
             ExpressionKind::Add,
             mode,
         ),
-        TokenKind::Dash => led_binary(
+        TokenKind::Minus => led_binary(
             p,
             lhs,
             recursion + 1,
@@ -366,7 +366,7 @@ where
             ExpressionKind::Div,
             mode,
         ),
-        TokenKind::DoubleEq => led_binary(
+        TokenKind::EqEq => led_binary(
             p,
             lhs,
             recursion + 1,
