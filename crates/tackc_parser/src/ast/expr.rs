@@ -51,6 +51,9 @@ pub enum ExpressionKind {
     Index(Box<Expression>, Box<Expression>),
     Member(Box<Expression>, Interned<str>),
 
+    Equal(Box<Expression>, Box<Expression>),
+    NotEqual(Box<Expression>, Box<Expression>),
+
     Binding(Interned<str>),
     IntLit(Interned<str>, IntegerBase),
     FloatLit(Interned<str>),
@@ -102,6 +105,13 @@ impl AstNode for Expression {
                 format!("(. {} {})", lhs.display(global), name.display(global))
             }
 
+            ExpressionKind::Equal(lhs, rhs) => {
+                format!("(== {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::NotEqual(lhs, rhs) => {
+                format!("(!= {} {})", lhs.display(global), rhs.display(global))
+            }
+
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
             ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
             ExpressionKind::FloatLit(str) => str.display(global).to_string(),
@@ -113,11 +123,14 @@ impl AstNode for Expression {
 pub enum BindingPower {
     None = 0,
 
-    TermLeft = 10,
-    TermRight = 11,
+    EqualityLeft = 10,
+    EqualityRight = 11,
 
-    FactorLeft = 20,
-    FactorRight = 21,
+    TermLeft = 20,
+    TermRight = 21,
+
+    FactorLeft = 30,
+    FactorRight = 31,
 
     Prefix = 50,
 
@@ -179,6 +192,7 @@ where
 fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
+        TokenKind::DoubleEq | TokenKind::BangEq => Some(P::EqualityLeft),
         TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
         TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::Dot => Some(P::Postfix),
@@ -334,6 +348,22 @@ where
             recursion + 1,
             BindingPower::FactorRight,
             ExpressionKind::Div,
+            mode,
+        ),
+        TokenKind::DoubleEq => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::EqualityRight,
+            ExpressionKind::Equal,
+            mode,
+        ),
+        TokenKind::BangEq => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::EqualityRight,
+            ExpressionKind::NotEqual,
             mode,
         ),
         TokenKind::OpenParen => call(p, lhs, recursion + 1, mode),

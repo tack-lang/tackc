@@ -73,6 +73,10 @@ pub enum TokenKind {
     Dash,
     Star,
     Slash,
+    
+    // Comparison operators
+    DoubleEq,
+    BangEq,
 
     // Bitwise operators
     DoublePipe,
@@ -130,6 +134,9 @@ impl Display for TokenKind {
             TokenKind::Dash => write!(f, "-"),
             TokenKind::Star => write!(f, "*"),
             TokenKind::Slash => write!(f, "/"),
+
+            TokenKind::DoubleEq => write!(f, "=="),
+            TokenKind::BangEq => write!(f, "!="),
 
             TokenKind::DoublePipe => write!(f, "||"),
         }
@@ -263,6 +270,15 @@ impl<'src, F: File> Lexer<'src, F> {
             ('}', _) => TokenKind::CloseBrace,
             ('[', _) => TokenKind::OpenBracket,
             (']', _) => TokenKind::CloseBracket,
+
+            ('=', Some(b'=')) => {
+                self.next_byte();
+                TokenKind::DoubleEq
+            }
+            ('!', Some(b'=')) => {
+                self.next_byte();
+                TokenKind::BangEq
+            }
 
             ('|', Some(b'|')) => {
                 self.next_byte();
