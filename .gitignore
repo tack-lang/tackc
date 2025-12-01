@@ -1,3 +1,8 @@
-/target
+target
 .DS_Store
 crates/tackc_testing/data/*/out
+
+hfuzz_target
+corpus
+artifacts
+coverage

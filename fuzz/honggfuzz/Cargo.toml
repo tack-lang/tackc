@@ -1,0 +1,9 @@
+[package]
+name = "tackc_honggfuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+honggfuzz = "0.5.58"
+tackc_fuzz = { version = "0.0.0", path = "../shared" }
