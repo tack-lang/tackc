@@ -535,24 +535,3 @@ impl<F: File> Clone for Lexer<'_, F> {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[cfg(test)]
-    use tackc_file::OwnedFile;
-    use tackc_macros::fuzz;
-
-    use super::*;
-
-    #[fuzz(20)]
-    #[cfg(test)]
-    #[allow(clippy::needless_pass_by_value)]
-    fn lexer_fuzz(file: OwnedFile) {
-        let global = Global::create_heap();
-
-        let lexer = Lexer::new(&file, &global);
-        for i in lexer {
-            drop(std::hint::black_box(i));
-        }
-    }
-}

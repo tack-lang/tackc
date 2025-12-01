@@ -7,7 +7,6 @@ edition = "2024"
 serde = { workspace = true, features = ["derive"], optional = true }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true, features = ["serde"] }
-tackc_macros = { workspace = true }
 tackc_span = { workspace = true }
 thiserror = { workspace = true }
 
