@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 serde = { workspace = true, features = ["derive"], optional = true }
-tackc_macros = { workspace = true }
 tackc_span = { workspace = true }
 
 [lints]

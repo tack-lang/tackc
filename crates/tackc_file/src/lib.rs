@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tackc_macros::Random;
 use tackc_span::SpanValue;
 
 pub trait File: Deref<Target = str> {
@@ -59,7 +58,7 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Random)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OwnedFile {
     src: String,
@@ -110,10 +109,10 @@ pub struct BorrowedFile<'src> {
 }
 
 impl<'src> BorrowedFile<'src> {
-    pub fn new(src: &'src str, path: &'static Path) -> Self {
+    pub fn new<P: AsRef<Path> + ?Sized>(src: &'src str, path: &'static P) -> Self {
         BorrowedFile {
             src,
-            path,
+            path: path.as_ref(),
             line_starts: line_starts(src),
         }
     }
