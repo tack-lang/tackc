@@ -47,12 +47,12 @@ pub enum TokenKind {
     Const,
 
     // Delimeters
-    OpenParen,
-    CloseParen,
-    OpenBrace,
-    CloseBrace,
-    OpenBracket,
-    CloseBracket,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    LBracket,
+    RBracket,
 
     // Assignment operators
     Eq,
@@ -111,12 +111,12 @@ impl Display for TokenKind {
             TokenKind::Let => write!(f, "let"),
             TokenKind::Const => write!(f, "const"),
 
-            TokenKind::OpenParen => write!(f, "("),
-            TokenKind::CloseParen => write!(f, ")"),
-            TokenKind::OpenBrace => write!(f, "{{"),
-            TokenKind::CloseBrace => write!(f, "}}"),
-            TokenKind::OpenBracket => write!(f, "["),
-            TokenKind::CloseBracket => write!(f, "]"),
+            TokenKind::LParen => write!(f, "("),
+            TokenKind::RParen => write!(f, ")"),
+            TokenKind::LBrace => write!(f, "{{"),
+            TokenKind::RBrace => write!(f, "}}"),
+            TokenKind::LBracket => write!(f, "["),
+            TokenKind::RBracket => write!(f, "]"),
 
             TokenKind::Eq => write!(f, "="),
             TokenKind::PlusEq => write!(f, "+="),
@@ -264,12 +264,12 @@ impl<'src, F: File> Lexer<'src, F> {
     fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, Error> {
         let c2 = self.current_byte();
         let ty = match (c1, c2) {
-            ('(', _) => TokenKind::OpenParen,
-            (')', _) => TokenKind::CloseParen,
-            ('{', _) => TokenKind::OpenBrace,
-            ('}', _) => TokenKind::CloseBrace,
-            ('[', _) => TokenKind::OpenBracket,
-            (']', _) => TokenKind::CloseBracket,
+            ('(', _) => TokenKind::LParen,
+            (')', _) => TokenKind::RParen,
+            ('{', _) => TokenKind::LBrace,
+            ('}', _) => TokenKind::RBrace,
+            ('[', _) => TokenKind::LBracket,
+            (']', _) => TokenKind::RBracket,
 
             ('=', Some(b'=')) => {
                 self.next_byte();
