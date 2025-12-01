@@ -53,6 +53,10 @@ pub enum ExpressionKind {
 
     Equal(Box<Expression>, Box<Expression>),
     NotEqual(Box<Expression>, Box<Expression>),
+    Gt(Box<Expression>, Box<Expression>),
+    Lt(Box<Expression>, Box<Expression>),
+    GtEq(Box<Expression>, Box<Expression>),
+    LtEq(Box<Expression>, Box<Expression>),
 
     Binding(Interned<str>),
     IntLit(Interned<str>, IntegerBase),
@@ -106,10 +110,22 @@ impl AstNode for Expression {
             }
 
             ExpressionKind::Equal(lhs, rhs) => {
-                format!("(== {} {})", lhs.display(global), rhs.display(global))
+                format!("(eq {} {})", lhs.display(global), rhs.display(global))
             }
             ExpressionKind::NotEqual(lhs, rhs) => {
-                format!("(!= {} {})", lhs.display(global), rhs.display(global))
+                format!("(ne {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Gt(lhs, rhs) => {
+                format!("(gt {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::Lt(lhs, rhs) => {
+                format!("(lt {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::GtEq(lhs, rhs) => {
+                format!("(gteq {} {})", lhs.display(global), rhs.display(global))
+            }
+            ExpressionKind::LtEq(lhs, rhs) => {
+                format!("(lteq {} {})", lhs.display(global), rhs.display(global))
             }
 
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
@@ -173,11 +189,11 @@ where
                 Span::new_from(tok.span.start, rhs_span.end),
             ))
         }
-        TokenKind::OpenParen => {
+        TokenKind::LParen => {
             // Ignore parse mode
             let mut rhs =
                 parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
-            let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
+            let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
             rhs.span.start = tok.span.start;
             rhs.span.end = closing.span.end;
             Ok(rhs)
@@ -195,7 +211,7 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
         TokenKind::DoubleEq | TokenKind::BangEq => Some(P::EqualityLeft),
         TokenKind::Plus | TokenKind::Dash => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
-        TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::Dot => Some(P::Postfix),
+        TokenKind::LParen | TokenKind::LBracket | TokenKind::Dot => Some(P::Postfix),
         _ => None,
     }
 }
@@ -246,7 +262,7 @@ where
     // Ignore parse mode
     let rhs = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
         .expected("expression")?;
-    let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::CloseBracket))?;
+    let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::RBracket))?;
     Ok(OperatorResult::Continue(Expression::new(
         ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
         Span::new_from(lhs_span.start, closing.span.end),
@@ -265,7 +281,7 @@ where
     let tok = p.expect_peek_token(Some("')' or expression"))?;
     let lhs_span = lhs.span;
 
-    if tok.kind == TokenKind::CloseParen {
+    if tok.kind == TokenKind::RParen {
         p.next_token();
         return Ok(OperatorResult::Continue(Expression::new(
             ExpressionKind::Call(Box::new(lhs), Vec::new()),
@@ -279,7 +295,7 @@ where
     args.push(expr);
 
     while let Some(tok) = p.peek_token()
-        && tok.kind != TokenKind::CloseParen
+        && tok.kind != TokenKind::RParen
     {
         let _comma = p.expect_token_kind(Some("',' or ')'"), token_kind!(TokenKind::Comma))?;
         // Ignore parse mode
@@ -288,7 +304,7 @@ where
         args.push(expr);
     }
 
-    let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::CloseParen))?;
+    let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
 
     Ok(OperatorResult::Continue(Expression::new(
         ExpressionKind::Call(Box::new(lhs), args),
@@ -366,8 +382,8 @@ where
             ExpressionKind::NotEqual,
             mode,
         ),
-        TokenKind::OpenParen => call(p, lhs, recursion + 1, mode),
-        TokenKind::OpenBracket => index(p, lhs, recursion + 1), // Parse mode is not passed, since `index` only parses value inside brackets
+        TokenKind::LParen => call(p, lhs, recursion + 1, mode),
+        TokenKind::LBracket => index(p, lhs, recursion + 1), // Parse mode is not passed, since `index` only parses value inside brackets
         TokenKind::Dot => member(p, lhs), // Parse mode is not passed, since `member` never parses expressions
         _ => unreachable!(),
     }
