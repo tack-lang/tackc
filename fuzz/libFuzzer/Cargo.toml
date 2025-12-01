@@ -1,5 +1,5 @@
 [package]
-name = "tackc_fuzz"
+name = "tackc_libfuzzer"
 version = "0.0.0"
 publish = false
 edition = "2024"
@@ -9,12 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = { workspace = true }
-tackc_error = { workspace = true }
-tackc_file = { workspace = true }
-tackc_global = { workspace = true }
-tackc_lexer = { workspace = true }
-tackc_parser = { workspace = true }
-
+tackc_fuzz = { version = "0.0.0", path = "../shared" }
 
 [[bin]]
 name = "full"

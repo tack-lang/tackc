@@ -1,6 +1,3 @@
-#![no_main]
-
-use libfuzzer_sys::fuzz_target;
 use std::path::Path;
 use tackc_parser::ast::Expression;
 use tackc_parser::error::DiagResult;
@@ -13,7 +10,7 @@ use tackc_lexer::Lexer;
 use tackc_parser::Parser;
 use tackc_parser::ast::AstNode;
 
-fuzz_target!(|data: &[u8]| {
+pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
         return;
     };
@@ -52,4 +49,4 @@ fuzz_target!(|data: &[u8]| {
             e.display(&file, &global);
         }
     };
-});
+}

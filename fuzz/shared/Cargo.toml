@@ -1,0 +1,12 @@
+[package]
+name = "tackc_fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+tackc_error = { workspace = true }
+tackc_file = { workspace = true }
+tackc_global = { workspace = true }
+tackc_lexer = { workspace = true }
+tackc_parser = { workspace = true }
