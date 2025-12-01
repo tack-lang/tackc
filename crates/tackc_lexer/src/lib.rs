@@ -73,7 +73,7 @@ pub enum TokenKind {
     Dash,
     Star,
     Slash,
-    
+
     // Comparison operators
     DoubleEq,
     BangEq,
