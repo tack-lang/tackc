@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 bumpalo = { workspace = true, features = ["std"] }
 ecow = { workspace = true }
+proptest = "1.9.0"
 serde = { workspace = true, features = ["derive"], optional = true }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true }

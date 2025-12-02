@@ -2,10 +2,12 @@
 
 use std::{cmp::Ordering, ops::Range};
 
+use proptest_derive::Arbitrary;
+
 pub type SpanValue = u32;
 
 /// The `Span` type represents an area of a file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Arbitrary)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Span {
     /// The start of the `Span` (Inclusive)
