@@ -1,13 +1,14 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
+use super::AstNode;
+use crate::Parser;
 use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::{Global, Interned};
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
 
-use super::AstNode;
-use crate::Parser;
+use proptest::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum ParseMode {
@@ -30,6 +31,15 @@ impl ParseMode {
 pub struct Expression {
     pub kind: ExpressionKind,
     pub span: Span,
+}
+
+proptest! {
+    #[test]
+    fn expr_test(tokens: Vec<Token>) {
+        let iter = tokens.iter().copied();
+        let mut p = Parser::new(iter);
+        let _ = p.parse::<Expression>(0);
+    }
 }
 
 impl Expression {
