@@ -1,0 +1,77 @@
+---
+source: crates/tackc_lexer/src/lib.rs
+expression: tokens
+input_file: crates/tackc_lexer/src/lexer/operators.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 2,
+    ),
+    kind: PipePipe,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 3,
+      end: 4,
+    ),
+    kind: Pipe,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 5,
+      end: 7,
+    ),
+    kind: PlusEq,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 8,
+      end: 9,
+    ),
+    kind: Eq,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 10,
+      end: 11,
+    ),
+    kind: Plus,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 12,
+      end: 13,
+    ),
+    kind: Minus,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 14,
+      end: 15,
+    ),
+    kind: Star,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 16,
+      end: 17,
+    ),
+    kind: Slash,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 18,
+      end: 19,
+    ),
+    kind: LParen,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 20,
+      end: 21,
+    ),
+    kind: RParen,
+  )),
+]

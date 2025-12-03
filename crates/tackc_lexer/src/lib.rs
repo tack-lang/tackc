@@ -1,14 +1,13 @@
 use std::fmt::Display;
 
 use proptest::prelude::*;
-use proptest_derive::Arbitrary;
 use tackc_span::Span;
 use thiserror::Error;
 
 use tackc_file::File;
 use tackc_global::{Global, Interned};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Arbitrary)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Token {
     pub span: Span,
@@ -31,24 +30,13 @@ impl Display for Token {
     }
 }
 
-fn int_lit_strategy() -> impl Strategy<Value = TokenKind> {
-    let int_lit_binary = "[0-1]".prop_map(|str| (str, IntegerBase::Binary));
-    let int_lit_octal = "[0-7]".prop_map(|str| (str, IntegerBase::Octal));
-    let int_lit_decimal = "[0-9]".prop_map(|str| (str, IntegerBase::Decimal));
-    let int_lit_hex = "[0-9a-fA-F]".prop_map(|str| (str, IntegerBase::Hex));
-
-    prop_oneof![int_lit_binary, int_lit_octal, int_lit_decimal, int_lit_hex,]
-        .prop_map(|(str, base)| TokenKind::IntLit(Interned::<str>::get_interned(&str), base))
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Arbitrary)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenKind {
     Ident(Interned<str>),
 
     // Literals
     StringLit(Interned<str>),
-    #[proptest(strategy = "int_lit_strategy()")]
     IntLit(Interned<str>, IntegerBase),
     FloatLit(Interned<str>),
 
@@ -554,7 +542,6 @@ proptest! {
     fn lexer(s in ".{1,4096}") {
         use tackc_file::BorrowedFile;
 
-        let s = std::hint::black_box(s);
         let file = BorrowedFile::new(&s, "proptest.tck");
         let global = Global::create_heap();
         let lexer = Lexer::new(&file, &global);
@@ -562,4 +549,24 @@ proptest! {
             drop(i);
         }
     }
+}
+
+#[test]
+#[cfg(feature = "serde")]
+fn lexer_test_glob() {
+    insta::glob!("lexer/*.tck", run_lexer_test);
+}
+
+#[cfg(all(test, feature = "serde"))]
+use std::path::Path;
+
+#[cfg(all(test, feature = "serde"))]
+fn run_lexer_test(path: &Path) {
+    use tackc_file::OwnedFile;
+
+    let file = OwnedFile::try_from(path.to_path_buf()).unwrap_or_else(|_| panic!("Could not file {}!", path.display()));
+    let global = Global::create_heap();
+    let lexer = Lexer::new(&file, &global);
+    let tokens = lexer.collect::<Vec<_>>();
+    insta::assert_ron_snapshot!(tokens);
 }

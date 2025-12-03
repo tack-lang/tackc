@@ -7,7 +7,6 @@ use std::{
 
 use bumpalo::Bump;
 use dashmap::DashMap;
-use proptest_derive::Arbitrary;
 use rustc_hash::FxHasher;
 
 pub trait Internable: Any {
@@ -29,30 +28,9 @@ impl<T: Any + Hash + PartialEq> Internable for T {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Arbitrary)]
+#[derive(PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
-
-impl<T: Internable> Interned<T> {
-    /// --- THIS FUNCTION SHOULD ONLY BE USED IN TESTING! --- <br>
-    /// This function creates an interned version of `val`, without entering it into a `Global`.
-    pub fn get_interned(val: &T) -> Self {
-        let mut hasher = FxHasher::default();
-        val.type_id().hash(&mut hasher);
-        val.dyn_hash(&mut hasher);
-        Interned(hasher.finish(), PhantomData)
-    }
-}
-
-impl Interned<str> {
-    /// --- THIS FUNCTION SHOULD ONLY BE USED IN TESTING! --- <br>
-    /// This function creates an interned version of `val`, without entering it into a `Global`.
-    pub fn get_interned(val: &str) -> Self {
-        let mut hasher = FxHasher::default();
-        val.hash(&mut hasher);
-        Interned(hasher.finish(), PhantomData)
-    }
-}
 
 impl<T: ?Sized> Debug for Interned<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-proptest = "1.9.0"
-proptest-derive = "0.7.0"
+proptest = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true, features = ["serde"] }
@@ -17,3 +16,6 @@ workspace = true
 
 [features]
 serde = ["dep:serde", "tackc_span/serde", "tackc_file/serde"]
+
+[dev-dependencies]
+insta = { workspace = true, features = ["glob", "ron", "serde"] }

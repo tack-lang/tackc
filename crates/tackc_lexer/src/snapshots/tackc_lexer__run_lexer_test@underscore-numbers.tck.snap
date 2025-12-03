@@ -1,0 +1,84 @@
+---
+source: crates/tackc_lexer/src/lib.rs
+expression: tokens
+input_file: crates/tackc_lexer/src/lexer/underscore-numbers.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 3,
+    ),
+    kind: IntLit(Interned(16823142301312792964, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 4,
+      end: 9,
+    ),
+    kind: FloatLit(Interned(715824544052560704, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 11,
+      end: 15,
+    ),
+    kind: IntLit(Interned(16823142301312792964, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 16,
+      end: 25,
+    ),
+    kind: IntLit(Interned(1865576272465152547, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 26,
+      end: 31,
+    ),
+    kind: FloatLit(Interned(3650977818952512897, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 32,
+      end: 36,
+    ),
+    kind: IntLit(Interned(2589342264452442892, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 37,
+      end: 39,
+    ),
+    kind: Ident(Interned(17194519625396939718, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 40,
+      end: 43,
+    ),
+    kind: Ident(Interned(4743474348169622309, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 44,
+      end: 46,
+    ),
+    kind: Ident(Interned(17194519625396939718, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 47,
+      end: 51,
+    ),
+    kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 52,
+      end: 61,
+    ),
+    kind: IntLit(Interned(8273128280023709275, PhantomData), Decimal),
+  )),
+]
