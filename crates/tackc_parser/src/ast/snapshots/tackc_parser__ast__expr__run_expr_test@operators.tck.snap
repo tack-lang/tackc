@@ -17,28 +17,34 @@ Ok(Expression(
           kind: Add(Expression(
             kind: Mul(Expression(
               kind: Member(Expression(
-                kind: Add(Expression(
-                  kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
-                  span: Span(
-                    start: 3,
-                    end: 4,
-                  ),
-                ), Expression(
-                  kind: Mul(Expression(
-                    kind: IntLit(Interned(14671982871472631300, PhantomData), Decimal),
+                kind: Grouping(Expression(
+                  kind: Add(Expression(
+                    kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
                     span: Span(
-                      start: 7,
-                      end: 8,
+                      start: 3,
+                      end: 4,
                     ),
                   ), Expression(
-                    kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+                    kind: Mul(Expression(
+                      kind: IntLit(Interned(14671982871472631300, PhantomData), Decimal),
+                      span: Span(
+                        start: 7,
+                        end: 8,
+                      ),
+                    ), Expression(
+                      kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+                      span: Span(
+                        start: 11,
+                        end: 12,
+                      ),
+                    )),
                     span: Span(
-                      start: 11,
+                      start: 7,
                       end: 12,
                     ),
                   )),
                   span: Span(
-                    start: 7,
+                    start: 3,
                     end: 12,
                   ),
                 )),
@@ -70,16 +76,22 @@ Ok(Expression(
             ),
           ), Expression(
             kind: Member(Expression(
-              kind: Div(Expression(
-                kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+              kind: Grouping(Expression(
+                kind: Div(Expression(
+                  kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+                  span: Span(
+                    start: 28,
+                    end: 29,
+                  ),
+                ), Expression(
+                  kind: IntLit(Interned(15401311348005721897, PhantomData), Decimal),
+                  span: Span(
+                    start: 32,
+                    end: 33,
+                  ),
+                )),
                 span: Span(
                   start: 28,
-                  end: 29,
-                ),
-              ), Expression(
-                kind: IntLit(Interned(15401311348005721897, PhantomData), Decimal),
-                span: Span(
-                  start: 32,
                   end: 33,
                 ),
               )),

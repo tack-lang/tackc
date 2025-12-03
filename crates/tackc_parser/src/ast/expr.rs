@@ -66,6 +66,8 @@ impl Expression {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExpressionKind {
+    Grouping(Box<Expression>),
+
     Add(Box<Expression>, Box<Expression>),
     Sub(Box<Expression>, Box<Expression>),
     Mul(Box<Expression>, Box<Expression>),
@@ -102,6 +104,7 @@ impl AstNode for Expression {
 
     fn display(&self, global: &Global) -> String {
         match &self.kind {
+            ExpressionKind::Grouping(inner) => inner.display(global),
             ExpressionKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))
             }
@@ -216,12 +219,12 @@ where
         }
         TokenKind::LParen => {
             // Ignore parse mode
-            let mut rhs =
-                parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
+            let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
             let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
-            rhs.span.start = tok.span.start;
-            rhs.span.end = closing.span.end;
-            Ok(rhs)
+            Ok(Expression::new(
+                ExpressionKind::Grouping(Box::new(inner)),
+                Span::new_from(tok.span.start, closing.span.end),
+            ))
         }
         _ => {
             p.restore(snapshot);
