@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = { workspace = true }
-tackc_fuzz = { version = "0.0.0", path = "../shared" }
+tackc_fuzz = { workspace = true }
 
 [[bin]]
 name = "full"

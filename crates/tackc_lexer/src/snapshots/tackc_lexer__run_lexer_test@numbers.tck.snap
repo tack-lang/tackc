@@ -1,0 +1,224 @@
+---
+source: crates/tackc_lexer/src/lib.rs
+expression: tokens
+input_file: crates/tackc_lexer/src/lexer/numbers.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 1,
+    ),
+    kind: IntLit(Interned(15401311348005721897, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 2,
+      end: 3,
+    ),
+    kind: IntLit(Interned(14671982871472631300, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 4,
+      end: 6,
+    ),
+    kind: IntLit(Interned(5800574621409966716, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 7,
+      end: 10,
+    ),
+    kind: IntLit(Interned(9921023479053410560, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 11,
+      end: 14,
+    ),
+    kind: FloatLit(Interned(11252680172489277155, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 15,
+      end: 18,
+    ),
+    kind: FloatLit(Interned(13247015695336138815, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 19,
+      end: 24,
+    ),
+    kind: FloatLit(Interned(11619216975903642240, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 25,
+      end: 31,
+    ),
+    kind: FloatLit(Interned(8291078580692345202, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 32,
+      end: 43,
+    ),
+    kind: FloatLit(Interned(2514053633829654485, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 44,
+      end: 48,
+    ),
+    kind: FloatLit(Interned(2999145440443515569, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 49,
+      end: 51,
+    ),
+    kind: FloatLit(Interned(5094947213300474516, PhantomData)),
+  )),
+  Err(Error(
+    span: Span(
+      start: 52,
+      end: 56,
+    ),
+    kind: MissingExponentDigits,
+  )),
+  Err(Error(
+    span: Span(
+      start: 57,
+      end: 61,
+    ),
+    kind: MissingExponentDigits,
+  )),
+  Err(Error(
+    span: Span(
+      start: 62,
+      end: 67,
+    ),
+    kind: MissingExponentDigits,
+  )),
+  Err(Error(
+    span: Span(
+      start: 68,
+      end: 74,
+    ),
+    kind: MissingExponentDigits,
+  )),
+  Err(Error(
+    span: Span(
+      start: 75,
+      end: 83,
+    ),
+    kind: MissingExponentDigits,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 84,
+      end: 86,
+    ),
+    kind: IntLit(Interned(4880640598873580246, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 86,
+      end: 87,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 87,
+      end: 88,
+    ),
+    kind: Ident(Interned(15449907369533685370, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 89,
+      end: 92,
+    ),
+    kind: IntLit(Interned(17582243207649602868, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 92,
+      end: 93,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 93,
+      end: 94,
+    ),
+    kind: Ident(Interned(15449907369533685370, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 95,
+      end: 98,
+    ),
+    kind: FloatLit(Interned(5590456642135288569, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 99,
+      end: 103,
+    ),
+    kind: FloatLit(Interned(11496616196227745784, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 104,
+      end: 108,
+    ),
+    kind: FloatLit(Interned(11125180283955857087, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 109,
+      end: 116,
+    ),
+    kind: FloatLit(Interned(3359943336504378245, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 117,
+      end: 122,
+    ),
+    kind: FloatLit(Interned(16440666526064113284, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 123,
+      end: 129,
+    ),
+    kind: FloatLit(Interned(13902153117040235252, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 130,
+      end: 136,
+    ),
+    kind: FloatLit(Interned(7949618146552845716, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 137,
+      end: 146,
+    ),
+    kind: FloatLit(Interned(13306423255111051860, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 147,
+      end: 157,
+    ),
+    kind: FloatLit(Interned(1468052424772581087, PhantomData)),
+  )),
+]

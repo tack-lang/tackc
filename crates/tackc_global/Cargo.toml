@@ -6,8 +6,6 @@ edition = "2024"
 [dependencies]
 bumpalo = { workspace = true, features = ["std"] }
 dashmap = { workspace = true }
-proptest = "1.9.0"
-proptest-derive = "0.7.0"
 rustc-hash = { workspace = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
 

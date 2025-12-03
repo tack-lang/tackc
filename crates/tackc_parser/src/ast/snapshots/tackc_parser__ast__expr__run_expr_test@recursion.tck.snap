@@ -1,0 +1,12 @@
+---
+source: crates/tackc_parser/src/ast/expr.rs
+expression: expr
+input_file: crates/tackc_parser/src/ast/expr/recursion.tck
+---
+Err(ParseErrors(
+  errors: [
+    ParseError(
+      kind: Recursion,
+    ),
+  ],
+))

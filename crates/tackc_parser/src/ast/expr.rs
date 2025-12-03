@@ -8,8 +8,6 @@ use tackc_global::{Global, Interned};
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
 
-use proptest::prelude::*;
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum ParseMode {
     Normal,
@@ -33,13 +31,29 @@ pub struct Expression {
     pub span: Span,
 }
 
-proptest! {
-    #[test]
-    fn expr_test(tokens: Vec<Token>) {
-        let iter = tokens.iter().copied();
-        let mut p = Parser::new(iter);
-        let _ = p.parse::<Expression>(0);
-    }
+#[test]
+#[cfg(feature = "serde")]
+fn expr_test_glob() {
+    use insta::glob;
+    
+    glob!("expr/*.tck", run_expr_test);
+}
+
+#[cfg(all(test, feature = "serde"))]
+use std::path::Path;
+
+#[cfg(all(test, feature = "serde"))]
+fn run_expr_test(path: &Path) {
+    use tackc_error::iter::IteratorExt;
+    use tackc_file::OwnedFile;
+    use tackc_lexer::Lexer;
+    
+    let global = Global::create_heap();
+    let src = OwnedFile::try_from(path.to_path_buf()).unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
+    let lexer = Lexer::new(&src, &global).consume_reporter(drop);
+    let mut p = Parser::new(lexer);
+    let expr = Expression::parse(&mut p, 0).expected("expression");
+    insta::assert_ron_snapshot!(expr);
 }
 
 impl Expression {

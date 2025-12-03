@@ -1,0 +1,21 @@
+---
+source: crates/tackc_lexer/src/lib.rs
+expression: tokens
+input_file: crates/tackc_lexer/src/lexer/non-ascii.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 50,
+    ),
+    kind: StringLit(Interned(17011932770600777675, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 52,
+      end: 109,
+    ),
+    kind: StringLit(Interned(14995452377924657312, PhantomData)),
+  )),
+]

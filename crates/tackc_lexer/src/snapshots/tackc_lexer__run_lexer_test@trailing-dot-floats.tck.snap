@@ -1,0 +1,77 @@
+---
+source: crates/tackc_lexer/src/lib.rs
+expression: tokens
+input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 1,
+    ),
+    kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 1,
+      end: 2,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 2,
+      end: 3,
+    ),
+    kind: Ident(Interned(6563574591185256773, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 4,
+      end: 6,
+    ),
+    kind: FloatLit(Interned(2739775576854559490, PhantomData)),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 7,
+      end: 8,
+    ),
+    kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 8,
+      end: 9,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 9,
+      end: 10,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 11,
+      end: 12,
+    ),
+    kind: IntLit(Interned(15401311348005721897, PhantomData), Decimal),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 12,
+      end: 13,
+    ),
+    kind: Dot,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 13,
+      end: 14,
+    ),
+    kind: Ident(Interned(2195687252668807314, PhantomData)),
+  )),
+]
