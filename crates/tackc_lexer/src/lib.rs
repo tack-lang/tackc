@@ -79,6 +79,11 @@ pub enum TokenKind {
     EqEq,
     BangEq,
 
+    Gt,
+    Lt,
+    GtEq,
+    LtEq,
+
     // Bitwise operators
     PipePipe,
 }
@@ -138,6 +143,11 @@ impl Display for TokenKind {
 
             TokenKind::EqEq => write!(f, "=="),
             TokenKind::BangEq => write!(f, "!="),
+
+            TokenKind::Gt => write!(f, ">"),
+            TokenKind::Lt => write!(f, "<"),
+            TokenKind::GtEq => write!(f, ">="),
+            TokenKind::LtEq => write!(f, "<="),
 
             TokenKind::PipePipe => write!(f, "||"),
         }
@@ -280,6 +290,17 @@ impl<'src, F: File> Lexer<'src, F> {
                 self.next_byte();
                 TokenKind::BangEq
             }
+            
+            ('>', Some(b'=')) => {
+                self.next_byte();
+                TokenKind::GtEq
+            }
+            ('<', Some(b'=')) => {
+                self.next_byte();
+                TokenKind::LtEq
+            }
+            ('>', _) => TokenKind::Gt,
+            ('<', _) => TokenKind::Lt,
 
             ('|', Some(b'|')) => {
                 self.next_byte();

@@ -69,9 +69,79 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
   )),
   Ok(Token(
     span: Span(
-      start: 20,
-      end: 21,
+      start: 19,
+      end: 20,
     ),
     kind: RParen,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 21,
+      end: 22,
+    ),
+    kind: LBrace,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 22,
+      end: 23,
+    ),
+    kind: RBrace,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 24,
+      end: 25,
+    ),
+    kind: LBracket,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 25,
+      end: 26,
+    ),
+    kind: RBracket,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 27,
+      end: 28,
+    ),
+    kind: Gt,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 29,
+      end: 30,
+    ),
+    kind: Lt,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 31,
+      end: 33,
+    ),
+    kind: GtEq,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 34,
+      end: 36,
+    ),
+    kind: LtEq,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 37,
+      end: 39,
+    ),
+    kind: EqEq,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 40,
+      end: 42,
+    ),
+    kind: BangEq,
   )),
 ]
