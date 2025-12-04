@@ -167,8 +167,8 @@ impl AstNode for Expression {
 pub enum BindingPower {
     None = 0,
 
-    EqualityLeft = 10,
-    EqualityRight = 11,
+    ComparisonLeft = 10,
+    ComparisonRight = 11,
 
     TermLeft = 20,
     TermRight = 21,
@@ -236,7 +236,7 @@ where
 fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
-        TokenKind::EqEq | TokenKind::BangEq => Some(P::EqualityLeft),
+        TokenKind::EqEq | TokenKind::BangEq | TokenKind::Gt | TokenKind::Lt | TokenKind::GtEq | TokenKind::LtEq => Some(P::ComparisonLeft),
         TokenKind::Plus | TokenKind::Minus => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
         TokenKind::LParen | TokenKind::LBracket | TokenKind::Dot => Some(P::Postfix),
@@ -398,7 +398,7 @@ where
             p,
             lhs,
             recursion + 1,
-            BindingPower::EqualityRight,
+            BindingPower::ComparisonRight,
             ExpressionKind::Equal,
             mode,
         ),
@@ -406,8 +406,40 @@ where
             p,
             lhs,
             recursion + 1,
-            BindingPower::EqualityRight,
+            BindingPower::ComparisonRight,
             ExpressionKind::NotEqual,
+            mode,
+        ),
+        TokenKind::Gt => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::ComparisonRight,
+            ExpressionKind::Gt,
+            mode,
+        ),
+        TokenKind::Lt => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::ComparisonRight,
+            ExpressionKind::Lt,
+            mode,
+        ),
+        TokenKind::GtEq => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::ComparisonRight,
+            ExpressionKind::GtEq,
+            mode,
+        ),
+        TokenKind::LtEq => led_binary(
+            p,
+            lhs,
+            recursion + 1,
+            BindingPower::ComparisonRight,
+            ExpressionKind::LtEq,
             mode,
         ),
         TokenKind::LParen => call(p, lhs, recursion + 1, mode),
