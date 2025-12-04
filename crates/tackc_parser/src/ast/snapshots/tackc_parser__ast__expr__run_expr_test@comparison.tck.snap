@@ -1,7 +1,7 @@
 ---
 source: crates/tackc_parser/src/ast/expr.rs
 expression: expr
-input_file: crates/tackc_parser/src/ast/expr/comparison.tck
+input_file: crates/tackc_parser/src/ast/expr-parse/comparison.tck
 ---
 Ok(Expression(
   kind: NotEqual(Expression(

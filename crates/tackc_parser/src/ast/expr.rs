@@ -36,7 +36,7 @@ pub struct Expression {
 fn expr_test_glob() {
     use insta::glob;
 
-    glob!("expr/*.tck", run_expr_test);
+    glob!("expr-parse/*.tck", run_expr_test);
 }
 
 #[cfg(all(test, feature = "serde"))]
