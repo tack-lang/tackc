@@ -1,7 +1,7 @@
 ---
 source: crates/tackc_parser/src/ast/expr.rs
 expression: expr
-input_file: crates/tackc_parser/src/ast/expr/operators.tck
+input_file: crates/tackc_parser/src/ast/expr-parse/operators.tck
 ---
 Ok(Expression(
   kind: Member(Expression(
