@@ -40,3 +40,6 @@ pub trait AstNode: Debug + PartialEq + Eq + Hash + Sized + Serde {
 
 mod expr;
 pub use expr::*;
+
+mod stmt;
+pub use stmt::*;
