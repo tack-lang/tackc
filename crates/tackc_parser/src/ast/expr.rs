@@ -236,7 +236,12 @@ where
 fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
-        TokenKind::EqEq | TokenKind::BangEq | TokenKind::Gt | TokenKind::Lt | TokenKind::GtEq | TokenKind::LtEq => Some(P::ComparisonLeft),
+        TokenKind::EqEq
+        | TokenKind::BangEq
+        | TokenKind::Gt
+        | TokenKind::Lt
+        | TokenKind::GtEq
+        | TokenKind::LtEq => Some(P::ComparisonLeft),
         TokenKind::Plus | TokenKind::Minus => Some(P::TermLeft),
         TokenKind::Star | TokenKind::Slash => Some(P::FactorLeft),
         TokenKind::LParen | TokenKind::LBracket | TokenKind::Dot => Some(P::Postfix),
