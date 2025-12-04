@@ -290,7 +290,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 self.next_byte();
                 TokenKind::BangEq
             }
-            
+
             ('>', Some(b'=')) => {
                 self.next_byte();
                 TokenKind::GtEq
