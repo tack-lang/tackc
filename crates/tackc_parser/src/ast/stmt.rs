@@ -54,29 +54,6 @@ pub struct ExpressionStatement {
     pub span: Span,
 }
 
-fn needs_semi(kind: &ExpressionKind) -> bool {
-    match kind {
-        ExpressionKind::Grouping(_)
-        | ExpressionKind::Add(_, _)
-        | ExpressionKind::Sub(_, _)
-        | ExpressionKind::Mul(_, _)
-        | ExpressionKind::Div(_, _)
-        | ExpressionKind::Neg(_)
-        | ExpressionKind::Call(_, _)
-        | ExpressionKind::Index(_, _)
-        | ExpressionKind::Member(_, _)
-        | ExpressionKind::Equal(_, _)
-        | ExpressionKind::NotEqual(_, _)
-        | ExpressionKind::Gt(_, _)
-        | ExpressionKind::Lt(_, _)
-        | ExpressionKind::GtEq(_, _)
-        | ExpressionKind::LtEq(_, _)
-        | ExpressionKind::Binding(_)
-        | ExpressionKind::IntLit(_, _)
-        | ExpressionKind::FloatLit(_) => true,
-    }
-}
-
 impl ExpressionStatement {
     fn new(inner: Expression, span: Span) -> Self {
         ExpressionStatement { inner, span }
@@ -89,15 +66,10 @@ impl AstNode for ExpressionStatement {
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
         let expr = p.parse::<Expression>(recursion + 1)?;
-        if needs_semi(&expr.kind) {
-            let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
-            let span = Span::new_from(expr.span.start, semi.span.end);
+        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+        let span = Span::new_from(expr.span.start, semi.span.end);
 
-            Ok(ExpressionStatement::new(expr, span))
-        } else {
-            let span = expr.span;
-            Ok(ExpressionStatement::new(expr, span))
-        }
+        Ok(ExpressionStatement::new(expr, span))
     }
 
     fn span(&self) -> Span {
