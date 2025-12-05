@@ -4,7 +4,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, ExpressionKind, Symbol},
+    ast::{AstNode, Expression, Symbol},
     error::{DiagResult, Result},
 };
 
