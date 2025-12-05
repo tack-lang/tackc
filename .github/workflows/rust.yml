@@ -79,6 +79,8 @@ jobs:
                 RUSTFLAGS: "-D warnings"
             - name: Run Tests
               run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --all-features --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+              env:
+                CI: true
     once:
         name: One-time Job
         runs-on: ubuntu-slim
