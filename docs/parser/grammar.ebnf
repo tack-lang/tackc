@@ -3,6 +3,13 @@
     This grammar does not encode precedence or associativity, and is heavily ambiguous.
 *)
 
+Stmt = LetStmt
+    | ExprStmt
+    ;
+
+LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
+ExprStmt = Expr SEMICOLON ;
+
 Expr = Primary
     | Infix
     | Prefix
@@ -14,12 +21,12 @@ Postfix = MemberAccess
     | Call
     | Index
     ;
-Infix = Expr ( PLUS | DASH | STAR | SLASH ) Expr ;
-Prefix = ( PLUS | DASH ) Expr ;
-Grouping = OPEN_PAREN Expr CLOSE_PAREN ;
+Infix = Expr InfixOp Expr ;
+Prefix = PrefixOp Expr ;
+Grouping = L_PAREN Expr R_PAREN ;
 MemberAccess = Expr DOT IDENTIFIER ;
-Call = Expr OPEN_PAREN ArgumentList? CLOSE_PAREN ;
-Index = Expr OPEN_BRACKET Expr CLOSE_BRACKET ;
+Call = Expr L_PAREN ArgumentList? R_PAREN ;
+Index = Expr L_BRACKET Expr R_BRACKET ;
 
 ArgumentList = Expr ( COMMA Expr )* ;
 
@@ -35,12 +42,15 @@ PostfixNB = MemberAccessNB
     | CallNB
     | IndexNB
     ;
-InfixNB = ExprNB ( PLUS | DASH | STAR | SLASH ) ExprNB ;
-PrefixNB = ( PLUS | DASH ) ExprNB ;
+InfixNB = ExprNB InfixOp ExprNB ;
+PrefixNB = PrefixOp ExprNB ;
 (* No GroupingNB *)
 MemberAccessNB = ExprNB DOT IDENTIFIER ;
-CallNB = ExprNB OPEN_PAREN ArgumentList? CLOSE_PAREN ; (* No ArgumentListNB *)
-IndexNB = ExprNB OPEN_BRACKET Expr CLOSE_BRACKET ; (* Uses Expr inside brackets *)
+CallNB = ExprNB L_PAREN ArgumentList? R_PAREN ; (* No ArgumentListNB *)
+IndexNB = ExprNB L_BRACKET Expr R_BRACKET ; (* Uses Expr inside brackets *)
+
+InfixOp = PLUS | DASH | STAR | SLASH | EQ_EQ | BANG_EQ | GT | LT | GT_EQ | LT_EQ ;
+PrefixOp = PLUS | DASH ;
 
 Primary = Literal
     | IDENTIFIER
