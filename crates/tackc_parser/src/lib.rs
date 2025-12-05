@@ -77,8 +77,10 @@ where
         self.iter.clone().next()
     }
 
-    /// Returns a recursion error if `recursion` is greater than [`MAX_RECURSION_DEPTH`].
-    #[allow(clippy::missing_errors_doc)]
+    /// This function can be used to ensure `recursion` is below the maximum recursion depth.
+    ///
+    /// # Errors
+    /// This function returns a recursion error if `recursion` is greater than [`MAX_RECURSION_DEPTH`].
     pub fn check_recursion(&self, recursion: u32) -> Result<()> {
         if recursion > MAX_RECURSION_DEPTH.load(Ordering::Acquire) {
             Err(ParseErrors::new(ParseError::recursion()))

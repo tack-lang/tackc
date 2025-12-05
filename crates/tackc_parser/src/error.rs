@@ -30,6 +30,7 @@ impl ParseErrors {
         self.errors.push(diag);
     }
 
+    /// This function takes the most recent error from `self` and changes it's `expected` field to `Some(str)` if it's `None`.
     #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
         debug_assert!(!self.errors.is_empty());
