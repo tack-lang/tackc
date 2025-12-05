@@ -21,7 +21,6 @@ impl AstNode for Statement {
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
         let tok = p.expect_peek_token(None)?;
-        #[allow(clippy::match_single_binding)]
         match tok.kind {
             TokenKind::Let => p
                 .parse::<LetStatement>(recursion + 1)

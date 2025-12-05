@@ -142,7 +142,6 @@ impl Span {
     ///
     /// # Panics
     /// Panics if `string` is shorter than the end of the span.
-    #[allow(clippy::cast_possible_truncation)]
     pub fn apply_bytes<'a>(&self, string: &'a str) -> &'a str {
         assert!(
             string.len() >= self.end as usize,

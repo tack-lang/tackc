@@ -155,7 +155,6 @@ impl Global {
     ///
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`, or in the event of a hash collision.
-    #[allow(clippy::missing_panics_doc)]
     pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
         <dyn Any>::downcast_ref::<T>(
             &**self

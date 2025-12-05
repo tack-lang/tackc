@@ -396,7 +396,6 @@ impl<'src, F: File> Lexer<'src, F> {
         lexeme.chars().filter(|&c| c != '_').collect()
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, Error> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
@@ -470,7 +469,6 @@ impl<'src, F: File> Lexer<'src, F> {
         }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn handle_float_with_exponent(&mut self) -> Result<Token, Error> {
         if let Some(b'-' | b'+') = self.current_byte() {
             self.next_byte();
@@ -487,7 +485,7 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn handle_ident_or_keyword(&mut self) -> Result<Token, Error> {
+    fn handle_ident_or_keyword(&mut self) -> Token {
         while let Some(c) = self.current_byte() {
             match c {
                 b'_' => {}
@@ -504,7 +502,7 @@ impl<'src, F: File> Lexer<'src, F> {
             ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
 
-        Ok(self.make_token(ty))
+        self.make_token(ty)
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -521,8 +519,8 @@ impl<'src, F: File> Lexer<'src, F> {
         match self.next_byte().unwrap() {
             b'"' => self.handle_string_lit(),
             c if c.is_ascii_digit() => self.handle_num_lit(c),
-            c if c.is_ascii_alphabetic() => self.handle_ident_or_keyword(),
-            b'_' => self.handle_ident_or_keyword(),
+            c if c.is_ascii_alphabetic() => Ok(self.handle_ident_or_keyword()),
+            b'_' => Ok(self.handle_ident_or_keyword()),
             c if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
 
