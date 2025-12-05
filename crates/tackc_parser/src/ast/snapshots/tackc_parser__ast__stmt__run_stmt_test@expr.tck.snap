@@ -1,25 +1,43 @@
 ---
 source: crates/tackc_parser/src/ast/stmt.rs
 expression: expr
-input_file: crates/tackc_parser/src/ast/stmt-parse/expr-stmt.tck
+input_file: crates/tackc_parser/src/ast/stmt-parse/expr.tck
 ---
 Ok(ExpressionStatement(ExpressionStatement(
   inner: Expression(
     kind: Add(Expression(
-      kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+      kind: IntLit(Symbol(
+        span: Span(
+          start: 0,
+          end: 1,
+        ),
+        ident: Interned(12543183117416492085, PhantomData),
+      ), Decimal),
       span: Span(
         start: 0,
         end: 1,
       ),
     ), Expression(
       kind: Mul(Expression(
-        kind: IntLit(Interned(14671982871472631300, PhantomData), Decimal),
+        kind: IntLit(Symbol(
+          span: Span(
+            start: 4,
+            end: 5,
+          ),
+          ident: Interned(14671982871472631300, PhantomData),
+        ), Decimal),
         span: Span(
           start: 4,
           end: 5,
         ),
       ), Expression(
-        kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
+        kind: IntLit(Symbol(
+          span: Span(
+            start: 8,
+            end: 9,
+          ),
+          ident: Interned(14894071113539278494, PhantomData),
+        ), Decimal),
         span: Span(
           start: 8,
           end: 9,

@@ -4,14 +4,15 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, ExpressionKind},
-    error::Result,
+    ast::{AstNode, Expression, ExpressionKind, Symbol},
+    error::{DiagResult, Result},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Statement {
     ExpressionStatement(ExpressionStatement),
+    LetStatement(LetStatement),
 }
 
 impl AstNode for Statement {
@@ -22,6 +23,9 @@ impl AstNode for Statement {
         let tok = p.expect_peek_token(None)?;
         #[allow(clippy::match_single_binding)]
         match tok.kind {
+            TokenKind::Let => p
+                .parse::<LetStatement>(recursion + 1)
+                .map(Statement::LetStatement),
             _ => p
                 .parse::<ExpressionStatement>(recursion + 1)
                 .map(Statement::ExpressionStatement),
@@ -31,12 +35,14 @@ impl AstNode for Statement {
     fn span(&self) -> Span {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.span(),
+            Statement::LetStatement(stmt) => stmt.span(),
         }
     }
 
     fn display(&self, global: &Global) -> String {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.display(global),
+            Statement::LetStatement(stmt) => stmt.display(global),
         }
     }
 }
@@ -103,6 +109,70 @@ impl AstNode for ExpressionStatement {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct LetStatement {
+    pub ident: Symbol,
+    pub ty: Option<Expression>,
+    pub expr: Option<Expression>,
+    pub span: Span,
+}
+
+impl AstNode for LetStatement {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = tackc_lexer::Token> + Clone,
+    {
+        let let_tok = p.expect_token_kind(None, token_kind!(TokenKind::Let))?;
+        let ident = p.identifier()?;
+        let ty = if p.consume(token_kind!(TokenKind::Colon)).is_some() {
+            Some(
+                p.parse::<Expression>(recursion + 1)
+                    .expected("expression")?,
+            )
+        } else {
+            None
+        };
+
+        let expr = if p.consume(token_kind!(TokenKind::Eq)).is_some() {
+            Some(
+                p.parse::<Expression>(recursion + 1)
+                    .expected("expression")?,
+            )
+        } else {
+            None
+        };
+
+        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+
+        Ok(LetStatement {
+            ident,
+            ty,
+            expr,
+            span: Span::new_from(let_tok.span.start, semi.span.end),
+        })
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn display(&self, global: &Global) -> String {
+        format!(
+            "let {}{}{};",
+            self.ident.display(global),
+            self.ty
+                .as_ref()
+                .map(|ty| format!(": {}", ty.display(global)))
+                .unwrap_or_default(),
+            self.expr
+                .as_ref()
+                .map(|expr| format!(" = {}", expr.display(global)))
+                .unwrap_or_default()
+        )
+    }
+}
+
 #[test]
 #[cfg(feature = "serde")]
 fn stmt_test_glob() {
@@ -127,6 +197,6 @@ fn run_stmt_test(path: &Path) {
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
     let mut p = Parser::new(lexer);
-    let expr = Statement::parse(&mut p, 0).expected("expression");
+    let expr = Statement::parse(&mut p, 0).expected("statement");
     insta::assert_ron_snapshot!(expr);
 }

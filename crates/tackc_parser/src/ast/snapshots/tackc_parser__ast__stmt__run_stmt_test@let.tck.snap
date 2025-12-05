@@ -1,0 +1,80 @@
+---
+source: crates/tackc_parser/src/ast/stmt.rs
+expression: expr
+input_file: crates/tackc_parser/src/ast/stmt-parse/let.tck
+---
+Ok(LetStatement(LetStatement(
+  ident: Symbol(
+    span: Span(
+      start: 4,
+      end: 5,
+    ),
+    ident: Interned(7125721452462380643, PhantomData),
+  ),
+  ty: Some(Expression(
+    kind: IntLit(Symbol(
+      span: Span(
+        start: 7,
+        end: 8,
+      ),
+      ident: Interned(12543183117416492085, PhantomData),
+    ), Decimal),
+    span: Span(
+      start: 7,
+      end: 8,
+    ),
+  )),
+  expr: Some(Expression(
+    kind: Add(Expression(
+      kind: IntLit(Symbol(
+        span: Span(
+          start: 11,
+          end: 12,
+        ),
+        ident: Interned(12543183117416492085, PhantomData),
+      ), Decimal),
+      span: Span(
+        start: 11,
+        end: 12,
+      ),
+    ), Expression(
+      kind: Mul(Expression(
+        kind: IntLit(Symbol(
+          span: Span(
+            start: 15,
+            end: 16,
+          ),
+          ident: Interned(4091593736821351671, PhantomData),
+        ), Decimal),
+        span: Span(
+          start: 15,
+          end: 16,
+        ),
+      ), Expression(
+        kind: IntLit(Symbol(
+          span: Span(
+            start: 19,
+            end: 20,
+          ),
+          ident: Interned(14671982871472631300, PhantomData),
+        ), Decimal),
+        span: Span(
+          start: 19,
+          end: 20,
+        ),
+      )),
+      span: Span(
+        start: 15,
+        end: 20,
+      ),
+    )),
+    span: Span(
+      start: 11,
+      end: 20,
+    ),
+  )),
+  span: Span(
+    start: 0,
+    end: 21,
+  ),
+)))
