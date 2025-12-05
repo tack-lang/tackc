@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::error::Result;
-use tackc_global::Global;
+use tackc_global::{Global, Interned};
 use tackc_lexer::Token;
 use tackc_span::Span;
 
@@ -43,3 +43,20 @@ pub use expr::*;
 
 mod stmt;
 pub use stmt::*;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Symbol {
+    pub span: Span,
+    pub ident: Interned<str>,
+}
+
+impl Symbol {
+    pub fn new(span: Span, ident: Interned<str>) -> Self {
+        Symbol { span, ident }
+    }
+
+    pub fn display<'a>(&self, global: &'a Global) -> &'a str {
+        self.ident.display(global)
+    }
+}

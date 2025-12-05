@@ -5,11 +5,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use error::{ParseError, ParseErrors, Result};
 
-use tackc_global::Interned;
 use tackc_lexer::{Token, TokenKind};
-use tackc_span::Span;
 
-use crate::ast::AstNode;
+use crate::ast::{AstNode, Symbol};
 
 pub static MAX_RECURSION_DEPTH: AtomicU32 = AtomicU32::new(256);
 
@@ -141,7 +139,7 @@ where
     ///
     /// # Errors
     /// This function returns an error if the next token isn't an identifier.
-    pub fn identifier(&mut self) -> Result<(Interned<str>, Span)> {
+    pub fn identifier(&mut self) -> Result<Symbol> {
         let Token {
             span,
             kind: TokenKind::Ident(ident),
@@ -149,7 +147,7 @@ where
         else {
             unreachable!()
         };
-        Ok((ident, span))
+        Ok(Symbol::new(span, ident))
     }
 
     /// Consumes the next token, returning an 'unexpected EOF' error on failure.
