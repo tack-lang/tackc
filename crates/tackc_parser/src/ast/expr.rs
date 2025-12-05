@@ -3,8 +3,9 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
+use crate::ast::Symbol;
 use crate::error::{DiagResult, ParseError, ParseErrors, Result};
-use tackc_global::{Global, Interned};
+use tackc_global::Global;
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
 
@@ -76,7 +77,7 @@ pub enum ExpressionKind {
 
     Call(Box<Expression>, Vec<Expression>),
     Index(Box<Expression>, Box<Expression>),
-    Member(Box<Expression>, Interned<str>),
+    Member(Box<Expression>, Symbol),
 
     Equal(Box<Expression>, Box<Expression>),
     NotEqual(Box<Expression>, Box<Expression>),
@@ -85,9 +86,9 @@ pub enum ExpressionKind {
     GtEq(Box<Expression>, Box<Expression>),
     LtEq(Box<Expression>, Box<Expression>),
 
-    Binding(Interned<str>),
-    IntLit(Interned<str>, IntegerBase),
-    FloatLit(Interned<str>),
+    Binding(Symbol),
+    IntLit(Symbol, IntegerBase),
+    FloatLit(Symbol),
 }
 
 impl AstNode for Expression {
@@ -187,11 +188,18 @@ where
 {
     let tok = p.expect_token(None)?;
     match tok.kind {
-        TokenKind::Ident(ident) => Ok(Expression::new(ExpressionKind::Binding(ident), tok.span)),
-        TokenKind::IntLit(str, base) => {
-            Ok(Expression::new(ExpressionKind::IntLit(str, base), tok.span))
-        }
-        TokenKind::FloatLit(str) => Ok(Expression::new(ExpressionKind::FloatLit(str), tok.span)),
+        TokenKind::Ident(ident) => Ok(Expression::new(
+            ExpressionKind::Binding(Symbol::new(tok.span, ident)),
+            tok.span,
+        )),
+        TokenKind::IntLit(str, base) => Ok(Expression::new(
+            ExpressionKind::IntLit(Symbol::new(tok.span, str), base),
+            tok.span,
+        )),
+        TokenKind::FloatLit(str) => Ok(Expression::new(
+            ExpressionKind::FloatLit(Symbol::new(tok.span, str)),
+            tok.span,
+        )),
         _ => Err(ParseErrors::new(ParseError::new(None, tok))),
     }
 }
@@ -278,12 +286,12 @@ fn member<I>(p: &mut Parser<I>, lhs: Expression) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let (ident, span) = p.identifier()?;
+    let ident = p.identifier()?;
     let lhs_span = lhs.span;
 
     Ok(OperatorResult::Continue(Expression::new(
         ExpressionKind::Member(Box::new(lhs), ident),
-        Span::new_from(lhs_span.start, span.end),
+        Span::new_from(lhs_span.start, ident.span.end),
     )))
 }
 
