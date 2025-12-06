@@ -118,6 +118,7 @@ impl ParseError {
     ///
     /// # Panics
     /// This function will panic if the file supplied is too short to contain the token used for the error.
+    /// This function will also panic if the expected field is set to `None`.
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
         let ParseError {
             kind:
@@ -132,9 +133,7 @@ impl ParseError {
         };
 
         let Some(expected) = expected else {
-            panic!(
-                "expected() was not called before displaying this error. this is a bug, please open an issue report."
-            );
+            panic!("expected() was not called before displaying this error.");
         };
 
         let mut f = String::new();

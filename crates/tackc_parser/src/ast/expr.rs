@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::Symbol;
+use crate::ast::{Block, Symbol};
 use crate::error::{DiagResult, ParseError, ParseErrors, Result};
 use tackc_global::Global;
 use tackc_lexer::{IntegerBase, Token, TokenKind};
@@ -89,6 +89,8 @@ pub enum ExpressionKind {
     Binding(Symbol),
     IntLit(Symbol, IntegerBase),
     FloatLit(Symbol),
+
+    Block(Box<Block>),
 }
 
 impl AstNode for Expression {
@@ -160,6 +162,8 @@ impl AstNode for Expression {
             ExpressionKind::Binding(ident) => ident.display(global).to_string(),
             ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
             ExpressionKind::FloatLit(str) => str.display(global).to_string(),
+
+            ExpressionKind::Block(block) => block.display(global),
         }
     }
 }
@@ -208,16 +212,19 @@ fn parse_prefix<I>(p: &mut Parser<I>, recursion: u32, mode: ParseMode) -> Result
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let snapshot = p.snapshot();
-    let tok = p.expect_token(None)?;
+    let tok = p.expect_peek_token(None)?;
     match tok.kind {
         TokenKind::Plus => {
+            p.next_token();
+
             // Drop unary `+`, does nothing
             let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
             rhs.span.start = tok.span.start;
             Ok(rhs)
         }
         TokenKind::Minus => {
+            p.next_token();
+
             let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
             let rhs_span = rhs.span;
             Ok(Expression::new(
@@ -226,6 +233,8 @@ where
             ))
         }
         TokenKind::LParen => {
+            p.next_token();
+
             // Ignore parse mode
             let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
             let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
@@ -234,10 +243,16 @@ where
                 Span::new_from(tok.span.start, closing.span.end),
             ))
         }
-        _ => {
-            p.restore(snapshot);
-            parse_primary(p)
+        TokenKind::LBrace => {
+            let block = p.parse::<Block>(recursion + 1)?;
+            let span = block.span;
+
+            Ok(Expression::new(
+                ExpressionKind::Block(Box::new(block)),
+                span,
+            ))
         }
+        _ => parse_primary(p),
     }
 }
 
