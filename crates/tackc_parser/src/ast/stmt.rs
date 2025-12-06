@@ -97,10 +97,7 @@ impl AstNode for LetStatement {
         let let_tok = p.expect_token_kind(None, token_kind!(TokenKind::Let))?;
         let ident = p.identifier()?;
         let ty = if p.consume(token_kind!(TokenKind::Colon)).is_some() {
-            Some(
-                p.parse::<Expression>(recursion + 1)
-                    .expected("expression")?,
-            )
+            Some(p.parse::<Expression>(recursion + 1).expected("type")?)
         } else {
             None
         };

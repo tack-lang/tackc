@@ -52,7 +52,7 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
             }
             _ => continue,
         }
-        out.push(i.try_into().unwrap());
+        out.push((i + 1).try_into().unwrap());
     }
 
     out

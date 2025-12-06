@@ -44,6 +44,9 @@ pub use expr::*;
 mod stmt;
 pub use stmt::*;
 
+mod block;
+pub use block::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Symbol {
