@@ -1,6 +1,8 @@
 const s = {
-    f(s,);
     const s = {
-        f(s,);
+        foo
+        bar;
     };
+
+    foo(s+);
 };
