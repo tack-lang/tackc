@@ -10,6 +10,36 @@ use crate::{
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
+fn sync_block<I>(p: &mut Parser<I>)
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let mut depth: u32 = 0;
+
+    loop {
+        let Some(tok) = p.peek_token() else { return };
+
+        match tok.kind {
+            TokenKind::LBrace => {
+                depth += 1;
+                p.next_token();
+            }
+            TokenKind::RBrace if depth == 0 => return,
+            TokenKind::RBrace => {
+                p.next_token();
+                depth -= 1;
+            }
+            TokenKind::Semicolon if depth == 0 => {
+                p.next_token();
+                return;
+            }
+            _ => {
+                p.next_token();
+            }
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
@@ -27,6 +57,8 @@ impl AstNode for Block {
 
         let l_brace = p.expect_token_kind(None, token_kind!(TokenKind::LBrace))?;
 
+        let mut errors: Option<ParseErrors> = None;
+
         let mut stmts = Vec::new();
         let expr = loop {
             if p.peek_is(token_kind!(TokenKind::RBrace)) {
@@ -38,19 +70,29 @@ impl AstNode for Block {
                 ))));
             }
 
+            // Use try_parse to help with synchronization
             match p
-                .parse::<StatementOrExpression>(recursion + 1)
+                .try_parse::<StatementOrExpression>(recursion + 1)
                 .expected("expression, statement, or '}'")
             {
                 Ok(StatementOrExpression::Expression(expr)) => break Some(expr),
                 Ok(StatementOrExpression::Statement(stmt)) => stmts.push(stmt),
                 Err(e) => {
-                    return Err(e);
+                    match &mut errors {
+                        Some(err) => err.merge(e),
+                        None => errors = Some(e),
+                    }
+
+                    sync_block(p);
                 }
             }
         };
 
         let r_brace = p.expect_token_kind(Some("'}'"), token_kind!(TokenKind::RBrace))?;
+
+        if let Some(e) = errors {
+            return Err(e);
+        }
 
         Ok(Block {
             span: Span::new_from(l_brace.span.start, r_brace.span.end),
