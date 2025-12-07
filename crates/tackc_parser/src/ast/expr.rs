@@ -32,67 +32,6 @@ pub struct Expression {
     pub span: Span,
 }
 
-#[test]
-#[cfg(feature = "serde")]
-fn expr_test_glob() {
-    use insta::glob;
-
-    glob!("expr-parse/*.tck", run_expr_test);
-}
-
-#[cfg(all(test, feature = "serde"))]
-use std::path::Path;
-
-#[cfg(all(test, feature = "serde"))]
-fn run_expr_test(path: &Path) {
-    use tackc_error::iter::IteratorExt;
-    use tackc_file::OwnedFile;
-    use tackc_lexer::Lexer;
-
-    let global = Global::create_heap();
-    let src = OwnedFile::try_from(path.to_path_buf())
-        .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
-    let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let mut p = Parser::new(lexer);
-    let expr = Expression::parse(&mut p, 0).expected("expression");
-    insta::assert_ron_snapshot!(expr);
-}
-
-impl Expression {
-    fn new(kind: ExpressionKind, span: Span) -> Self {
-        Expression { kind, span }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExpressionKind {
-    Grouping(Box<Expression>),
-
-    Add(Box<Expression>, Box<Expression>),
-    Sub(Box<Expression>, Box<Expression>),
-    Mul(Box<Expression>, Box<Expression>),
-    Div(Box<Expression>, Box<Expression>),
-    Neg(Box<Expression>),
-
-    Call(Box<Expression>, Vec<Expression>),
-    Index(Box<Expression>, Box<Expression>),
-    Member(Box<Expression>, Symbol),
-
-    Equal(Box<Expression>, Box<Expression>),
-    NotEqual(Box<Expression>, Box<Expression>),
-    Gt(Box<Expression>, Box<Expression>),
-    Lt(Box<Expression>, Box<Expression>),
-    GtEq(Box<Expression>, Box<Expression>),
-    LtEq(Box<Expression>, Box<Expression>),
-
-    Binding(Symbol),
-    IntLit(Symbol, IntegerBase),
-    FloatLit(Symbol),
-
-    Block(Box<Block>),
-}
-
 impl AstNode for Expression {
     fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
@@ -166,6 +105,67 @@ impl AstNode for Expression {
             ExpressionKind::Block(block) => block.display(global),
         }
     }
+}
+
+#[test]
+#[cfg(feature = "serde")]
+fn expr_test_glob() {
+    use insta::glob;
+
+    glob!("expr-parse/*.tck", run_expr_test);
+}
+
+#[cfg(all(test, feature = "serde"))]
+use std::path::Path;
+
+#[cfg(all(test, feature = "serde"))]
+fn run_expr_test(path: &Path) {
+    use tackc_error::iter::IteratorExt;
+    use tackc_file::OwnedFile;
+    use tackc_lexer::Lexer;
+
+    let global = Global::create_heap();
+    let src = OwnedFile::try_from(path.to_path_buf())
+        .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
+    let lexer = Lexer::new(&src, &global).consume_reporter(drop);
+    let mut p = Parser::new(lexer);
+    let expr = Expression::parse(&mut p, 0).expected("expression");
+    insta::assert_ron_snapshot!(expr);
+}
+
+impl Expression {
+    fn new(kind: ExpressionKind, span: Span) -> Self {
+        Expression { kind, span }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum ExpressionKind {
+    Grouping(Box<Expression>),
+
+    Add(Box<Expression>, Box<Expression>),
+    Sub(Box<Expression>, Box<Expression>),
+    Mul(Box<Expression>, Box<Expression>),
+    Div(Box<Expression>, Box<Expression>),
+    Neg(Box<Expression>),
+
+    Call(Box<Expression>, Vec<Expression>),
+    Index(Box<Expression>, Box<Expression>),
+    Member(Box<Expression>, Symbol),
+
+    Equal(Box<Expression>, Box<Expression>),
+    NotEqual(Box<Expression>, Box<Expression>),
+    Gt(Box<Expression>, Box<Expression>),
+    Lt(Box<Expression>, Box<Expression>),
+    GtEq(Box<Expression>, Box<Expression>),
+    LtEq(Box<Expression>, Box<Expression>),
+
+    Binding(Symbol),
+    IntLit(Symbol, IntegerBase),
+    FloatLit(Symbol),
+
+    Block(Box<Block>),
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]

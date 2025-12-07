@@ -6,8 +6,8 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Statement},
-    error::Result,
+    ast::{AstNode, Expression, Statement, StatementOrExpression},
+    error::{ParseError, ParseErrors, Result},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -23,6 +23,8 @@ impl AstNode for Block {
     where
         I: Iterator<Item = Token> + Clone,
     {
+        p.check_recursion(recursion)?;
+
         let l_brace = p.expect_token_kind(None, token_kind!(TokenKind::LBrace))?;
 
         let mut stmts = Vec::new();
@@ -30,15 +32,17 @@ impl AstNode for Block {
             if p.peek_is(token_kind!(TokenKind::RBrace)) {
                 break None;
             }
+            if p.is_eof() {
+                return Err(ParseErrors::new(ParseError::eof(Some(
+                    "expression, statement, or '}'",
+                ))));
+            }
 
-            match p.try_parse::<Statement>(recursion + 1) {
-                Ok(stmt) => stmts.push(stmt),
+            match p.parse::<StatementOrExpression>(recursion + 1) {
+                Ok(StatementOrExpression::Expression(expr)) => break Some(expr),
+                Ok(StatementOrExpression::Statement(stmt)) => stmts.push(stmt),
                 Err(e) => {
-                    // On statement error, parse an expression
-                    match p.parse::<Expression>(recursion + 1) {
-                        Ok(expr) => break Some(expr),
-                        Err(_) => return Err(e),
-                    }
+                    return Err(e);
                 }
             }
         };

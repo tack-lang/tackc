@@ -1,5 +1,5 @@
 use tackc_global::Global;
-use tackc_lexer::TokenKind;
+use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
 use crate::{
@@ -7,6 +7,58 @@ use crate::{
     ast::{AstNode, Expression, Symbol},
     error::{DiagResult, Result},
 };
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum StatementOrExpression {
+    Expression(Expression),
+    Statement(Statement),
+}
+
+impl AstNode for StatementOrExpression {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        let tok = p.expect_peek_token(None)?;
+        #[allow(clippy::single_match_else)]
+        match tok.kind {
+            TokenKind::Let => p
+                .parse::<LetStatement>(recursion + 1)
+                .map(Statement::LetStatement)
+                .map(StatementOrExpression::Statement),
+            _ => {
+                let expr = p.parse::<Expression>(recursion + 1)?;
+                if let Some(tok) = p.consume(token_kind!(TokenKind::Semicolon)) {
+                    let expr_span = expr.span;
+                    let stmt = ExpressionStatement::new(
+                        expr,
+                        Span::new_from(expr_span.start, tok.span.end),
+                    );
+                    Ok(StatementOrExpression::Statement(
+                        Statement::ExpressionStatement(stmt),
+                    ))
+                } else {
+                    Ok(StatementOrExpression::Expression(expr))
+                }
+            }
+        }
+    }
+
+    fn span(&self) -> Span {
+        match self {
+            StatementOrExpression::Expression(expr) => expr.span,
+            StatementOrExpression::Statement(stmt) => stmt.span(),
+        }
+    }
+
+    fn display(&self, global: &Global) -> String {
+        match self {
+            StatementOrExpression::Expression(expr) => expr.display(global),
+            StatementOrExpression::Statement(stmt) => stmt.display(global),
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -18,7 +70,7 @@ pub enum Statement {
 impl AstNode for Statement {
     fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
-        I: Iterator<Item = tackc_lexer::Token> + Clone,
+        I: Iterator<Item = Token> + Clone,
     {
         let tok = p.expect_peek_token(None)?;
         match tok.kind {
