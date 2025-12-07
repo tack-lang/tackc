@@ -1,5 +1,5 @@
 use std::path::Path;
-use tackc_parser::ast::Expression;
+use tackc_parser::ast::Statement;
 use tackc_parser::error::DiagResult;
 
 // Bring in the compiler pieces we want to fuzz
@@ -40,7 +40,7 @@ pub fn run(data: &[u8]) {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Expression::parse(&mut parser, 0).expected("expression");
+    let res = Statement::parse(&mut parser, 0).expected("statement");
     match res {
         Ok(s) => {
             s.display(&global);
