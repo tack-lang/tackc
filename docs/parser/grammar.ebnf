@@ -31,7 +31,7 @@ Call = Expr L_PAREN ArgumentList? R_PAREN ;
 Index = Expr L_BRACKET Expr R_BRACKET ;
 Block = L_BRACE Stmt* Expr? R_BRACE ;
 
-ArgumentList = Expr ( COMMA Expr )* ;
+ArgumentList = Expr ( COMMA Expr )* COMMA? ;
 
 (* Expressions that can't be ambiguous to expressions followed by blocks *)
 ExprNB = Primary
