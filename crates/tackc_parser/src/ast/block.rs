@@ -7,7 +7,7 @@ use tackc_span::Span;
 use crate::{
     Parser,
     ast::{AstNode, Expression, Statement, StatementOrExpression},
-    error::{ParseError, ParseErrors, Result},
+    error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -38,7 +38,7 @@ impl AstNode for Block {
                 ))));
             }
 
-            match p.parse::<StatementOrExpression>(recursion + 1) {
+            match p.parse::<StatementOrExpression>(recursion + 1).expected("expression, statement, or '}'") {
                 Ok(StatementOrExpression::Expression(expr)) => break Some(expr),
                 Ok(StatementOrExpression::Statement(stmt)) => stmts.push(stmt),
                 Err(e) => {
