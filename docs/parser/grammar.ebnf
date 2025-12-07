@@ -3,6 +3,10 @@
     This grammar does not encode precedence or associativity, and is heavily ambiguous.
 *)
 
+Item = ConstItem ;
+
+ConstItem = CONST IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
+
 Stmt = LetStmt
     | ExprStmt
     ;

@@ -8,7 +8,7 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::{
     Parser,
-    ast::{AstNode, Statement},
+    ast::{AstNode, Item},
     error::DiagResult,
 };
 
@@ -37,7 +37,7 @@ fn main() -> Result<()> {
 
     let mut parser = Parser::new(tokens.iter().copied());
 
-    let res = Statement::parse(&mut parser, 0).expected("statement");
+    let res = Item::parse(&mut parser, 0).expected("item");
     match res {
         Ok(prog) => {
             println!("{}", prog.display(global));
