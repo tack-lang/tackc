@@ -11,9 +11,14 @@ Stmt = Item
 LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
 ExprStmt = Expr SEMICOLON ;
 
-Item = ConstItem ;
+Item = ConstItem
+    | FuncItem
+    ;
 
 ConstItem = CONST IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
+FuncItem = FUNC IDENTIFIER OPEN_PAREN ParameterList? CLOSE_PAREN ExprNB? Block ;
+
+ParameterList = IDENTIFIER COLON Expr ( COMMA IDENTIFIER COLON Expr )* COMMA? ;
 
 Expr = Primary
     | Infix
