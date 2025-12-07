@@ -325,15 +325,11 @@ where
     )))
 }
 
-fn call<I>(
-    p: &mut Parser<I>,
-    lhs: Expression,
-    recursion: u32,
-) -> Result<OperatorResult>
+fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let mut args= Vec::new();
+    let mut args = Vec::new();
     while let Some(tok) = p.peek_token()
         && tok.kind != TokenKind::RParen
     {
