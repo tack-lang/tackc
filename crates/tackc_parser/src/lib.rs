@@ -1,19 +1,13 @@
 pub mod ast;
 pub mod error;
 
-use std::sync::atomic::{AtomicU32, Ordering};
-
 use error::{ParseError, ParseErrors, Result};
 
 use tackc_lexer::{Token, TokenKind};
 
 use crate::ast::{AstNode, Symbol};
 
-pub static MAX_RECURSION_DEPTH: AtomicU32 = AtomicU32::new(256);
-
-pub fn set_max_recursion_depth(depth: u32) {
-    MAX_RECURSION_DEPTH.store(depth, Ordering::Release);
-}
+pub const MAX_RECURSION_DEPTH: u32 = 256;
 
 pub struct ParserSnapshot<I>(I);
 
@@ -82,7 +76,7 @@ where
     /// # Errors
     /// This function returns a recursion error if `recursion` is greater than [`MAX_RECURSION_DEPTH`].
     pub fn check_recursion(&self, recursion: u32) -> Result<()> {
-        if recursion > MAX_RECURSION_DEPTH.load(Ordering::Acquire) {
+        if recursion > MAX_RECURSION_DEPTH {
             Err(ParseErrors::new(ParseError::recursion()))
         } else {
             Ok(())

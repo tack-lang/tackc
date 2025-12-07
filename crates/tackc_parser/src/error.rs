@@ -108,7 +108,7 @@ impl ParseError {
     }
 
     #[must_use]
-    pub fn recursion() -> Self {
+    pub const fn recursion() -> Self {
         ParseError {
             kind: ParseErrorKind::Recursion,
         }
