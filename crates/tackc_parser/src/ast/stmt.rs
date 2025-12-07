@@ -23,7 +23,8 @@ impl AstNode for StatementOrExpression {
         let tok = p.expect_peek_token(None)?;
         #[allow(clippy::single_match_else)]
         match tok.kind {
-            TokenKind::Const => p.parse::<Item>(recursion + 1)
+            TokenKind::Const => p
+                .parse::<Item>(recursion + 1)
                 .map(Statement::Item)
                 .map(StatementOrExpression::Statement),
             TokenKind::Let => p
@@ -195,12 +196,14 @@ fn run_stmt_test(path: &Path) {
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
     let mut p = Parser::new(lexer);
-    let expr = StatementOrExpression::parse(&mut p, 0).expected("statement").map(|stmt_or_expr| {
-        if let StatementOrExpression::Statement(stmt) = stmt_or_expr {
-            stmt
-        } else {
-            panic!("expected statement, found expression");
-        }
-    });
+    let expr = StatementOrExpression::parse(&mut p, 0)
+        .expected("statement")
+        .map(|stmt_or_expr| {
+            if let StatementOrExpression::Statement(stmt) = stmt_or_expr {
+                stmt
+            } else {
+                panic!("expected statement, found expression");
+            }
+        });
     insta::assert_ron_snapshot!(expr);
 }

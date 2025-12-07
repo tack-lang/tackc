@@ -38,7 +38,10 @@ impl AstNode for Block {
                 ))));
             }
 
-            match p.parse::<StatementOrExpression>(recursion + 1).expected("expression, statement, or '}'") {
+            match p
+                .parse::<StatementOrExpression>(recursion + 1)
+                .expected("expression, statement, or '}'")
+            {
                 Ok(StatementOrExpression::Expression(expr)) => break Some(expr),
                 Ok(StatementOrExpression::Statement(stmt)) => stmts.push(stmt),
                 Err(e) => {
