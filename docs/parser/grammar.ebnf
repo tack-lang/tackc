@@ -3,16 +3,17 @@
     This grammar does not encode precedence or associativity, and is heavily ambiguous.
 *)
 
-Item = ConstItem ;
-
-ConstItem = CONST IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
-
-Stmt = LetStmt
+Stmt = Item
+    | LetStmt
     | ExprStmt
     ;
 
 LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
 ExprStmt = Expr SEMICOLON ;
+
+Item = ConstItem ;
+
+ConstItem = CONST IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
 
 Expr = Primary
     | Infix
