@@ -329,39 +329,25 @@ fn call<I>(
     p: &mut Parser<I>,
     lhs: Expression,
     recursion: u32,
-    mode: ParseMode,
 ) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let tok = p.expect_peek_token(Some("')' or expression"))?;
-    let lhs_span = lhs.span;
-
-    if tok.kind == TokenKind::RParen {
-        p.next_token();
-        return Ok(OperatorResult::Continue(Expression::new(
-            ExpressionKind::Call(Box::new(lhs), Vec::new()),
-            Span::new_from(lhs_span.start, tok.span.end),
-        )));
-    }
-
-    let mut args = Vec::new();
-    let expr =
-        parse_expression(p, BindingPower::None, recursion + 1, mode).expected("expression")?;
-    args.push(expr);
-
+    let mut args= Vec::new();
     while let Some(tok) = p.peek_token()
         && tok.kind != TokenKind::RParen
     {
-        let _comma = p.expect_token_kind(Some("',' or ')'"), token_kind!(TokenKind::Comma))?;
-        // Ignore parse mode
         let expr = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
             .expected("expression")?;
         args.push(expr);
+        if p.consume(token_kind!(TokenKind::Comma)).is_none() {
+            break;
+        }
     }
 
     let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
 
+    let lhs_span = lhs.span;
     Ok(OperatorResult::Continue(Expression::new(
         ExpressionKind::Call(Box::new(lhs), args),
         Span::new_from(lhs_span.start, tok.span.end),
@@ -470,7 +456,7 @@ where
             ExpressionKind::LtEq,
             mode,
         ),
-        TokenKind::LParen => call(p, lhs, recursion + 1, mode),
+        TokenKind::LParen => call(p, lhs, recursion + 1),
         TokenKind::LBracket => index(p, lhs, recursion + 1), // Parse mode is not passed, since `index` only parses value inside brackets
         TokenKind::Dot => member(p, lhs), // Parse mode is not passed, since `member` never parses expressions
         _ => unreachable!(),
