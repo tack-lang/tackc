@@ -244,6 +244,10 @@ where
             ))
         }
         TokenKind::LBrace => {
+            if mode == ParseMode::NoBlocks {
+                return parse_primary(p);
+            }
+
             let block = p.parse::<Block>(recursion + 1)?;
             let span = block.span;
 
