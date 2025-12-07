@@ -5,10 +5,7 @@ use tackc_error::iter::IteratorExt;
 use tackc_file::BorrowedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::Parser;
-use tackc_parser::ast::AstNode;
-use tackc_parser::ast::Item;
-use tackc_parser::error::DiagResult;
+use tackc_parser::ast::Program;
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
@@ -35,12 +32,9 @@ pub fn run(data: &[u8]) {
         return;
     }
 
-    // Parser expects an iterator of `Token` that implements `Clone`.
-    let mut parser = Parser::new(tokens.iter().copied());
-
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Item::parse(&mut parser, 0).expected("item");
+    let res = Program::parse(tokens.iter().copied());
     match res {
         Ok(s) => {
             s.display(&global);
