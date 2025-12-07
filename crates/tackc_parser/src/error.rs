@@ -30,6 +30,24 @@ impl ParseErrors {
         self.errors.push(diag);
     }
 
+    #[allow(clippy::missing_panics_doc)]
+    pub fn clear_expected(&mut self) {
+        debug_assert!(!self.errors.is_empty());
+
+        let errors = self.errors.make_mut();
+        let last = errors.last_mut().unwrap();
+        match &mut last.kind {
+            ParseErrorKind::ExpectedFound {
+                expected,
+                found: _,
+                span: _,
+            } => {
+                *expected = None;
+            }
+            ParseErrorKind::Recursion => {}
+        }
+    }
+
     /// This function takes the most recent error from `self` and changes it's `expected` field to `Some(str)` if it's `None`.
     #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
@@ -172,6 +190,8 @@ pub trait DiagResult {
     fn pushed_with<F: FnOnce() -> ParseError>(self, diag: F) -> Self;
     #[must_use]
     fn expected(self, str: &'static str) -> Self;
+    #[must_use]
+    fn clear_expected(self) -> Self;
 }
 
 impl<T> DiagResult for Result<T> {
@@ -185,6 +205,13 @@ impl<T> DiagResult for Result<T> {
     fn expected(self, str: &'static str) -> Self {
         self.map_err(|mut e| {
             e.expected(str);
+            e
+        })
+    }
+
+    fn clear_expected(self) -> Self {
+        self.map_err(|mut e| {
+            e.clear_expected();
             e
         })
     }
