@@ -20,13 +20,16 @@ Expr = Primary
 Postfix = MemberAccess
     | Call
     | Index
+    | Block
     ;
 Infix = Expr InfixOp Expr ;
 Prefix = PrefixOp Expr ;
 Grouping = L_PAREN Expr R_PAREN ;
+
 MemberAccess = Expr DOT IDENTIFIER ;
 Call = Expr L_PAREN ArgumentList? R_PAREN ;
 Index = Expr L_BRACKET Expr R_BRACKET ;
+Block = L_BRACE Stmt* Expr? R_BRACE ;
 
 ArgumentList = Expr ( COMMA Expr )* ;
 
