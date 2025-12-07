@@ -1,0 +1,5 @@
+mod tack;
+
+func main() {
+    println(5);
+}

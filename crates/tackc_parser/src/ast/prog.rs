@@ -1,0 +1,145 @@
+use tackc_global::Global;
+use tackc_lexer::{Token, TokenKind};
+use tackc_span::Span;
+
+use crate::{
+    Parser,
+    ast::{AstNode, Item, Path},
+    error::{DiagResult, ParseErrors, Result},
+};
+
+fn sync_prog<I>(p: &mut Parser<I>)
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    p.next_token(); // Don't stop on first item 
+
+    let mut depth: u32 = 0;
+
+    loop {
+        let Some(tok) = p.peek_token() else { return };
+
+        match tok.kind {
+            TokenKind::LBrace => {
+                depth += 1;
+                p.next_token();
+            }
+            TokenKind::RBrace if depth == 0 => return,
+            TokenKind::RBrace => {
+                p.next_token();
+                depth -= 1;
+            }
+            TokenKind::Func | TokenKind::Const if depth == 0 => {
+                return;
+            }
+            _ => {
+                p.next_token();
+            }
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Program {
+    pub mod_stmt: ModStatement,
+    pub items: Vec<Item>,
+}
+
+impl Program {
+    /// This function will take an input of tokens, and parse a program from it.
+    /// The inputted iterator should be easily clonable.
+    ///
+    /// # Errors
+    /// This function will return an error if it fails to parse a full program.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn parse<I>(iter: I) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        let mut p = Parser::new(iter);
+        let mut errors: Option<ParseErrors> = None;
+
+        let mod_stmt = p
+            .parse::<ModStatement>(0)
+            .expected("`mod`")
+            .map_err(|e| {
+                match &mut errors {
+                    Some(errs) => {
+                        errs.merge(e);
+                    }
+                    None => errors = Some(e),
+                }
+                sync_prog(&mut p);
+            })
+            .ok();
+
+        let mut items = Vec::new();
+
+        while !p.is_eof() {
+            match p.parse::<Item>(0).expected("item") {
+                Ok(item) => items.push(item),
+                Err(e) => {
+                    match &mut errors {
+                        Some(err) => {
+                            err.merge(e);
+                        }
+                        None => errors = Some(e),
+                    }
+                    sync_prog(&mut p);
+                }
+            }
+        }
+
+        if let Some(e) = errors {
+            Err(e)
+        } else {
+            Ok(Program {
+                mod_stmt: mod_stmt.unwrap(),
+                items,
+            })
+        }
+    }
+
+    pub fn display(&self, global: &Global) -> String {
+        format!(
+            "{}\n{}",
+            self.mod_stmt.display(global),
+            self.items
+                .iter()
+                .map(|item| item.display(global))
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ModStatement {
+    pub span: Span,
+    pub path: Path,
+}
+
+impl AstNode for ModStatement {
+    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
+        let mod_tok = p.expect_token_kind(None, token_kind!(TokenKind::Mod))?;
+        let path = p.parse::<Path>(recursion + 1)?;
+        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+        Ok(ModStatement {
+            span: Span::new_from(mod_tok.span.start, semi.span.end),
+            path,
+        })
+    }
+
+    fn span(&self) -> Span {
+        self.span
+    }
+
+    fn display(&self, global: &Global) -> String {
+        format!("mod {};", self.path.display(global))
+    }
+}

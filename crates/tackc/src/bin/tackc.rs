@@ -6,11 +6,7 @@ use tackc_error::prelude::*;
 use tackc_file::OwnedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::{
-    Parser,
-    ast::{AstNode, Item},
-    error::DiagResult,
-};
+use tackc_parser::ast::Program;
 
 fn main() -> Result<()> {
     let global = Global::new();
@@ -35,9 +31,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let mut parser = Parser::new(tokens.iter().copied());
-
-    let res = Item::parse(&mut parser, 0).expected("item");
+    let res = Program::parse(tokens.iter().copied());
     match res {
         Ok(prog) => {
             println!("{}", prog.display(global));

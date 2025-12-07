@@ -46,6 +46,7 @@ pub enum TokenKind {
     Func,
     Let,
     Const,
+    Mod,
 
     // Delimeters
     LParen,
@@ -116,6 +117,7 @@ impl Display for TokenKind {
             TokenKind::Func => write!(f, "func"),
             TokenKind::Let => write!(f, "let"),
             TokenKind::Const => write!(f, "const"),
+            TokenKind::Mod => write!(f, "mod"),
 
             TokenKind::LParen => write!(f, "("),
             TokenKind::RParen => write!(f, ")"),
@@ -499,6 +501,7 @@ impl<'src, F: File> Lexer<'src, F> {
             "func" => TokenKind::Func,
             "let" => TokenKind::Let,
             "const" => TokenKind::Const,
+            "mod" => TokenKind::Mod,
             ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
 
