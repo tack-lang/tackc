@@ -42,6 +42,14 @@ impl AstNode for StatementOrExpression {
                     Ok(StatementOrExpression::Statement(
                         Statement::ExpressionStatement(stmt),
                     ))
+                } else if let Some(_tok) = p.consume(token_kind!(TokenKind::Eq)) {
+                    let rvalue = p.parse::<Expression>(recursion + 1)?;
+                    let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+                    Ok(StatementOrExpression::Statement(Statement::Assignment(Assignment {
+                        span: Span::new_from(expr.span.start, semi.span.end),
+                        lvalue: expr,
+                        rvalue,
+                    })))
                 } else {
                     Ok(StatementOrExpression::Expression(expr))
                 }
@@ -69,6 +77,7 @@ impl AstNode for StatementOrExpression {
 pub enum Statement {
     ExpressionStatement(ExpressionStatement),
     LetStatement(LetStatement),
+    Assignment(Assignment),
     Item(Item),
 }
 
@@ -78,6 +87,7 @@ impl Statement {
             Statement::ExpressionStatement(stmt) => stmt.span(),
             Statement::LetStatement(stmt) => stmt.span(),
             Statement::Item(item) => item.span(),
+            Statement::Assignment(stmt) => stmt.span(),
         }
     }
 
@@ -86,6 +96,7 @@ impl Statement {
             Statement::ExpressionStatement(stmt) => stmt.display(global),
             Statement::LetStatement(stmt) => stmt.display(global),
             Statement::Item(item) => item.display(global),
+            Statement::Assignment(stmt) => stmt.display(global),
         }
     }
 }
@@ -169,6 +180,24 @@ impl AstNode for LetStatement {
                 .map(|expr| format!(" = {}", expr.display(global)))
                 .unwrap_or_default()
         )
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Assignment {
+    pub span: Span,
+    pub lvalue: Expression,
+    pub rvalue: Expression,
+}
+
+impl Assignment {
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn display(&self, global: &Global) -> String {
+        format!("{} = {};", self.lvalue.display(global), self.rvalue.display(global))
     }
 }
 

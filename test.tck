@@ -1,7 +1,9 @@
 mod tack;
 
 func main() i32 {
-    add(5, 2)
+    let res = add(2, 5);
+    res = add(5, res);
+    res
 }
 
 func add(x: i32, y: i32) i32 {
