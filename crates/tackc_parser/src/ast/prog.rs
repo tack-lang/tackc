@@ -12,7 +12,7 @@ fn sync_prog<I>(p: &mut Parser<I>)
 where
     I: Iterator<Item = Token> + Clone,
 {
-    //p.next_token(); // Don't stop on first item
+    p.consume(token_kind!(TokenKind::Func | TokenKind::Const)); // Don't stop on first item
 
     let mut depth: u32 = 0;
 
