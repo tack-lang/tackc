@@ -5,39 +5,39 @@ input_file: crates/tackc_parser/src/ast/expr-parse/trailing-comma-call.tck
 ---
 Ok(Expression(
   kind: Call(Expression(
-    kind: Binding(Symbol(
+    kind: Primary(Binding(Symbol(
       span: Span(
         start: 0,
         end: 1,
       ),
       ident: Interned(6563574591185256773, PhantomData),
-    )),
+    ))),
     span: Span(
       start: 0,
       end: 1,
     ),
   ), [
     Expression(
-      kind: Binding(Symbol(
+      kind: Primary(Binding(Symbol(
         span: Span(
           start: 2,
           end: 3,
         ),
         ident: Interned(14504427626919653262, PhantomData),
-      )),
+      ))),
       span: Span(
         start: 2,
         end: 3,
       ),
     ),
     Expression(
-      kind: Binding(Symbol(
+      kind: Primary(Binding(Symbol(
         span: Span(
           start: 4,
           end: 5,
         ),
         ident: Interned(579860146683532731, PhantomData),
-      )),
+      ))),
       span: Span(
         start: 4,
         end: 5,
