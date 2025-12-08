@@ -32,10 +32,7 @@ pub enum PrimaryKind {
 
 impl Primary {
     fn new(span: Span, kind: PrimaryKind) -> Self {
-        Primary {
-            span,
-            kind,
-        }
+        Primary { span, kind }
     }
 }
 
@@ -46,9 +43,18 @@ impl AstNode for Primary {
     {
         let tok = p.expect_token(None)?;
         match tok.kind {
-            TokenKind::Ident(ident) => Ok(Primary::new(tok.span, PrimaryKind::Binding(Symbol::new(tok.span, ident)))),
-            TokenKind::IntLit(str, base) => Ok(Primary::new(tok.span, PrimaryKind::IntLit(Symbol::new(tok.span, str), base))),
-            TokenKind::FloatLit(str) => Ok(Primary::new(tok.span, PrimaryKind::FloatLit(Symbol::new(tok.span, str)))),
+            TokenKind::Ident(ident) => Ok(Primary::new(
+                tok.span,
+                PrimaryKind::Binding(Symbol::new(tok.span, ident)),
+            )),
+            TokenKind::IntLit(str, base) => Ok(Primary::new(
+                tok.span,
+                PrimaryKind::IntLit(Symbol::new(tok.span, str), base),
+            )),
+            TokenKind::FloatLit(str) => Ok(Primary::new(
+                tok.span,
+                PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
+            )),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
@@ -59,7 +65,9 @@ impl AstNode for Primary {
 
     fn display(&self, global: &Global) -> String {
         match self.kind {
-            PrimaryKind::Binding(sym) | PrimaryKind::FloatLit(sym) => sym.display(global).to_string(),
+            PrimaryKind::Binding(sym) | PrimaryKind::FloatLit(sym) => {
+                sym.display(global).to_string()
+            }
             PrimaryKind::IntLit(sym, base) => format!("{base}{}", sym.display(global)),
             PrimaryKind::U8 => "u8".to_string(),
             PrimaryKind::U16 => "u16".to_string(),
