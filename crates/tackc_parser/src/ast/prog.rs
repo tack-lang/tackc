@@ -24,7 +24,6 @@ where
                 depth += 1;
                 p.next_token();
             }
-            TokenKind::RBrace if depth == 0 => return,
             TokenKind::RBrace => {
                 p.next_token();
                 depth -= 1;
@@ -61,7 +60,7 @@ impl Program {
         let mut errors: Option<ParseErrors> = None;
 
         let mod_stmt = p
-            .parse::<ModStatement>(0)
+            .try_parse::<ModStatement>(0)
             .expected("`mod`")
             .map_err(|e| {
                 match &mut errors {
@@ -77,7 +76,7 @@ impl Program {
         let mut items = Vec::new();
 
         while !p.is_eof() {
-            match p.parse::<Item>(0).expected("item") {
+            match p.try_parse::<Item>(0).expected("item") {
                 Ok(item) => items.push(item),
                 Err(e) => {
                     match &mut errors {
