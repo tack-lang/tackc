@@ -44,12 +44,15 @@ impl AstNode for StatementOrExpression {
                     ))
                 } else if let Some(_tok) = p.consume(token_kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
-                    let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
-                    Ok(StatementOrExpression::Statement(Statement::Assignment(Assignment {
-                        span: Span::new_from(expr.span.start, semi.span.end),
-                        lvalue: expr,
-                        rvalue,
-                    })))
+                    let semi =
+                        p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+                    Ok(StatementOrExpression::Statement(Statement::Assignment(
+                        Assignment {
+                            span: Span::new_from(expr.span.start, semi.span.end),
+                            lvalue: expr,
+                            rvalue,
+                        },
+                    )))
                 } else {
                     Ok(StatementOrExpression::Expression(expr))
                 }
@@ -197,7 +200,11 @@ impl Assignment {
     }
 
     pub fn display(&self, global: &Global) -> String {
-        format!("{} = {};", self.lvalue.display(global), self.rvalue.display(global))
+        format!(
+            "{} = {};",
+            self.lvalue.display(global),
+            self.rvalue.display(global)
+        )
     }
 }
 
