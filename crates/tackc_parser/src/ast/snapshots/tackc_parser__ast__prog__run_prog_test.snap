@@ -3,212 +3,37 @@ source: crates/tackc_parser/src/ast/prog.rs
 expression: expr
 input_file: crates/tackc_parser/src/ast/prog-parse/basic.tck
 ---
-Ok(Program(
-  mod_stmt: ModStatement(
-    span: Span(
-      start: 0,
-      end: 9,
-    ),
-    path: Path(
-      span: Span(
-        start: 4,
-        end: 8,
-      ),
-      components: [
-        Symbol(
-          span: Span(
-            start: 4,
-            end: 8,
-          ),
-          ident: Interned(7250452609033638561, PhantomData),
-        ),
-      ],
-    ),
-  ),
-  items: [
-    FuncItem(FuncItem(
-      ident: Symbol(
-        span: Span(
-          start: 16,
-          end: 20,
-        ),
-        ident: Interned(812864953376315205, PhantomData),
-      ),
-      params: [],
-      ret_ty: Some(Expression(
-        kind: Binding(Symbol(
-          span: Span(
-            start: 23,
-            end: 26,
-          ),
-          ident: Interned(7010835363999694691, PhantomData),
-        )),
-        span: Span(
+Err(ParseErrors(
+  errors: [
+    ParseError(
+      kind: ExpectedFound(
+        expected: Some("type"),
+        found: I32,
+        span: Some(Span(
           start: 23,
           end: 26,
-        ),
-      )),
-      block: Block(
-        stmts: [],
-        expr: Some(Expression(
-          kind: Call(Expression(
-            kind: Binding(Symbol(
-              span: Span(
-                start: 33,
-                end: 36,
-              ),
-              ident: Interned(1515349274698079117, PhantomData),
-            )),
-            span: Span(
-              start: 33,
-              end: 36,
-            ),
-          ), [
-            Expression(
-              kind: IntLit(Symbol(
-                span: Span(
-                  start: 37,
-                  end: 38,
-                ),
-                ident: Interned(12543183117416492085, PhantomData),
-              ), Decimal),
-              span: Span(
-                start: 37,
-                end: 38,
-              ),
-            ),
-            Expression(
-              kind: IntLit(Symbol(
-                span: Span(
-                  start: 40,
-                  end: 41,
-                ),
-                ident: Interned(14671982871472631300, PhantomData),
-              ), Decimal),
-              span: Span(
-                start: 40,
-                end: 41,
-              ),
-            ),
-          ]),
-          span: Span(
-            start: 33,
-            end: 42,
-          ),
         )),
-        span: Span(
-          start: 27,
+      ),
+    ),
+    ParseError(
+      kind: ExpectedFound(
+        expected: Some("item"),
+        found: RBrace,
+        span: Some(Span(
+          start: 43,
           end: 44,
-        ),
-      ),
-      span: Span(
-        start: 11,
-        end: 44,
-      ),
-    )),
-    FuncItem(FuncItem(
-      ident: Symbol(
-        span: Span(
-          start: 51,
-          end: 54,
-        ),
-        ident: Interned(1515349274698079117, PhantomData),
-      ),
-      params: [
-        (Symbol(
-          span: Span(
-            start: 55,
-            end: 56,
-          ),
-          ident: Interned(14504427626919653262, PhantomData),
-        ), Expression(
-          kind: Binding(Symbol(
-            span: Span(
-              start: 58,
-              end: 61,
-            ),
-            ident: Interned(7010835363999694691, PhantomData),
-          )),
-          span: Span(
-            start: 58,
-            end: 61,
-          ),
         )),
-        (Symbol(
-          span: Span(
-            start: 63,
-            end: 64,
-          ),
-          ident: Interned(579860146683532731, PhantomData),
-        ), Expression(
-          kind: Binding(Symbol(
-            span: Span(
-              start: 66,
-              end: 69,
-            ),
-            ident: Interned(7010835363999694691, PhantomData),
-          )),
-          span: Span(
-            start: 66,
-            end: 69,
-          ),
-        )),
-      ],
-      ret_ty: Some(Expression(
-        kind: Binding(Symbol(
-          span: Span(
-            start: 71,
-            end: 74,
-          ),
-          ident: Interned(7010835363999694691, PhantomData),
-        )),
-        span: Span(
-          start: 71,
-          end: 74,
-        ),
-      )),
-      block: Block(
-        stmts: [],
-        expr: Some(Expression(
-          kind: Add(Expression(
-            kind: Binding(Symbol(
-              span: Span(
-                start: 81,
-                end: 82,
-              ),
-              ident: Interned(14504427626919653262, PhantomData),
-            )),
-            span: Span(
-              start: 81,
-              end: 82,
-            ),
-          ), Expression(
-            kind: Binding(Symbol(
-              span: Span(
-                start: 85,
-                end: 86,
-              ),
-              ident: Interned(579860146683532731, PhantomData),
-            )),
-            span: Span(
-              start: 85,
-              end: 86,
-            ),
-          )),
-          span: Span(
-            start: 81,
-            end: 86,
-          ),
-        )),
-        span: Span(
-          start: 75,
-          end: 88,
-        ),
       ),
-      span: Span(
-        start: 46,
-        end: 88,
+    ),
+    ParseError(
+      kind: ExpectedFound(
+        expected: Some("type"),
+        found: I32,
+        span: Some(Span(
+          start: 58,
+          end: 61,
+        )),
       ),
-    )),
+    ),
   ],
 ))

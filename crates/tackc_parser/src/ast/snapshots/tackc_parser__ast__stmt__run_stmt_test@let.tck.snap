@@ -12,13 +12,19 @@ Ok(LetStatement(LetStatement(
     ident: Interned(7125721452462380643, PhantomData),
   ),
   ty: Some(Expression(
-    kind: Primary(IntLit(Symbol(
+    kind: Primary(Primary(
       span: Span(
         start: 7,
         end: 8,
       ),
-      ident: Interned(12543183117416492085, PhantomData),
-    ), Decimal)),
+      kind: IntLit(Symbol(
+        span: Span(
+          start: 7,
+          end: 8,
+        ),
+        ident: Interned(12543183117416492085, PhantomData),
+      ), Decimal),
+    )),
     span: Span(
       start: 7,
       end: 8,
@@ -26,38 +32,56 @@ Ok(LetStatement(LetStatement(
   )),
   expr: Some(Expression(
     kind: Add(Expression(
-      kind: Primary(IntLit(Symbol(
+      kind: Primary(Primary(
         span: Span(
           start: 11,
           end: 12,
         ),
-        ident: Interned(12543183117416492085, PhantomData),
-      ), Decimal)),
+        kind: IntLit(Symbol(
+          span: Span(
+            start: 11,
+            end: 12,
+          ),
+          ident: Interned(12543183117416492085, PhantomData),
+        ), Decimal),
+      )),
       span: Span(
         start: 11,
         end: 12,
       ),
     ), Expression(
       kind: Mul(Expression(
-        kind: Primary(IntLit(Symbol(
+        kind: Primary(Primary(
           span: Span(
             start: 15,
             end: 16,
           ),
-          ident: Interned(4091593736821351671, PhantomData),
-        ), Decimal)),
+          kind: IntLit(Symbol(
+            span: Span(
+              start: 15,
+              end: 16,
+            ),
+            ident: Interned(4091593736821351671, PhantomData),
+          ), Decimal),
+        )),
         span: Span(
           start: 15,
           end: 16,
         ),
       ), Expression(
-        kind: Primary(IntLit(Symbol(
+        kind: Primary(Primary(
           span: Span(
             start: 19,
             end: 20,
           ),
-          ident: Interned(14671982871472631300, PhantomData),
-        ), Decimal)),
+          kind: IntLit(Symbol(
+            span: Span(
+              start: 19,
+              end: 20,
+            ),
+            ident: Interned(14671982871472631300, PhantomData),
+          ), Decimal),
+        )),
         span: Span(
           start: 19,
           end: 20,
