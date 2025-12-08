@@ -12,7 +12,7 @@ fn sync_prog<I>(p: &mut Parser<I>)
 where
     I: Iterator<Item = Token> + Clone,
 {
-    p.next_token(); // Don't stop on first item 
+    //p.next_token(); // Don't stop on first item
 
     let mut depth: u32 = 0;
 
@@ -21,12 +21,12 @@ where
 
         match tok.kind {
             TokenKind::LBrace => {
-                depth += 1;
                 p.next_token();
+                depth += 1;
             }
             TokenKind::RBrace => {
                 p.next_token();
-                depth -= 1;
+                depth = depth.saturating_sub(1);
             }
             TokenKind::Func | TokenKind::Const if depth == 0 => {
                 return;
