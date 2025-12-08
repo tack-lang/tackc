@@ -67,4 +67,25 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
     ),
     kind: Ident(Interned(4556722434798906291, PhantomData)),
   )),
+  Ok(Token(
+    span: Span(
+      start: 56,
+      end: 59,
+    ),
+    kind: I32,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 60,
+      end: 62,
+    ),
+    kind: U8,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 63,
+      end: 66,
+    ),
+    kind: I64,
+  )),
 ]
