@@ -47,6 +47,14 @@ pub enum TokenKind {
     Let,
     Const,
     Mod,
+    U8,
+    U16,
+    U32,
+    U64,
+    I8,
+    I16,
+    I32,
+    I64,
 
     // Delimeters
     LParen,
@@ -118,6 +126,14 @@ impl Display for TokenKind {
             TokenKind::Let => write!(f, "let"),
             TokenKind::Const => write!(f, "const"),
             TokenKind::Mod => write!(f, "mod"),
+            TokenKind::U8 => write!(f, "u8"),
+            TokenKind::U16 => write!(f, "u16"),
+            TokenKind::U32 => write!(f, "u32"),
+            TokenKind::U64 => write!(f, "u64"),
+            TokenKind::I8 => write!(f, "i8"),
+            TokenKind::I16 => write!(f, "i16"),
+            TokenKind::I32 => write!(f, "i32"),
+            TokenKind::I64 => write!(f, "i64"),
 
             TokenKind::LParen => write!(f, "("),
             TokenKind::RParen => write!(f, ")"),
@@ -502,6 +518,16 @@ impl<'src, F: File> Lexer<'src, F> {
             "let" => TokenKind::Let,
             "const" => TokenKind::Const,
             "mod" => TokenKind::Mod,
+
+            "u8" => TokenKind::U8,
+            "u16" => TokenKind::U16,
+            "u32" => TokenKind::U32,
+            "u64" => TokenKind::U64,
+            "i8" => TokenKind::I8,
+            "i16" => TokenKind::I16,
+            "i32" => TokenKind::I32,
+            "i64" => TokenKind::I64,
+
             ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
 
