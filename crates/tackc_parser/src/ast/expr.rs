@@ -3,10 +3,10 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::{Block, Symbol};
-use crate::error::{DiagResult, ParseError, ParseErrors, Result};
+use crate::ast::{Block, Primary, Symbol};
+use crate::error::{DiagResult, Result};
 use tackc_global::Global;
-use tackc_lexer::{IntegerBase, Token, TokenKind};
+use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -98,9 +98,7 @@ impl AstNode for Expression {
                 format!("(lteq {} {})", lhs.display(global), rhs.display(global))
             }
 
-            ExpressionKind::Binding(ident) => ident.display(global).to_string(),
-            ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
-            ExpressionKind::FloatLit(str) => str.display(global).to_string(),
+            ExpressionKind::Primary(prim) => prim.display(global),
 
             ExpressionKind::Block(block) => block.display(global),
         }
@@ -161,9 +159,7 @@ pub enum ExpressionKind {
     GtEq(Box<Expression>, Box<Expression>),
     LtEq(Box<Expression>, Box<Expression>),
 
-    Binding(Symbol),
-    IntLit(Symbol, IntegerBase),
-    FloatLit(Symbol),
+    Primary(Primary),
 
     Block(Box<Block>),
 }
@@ -184,28 +180,6 @@ pub enum BindingPower {
     Prefix = 50,
 
     Postfix = 60,
-}
-
-fn parse_primary<I>(p: &mut Parser<I>) -> Result<Expression>
-where
-    I: Iterator<Item = Token> + Clone,
-{
-    let tok = p.expect_token(None)?;
-    match tok.kind {
-        TokenKind::Ident(ident) => Ok(Expression::new(
-            ExpressionKind::Binding(Symbol::new(tok.span, ident)),
-            tok.span,
-        )),
-        TokenKind::IntLit(str, base) => Ok(Expression::new(
-            ExpressionKind::IntLit(Symbol::new(tok.span, str), base),
-            tok.span,
-        )),
-        TokenKind::FloatLit(str) => Ok(Expression::new(
-            ExpressionKind::FloatLit(Symbol::new(tok.span, str)),
-            tok.span,
-        )),
-        _ => Err(ParseErrors::new(ParseError::new(None, tok))),
-    }
 }
 
 fn parse_prefix<I>(p: &mut Parser<I>, recursion: u32, mode: ParseMode) -> Result<Expression>
@@ -245,7 +219,9 @@ where
         }
         TokenKind::LBrace => {
             if mode == ParseMode::NoBlocks {
-                return parse_primary(p);
+                return p
+                    .parse::<Primary>(recursion + 1)
+                    .map(|prim| Expression::new(ExpressionKind::Primary(prim), prim.span()));
             }
 
             let block = p.parse::<Block>(recursion + 1)?;
@@ -256,7 +232,9 @@ where
                 span,
             ))
         }
-        _ => parse_primary(p),
+        _ => p
+            .parse::<Primary>(recursion + 1)
+            .map(|prim| Expression::new(ExpressionKind::Primary(prim), prim.span())),
     }
 }
 
