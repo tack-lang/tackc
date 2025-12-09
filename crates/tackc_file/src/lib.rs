@@ -52,7 +52,8 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
             }
             _ => continue,
         }
-        out.push((i + 1).try_into().unwrap());
+        #[allow(clippy::cast_possible_truncation)]
+        out.push((i + 1) as SpanValue);
     }
 
     out

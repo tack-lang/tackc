@@ -262,13 +262,10 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 
     fn skip_whitespace(&mut self) {
-        while !self.at_eof() {
-            match self.current_byte().unwrap() {
-                c if c.is_ascii_whitespace() => {
-                    self.next_byte();
-                }
-                _ => break,
-            }
+        while let Some(c) = self.current_byte()
+            && c.is_ascii_whitespace()
+        {
+            self.next_byte();
         }
         self.span.reset();
     }
@@ -366,7 +363,7 @@ impl<'src, F: File> Lexer<'src, F> {
 
         let lexeme = self.current_lexeme();
         let char_len = extra_bytes + 1;
-        lexeme[lexeme.len() - char_len..].chars().next().unwrap()
+        lexeme[lexeme.len() - char_len..].chars().next().expect("This is a bug. Please submit a bug report.")
     }
 
     fn handle_string_lit(&mut self) -> Result<Token, Error> {
@@ -502,7 +499,6 @@ impl<'src, F: File> Lexer<'src, F> {
         )))
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn handle_ident_or_keyword(&mut self) -> Token {
         while let Some(c) = self.current_byte() {
             match c {
@@ -533,19 +529,18 @@ impl<'src, F: File> Lexer<'src, F> {
 
         self.make_token(ty)
     }
-
-    #[allow(clippy::missing_panics_doc)]
+    
     /// Gets the next token in the lexer. Nearly equivilant to [`next()`](`Self::next()`), but returns an [`TokenKind::Eof`] token instead of `None`.
     ///
     /// # Errors
     /// See [`ErrorKind`].
     pub fn next_token(&mut self) -> Result<Token, Error> {
         self.skip_whitespace();
-        if self.at_eof() {
+        let Some(c) = self.next_byte() else {
             return Ok(self.make_token(TokenKind::Eof));
-        }
+        };
 
-        match self.next_byte().unwrap() {
+        match c {
             b'"' => self.handle_string_lit(),
             c if c.is_ascii_digit() => self.handle_num_lit(c),
             c if c.is_ascii_alphabetic() => Ok(self.handle_ident_or_keyword()),
