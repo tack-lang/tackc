@@ -13,7 +13,7 @@ use crate::{
 pub enum Item {
     ConstItem(ConstItem),
     FuncItem(FuncItem),
-    // When adding to `Item`, update `prog::sync_prog`.
+    // When adding to `Item`, update `prog::sync_item`.
 }
 
 impl AstNode for Item {
