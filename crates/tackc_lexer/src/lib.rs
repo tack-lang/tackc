@@ -363,7 +363,10 @@ impl<'src, F: File> Lexer<'src, F> {
 
         let lexeme = self.current_lexeme();
         let char_len = extra_bytes + 1;
-        lexeme[lexeme.len() - char_len..].chars().next().expect("This is a bug. Please submit a bug report.")
+        lexeme[lexeme.len() - char_len..]
+            .chars()
+            .next()
+            .expect("This is a bug. Please submit a bug report.")
     }
 
     fn handle_string_lit(&mut self) -> Result<Token, Error> {
@@ -529,7 +532,7 @@ impl<'src, F: File> Lexer<'src, F> {
 
         self.make_token(ty)
     }
-    
+
     /// Gets the next token in the lexer. Nearly equivilant to [`next()`](`Self::next()`), but returns an [`TokenKind::Eof`] token instead of `None`.
     ///
     /// # Errors
