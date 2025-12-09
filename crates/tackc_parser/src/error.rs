@@ -30,12 +30,19 @@ impl ParseErrors {
         self.errors.push(diag);
     }
 
-    #[allow(clippy::missing_panics_doc)]
-    pub fn clear_expected(&mut self) {
+    /*fn most_recent(&self) -> &ParseError {
         debug_assert!(!self.errors.is_empty());
 
+        self.errors.last().unwrap()
+    }*/
+
+    fn most_recent_mut(&mut self) -> &mut ParseError {
         let errors = self.errors.make_mut();
-        let last = errors.last_mut().unwrap();
+        errors.last_mut().unwrap()
+    }
+
+    pub fn clear_expected(&mut self) {
+        let last = self.most_recent_mut();
         match &mut last.kind {
             ParseErrorKind::ExpectedFound {
                 expected,
@@ -51,10 +58,8 @@ impl ParseErrors {
     /// This function takes the most recent error from `self` and changes it's `expected` field to `Some(str)` if it's `None`.
     #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
-        debug_assert!(!self.errors.is_empty());
+        let last = self.most_recent_mut();
 
-        let errors = self.errors.make_mut();
-        let last = errors.last_mut().unwrap();
         match &mut last.kind {
             ParseErrorKind::ExpectedFound {
                 expected,
@@ -71,6 +76,8 @@ impl ParseErrors {
 
     #[allow(clippy::missing_panics_doc)]
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
+        debug_assert!(!self.is_empty());
+
         let mut str = String::new();
         let mut errors = self.errors.iter();
         _ = write!(str, "{}", errors.next().unwrap().display(file, global));

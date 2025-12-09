@@ -94,7 +94,7 @@ impl Program {
             Err(e)
         } else {
             Ok(Program {
-                mod_stmt: mod_stmt.unwrap(),
+                mod_stmt: mod_stmt.expect("This is a bug. Please submit a bug report."),
                 items,
             })
         }

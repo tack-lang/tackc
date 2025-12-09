@@ -33,11 +33,14 @@ impl Span {
     /// Creates a new `Span` pointing to the end of a string.
     ///
     /// # Panics
-    /// This function can panic, if the input string's length is greater than [`SpanValue::MAX`].
+    /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
     pub fn eof(string: &str) -> Self {
+        assert!(string.len() > SpanValue::MAX as usize);
+
+        #[allow(clippy::cast_possible_truncation)]
         Span {
-            start: string.len().try_into().unwrap(),
-            end: string.len().try_into().unwrap(),
+            start: string.len() as SpanValue,
+            end: string.len() as SpanValue,
         }
     }
 
