@@ -3,6 +3,10 @@
     This grammar does not encode precedence or associativity, and is heavily ambiguous.
 *)
 
+Prog = ModStmt Item* ;
+
+ModStmt = MOD Path SEMICOLON ;
+
 Stmt = Item
     | LetStmt
     | ExprStmt
@@ -25,12 +29,12 @@ Expr = Primary
     | Prefix
     | Grouping
     | Postfix
+    | Block
     ;
 
 Postfix = MemberAccess
     | Call
     | Index
-    | Block
     ;
 Infix = Expr InfixOp Expr ;
 Prefix = PrefixOp Expr ;
@@ -65,12 +69,30 @@ IndexNB = ExprNB L_BRACKET Expr R_BRACKET ; (* Uses Expr inside brackets *)
 InfixOp = PLUS | DASH | STAR | SLASH | EQ_EQ | BANG_EQ | GT | LT | GT_EQ | LT_EQ ;
 PrefixOp = PLUS | DASH ;
 
-Primary = Literal
-    | IDENTIFIER
-    ;
-
-Literal = INT_LIT
+Primary = IDENTIFIER
+    | U8
+    | U16
+    | U32
+    | U64
+    | I8
+    | I16
+    | I32
+    | I64
+    | INT_LIT
     | FLOAT_LIT
     ;
 
 Path = IDENTIFIER ( DOT IDENTIFIER )* ;
+
+(*
+    Operators (in precedence order, lowest to highest):
+    Comparison (<, >, <=, >=, ==, !=, left-associative)
+
+    Term (+, -, left-associative)
+
+    Factor (*, /, left-associative)
+
+    Prefix (+, -, right-associative)
+
+    Postfix ([, (, .,  left-associative)
+*)
