@@ -1,1 +1,9 @@
-func
+mod tack;
+
+func main() i32 {
+    add(5, 2)
+}
+
+func add(x: i32, y: i32) i32 {
+    x + y
+}

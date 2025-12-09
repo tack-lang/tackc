@@ -55,6 +55,14 @@ impl AstNode for Primary {
                 tok.span,
                 PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
             )),
+            TokenKind::U8 => Ok(Primary::new(tok.span, PrimaryKind::U8)),
+            TokenKind::U16 => Ok(Primary::new(tok.span, PrimaryKind::U16)),
+            TokenKind::U32 => Ok(Primary::new(tok.span, PrimaryKind::U32)),
+            TokenKind::U64 => Ok(Primary::new(tok.span, PrimaryKind::U64)),
+            TokenKind::I8 => Ok(Primary::new(tok.span, PrimaryKind::I8)),
+            TokenKind::I16 => Ok(Primary::new(tok.span, PrimaryKind::I16)),
+            TokenKind::I32 => Ok(Primary::new(tok.span, PrimaryKind::I32)),
+            TokenKind::I64 => Ok(Primary::new(tok.span, PrimaryKind::I64)),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
