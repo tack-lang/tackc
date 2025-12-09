@@ -1,0 +1,57 @@
+---
+source: crates/tackc_parser/src/ast/expr.rs
+expression: expr
+input_file: crates/tackc_parser/src/ast/expr-parse/types.tck
+---
+Ok(Expression(
+  kind: Call(Expression(
+    kind: Primary(Primary(
+      span: Span(
+        start: 0,
+        end: 1,
+      ),
+      kind: Binding(Symbol(
+        span: Span(
+          start: 0,
+          end: 1,
+        ),
+        ident: Interned(6563574591185256773, PhantomData),
+      )),
+    )),
+    span: Span(
+      start: 0,
+      end: 1,
+    ),
+  ), [
+    Expression(
+      kind: Primary(Primary(
+        span: Span(
+          start: 2,
+          end: 5,
+        ),
+        kind: I32,
+      )),
+      span: Span(
+        start: 2,
+        end: 5,
+      ),
+    ),
+    Expression(
+      kind: Primary(Primary(
+        span: Span(
+          start: 7,
+          end: 10,
+        ),
+        kind: U32,
+      )),
+      span: Span(
+        start: 7,
+        end: 10,
+      ),
+    ),
+  ]),
+  span: Span(
+    start: 0,
+    end: 11,
+  ),
+))
