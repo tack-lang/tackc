@@ -8,7 +8,7 @@ use crate::{
     error::{DiagResult, ParseErrors, Result},
 };
 
-fn sync_prog<I>(p: &mut Parser<I>)
+fn sync_item<I>(p: &mut Parser<I>)
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -69,7 +69,7 @@ impl Program {
                     }
                     None => errors = Some(e),
                 }
-                sync_prog(&mut p);
+                sync_item(&mut p);
             })
             .ok();
 
@@ -85,7 +85,7 @@ impl Program {
                         }
                         None => errors = Some(e),
                     }
-                    sync_prog(&mut p);
+                    sync_item(&mut p);
                 }
             }
         }
