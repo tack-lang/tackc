@@ -35,7 +35,10 @@ impl Span {
     /// # Panics
     /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
     pub fn eof(string: &str) -> Self {
-        assert!(string.len() < SpanValue::MAX as usize);
+        assert!(
+            string.len() < SpanValue::MAX as usize,
+            "Length of `Span::eof` input must be less than `SpanValue::MAX!`"
+        );
 
         #[allow(clippy::cast_possible_truncation)]
         Span {
