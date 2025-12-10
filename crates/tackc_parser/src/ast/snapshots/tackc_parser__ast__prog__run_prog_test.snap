@@ -27,6 +27,10 @@ Ok(Program(
   ),
   items: [
     FuncItem(FuncItem(
+      span: Span(
+        start: 11,
+        end: 44,
+      ),
       ident: Symbol(
         span: Span(
           start: 16,
@@ -36,6 +40,10 @@ Ok(Program(
       ),
       params: [],
       ret_ty: Some(Expression(
+        span: Span(
+          start: 23,
+          end: 26,
+        ),
         kind: Primary(Primary(
           span: Span(
             start: 23,
@@ -43,15 +51,23 @@ Ok(Program(
           ),
           kind: I32,
         )),
-        span: Span(
-          start: 23,
-          end: 26,
-        ),
       )),
       block: Block(
+        span: Span(
+          start: 27,
+          end: 44,
+        ),
         stmts: [],
         expr: Some(Expression(
+          span: Span(
+            start: 33,
+            end: 42,
+          ),
           kind: Call(Expression(
+            span: Span(
+              start: 33,
+              end: 36,
+            ),
             kind: Primary(Primary(
               span: Span(
                 start: 33,
@@ -65,12 +81,12 @@ Ok(Program(
                 ident: Interned(1515349274698079117, PhantomData),
               )),
             )),
-            span: Span(
-              start: 33,
-              end: 36,
-            ),
           ), [
             Expression(
+              span: Span(
+                start: 37,
+                end: 38,
+              ),
               kind: Primary(Primary(
                 span: Span(
                   start: 37,
@@ -84,12 +100,12 @@ Ok(Program(
                   ident: Interned(12543183117416492085, PhantomData),
                 ), Decimal),
               )),
-              span: Span(
-                start: 37,
-                end: 38,
-              ),
             ),
             Expression(
+              span: Span(
+                start: 40,
+                end: 41,
+              ),
               kind: Primary(Primary(
                 span: Span(
                   start: 40,
@@ -103,28 +119,16 @@ Ok(Program(
                   ident: Interned(14671982871472631300, PhantomData),
                 ), Decimal),
               )),
-              span: Span(
-                start: 40,
-                end: 41,
-              ),
             ),
           ]),
-          span: Span(
-            start: 33,
-            end: 42,
-          ),
         )),
-        span: Span(
-          start: 27,
-          end: 44,
-        ),
-      ),
-      span: Span(
-        start: 11,
-        end: 44,
       ),
     )),
     FuncItem(FuncItem(
+      span: Span(
+        start: 46,
+        end: 88,
+      ),
       ident: Symbol(
         span: Span(
           start: 51,
@@ -140,6 +144,10 @@ Ok(Program(
           ),
           ident: Interned(14504427626919653262, PhantomData),
         ), Expression(
+          span: Span(
+            start: 58,
+            end: 61,
+          ),
           kind: Primary(Primary(
             span: Span(
               start: 58,
@@ -147,10 +155,6 @@ Ok(Program(
             ),
             kind: I32,
           )),
-          span: Span(
-            start: 58,
-            end: 61,
-          ),
         )),
         (Symbol(
           span: Span(
@@ -159,6 +163,10 @@ Ok(Program(
           ),
           ident: Interned(579860146683532731, PhantomData),
         ), Expression(
+          span: Span(
+            start: 66,
+            end: 69,
+          ),
           kind: Primary(Primary(
             span: Span(
               start: 66,
@@ -166,13 +174,13 @@ Ok(Program(
             ),
             kind: I32,
           )),
-          span: Span(
-            start: 66,
-            end: 69,
-          ),
         )),
       ],
       ret_ty: Some(Expression(
+        span: Span(
+          start: 71,
+          end: 74,
+        ),
         kind: Primary(Primary(
           span: Span(
             start: 71,
@@ -180,15 +188,23 @@ Ok(Program(
           ),
           kind: I32,
         )),
-        span: Span(
-          start: 71,
-          end: 74,
-        ),
       )),
       block: Block(
+        span: Span(
+          start: 75,
+          end: 88,
+        ),
         stmts: [],
         expr: Some(Expression(
+          span: Span(
+            start: 81,
+            end: 86,
+          ),
           kind: Add(Expression(
+            span: Span(
+              start: 81,
+              end: 82,
+            ),
             kind: Primary(Primary(
               span: Span(
                 start: 81,
@@ -202,11 +218,11 @@ Ok(Program(
                 ident: Interned(14504427626919653262, PhantomData),
               )),
             )),
-            span: Span(
-              start: 81,
-              end: 82,
-            ),
           ), Expression(
+            span: Span(
+              start: 85,
+              end: 86,
+            ),
             kind: Primary(Primary(
               span: Span(
                 start: 85,
@@ -220,24 +236,8 @@ Ok(Program(
                 ident: Interned(579860146683532731, PhantomData),
               )),
             )),
-            span: Span(
-              start: 85,
-              end: 86,
-            ),
           )),
-          span: Span(
-            start: 81,
-            end: 86,
-          ),
         )),
-        span: Span(
-          start: 75,
-          end: 88,
-        ),
-      ),
-      span: Span(
-        start: 46,
-        end: 88,
       ),
     )),
   ],

@@ -23,12 +23,8 @@ impl AstNode for Path {
         let first = p.identifier().clear_expected()?;
         let mut components = vec![first];
 
-        while let Some(Token {
-            span: _,
-            kind: TokenKind::Dot,
-        }) = p.peek_token()
+        while p.consume(token_kind!(TokenKind::Dot)).is_some()
         {
-            p.next_token(); // Skip dot
             let next = p.identifier()?;
             components.push(next);
         }

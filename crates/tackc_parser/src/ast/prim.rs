@@ -30,12 +30,6 @@ pub enum PrimaryKind {
     I64,
 }
 
-impl Primary {
-    fn new(span: Span, kind: PrimaryKind) -> Self {
-        Primary { span, kind }
-    }
-}
-
 impl AstNode for Primary {
     fn parse<I>(p: &mut Parser<I>, _: u32) -> Result<Self>
     where
@@ -43,26 +37,26 @@ impl AstNode for Primary {
     {
         let tok = p.expect_token(None)?;
         match tok.kind {
-            TokenKind::Ident(ident) => Ok(Primary::new(
-                tok.span,
-                PrimaryKind::Binding(Symbol::new(tok.span, ident)),
-            )),
-            TokenKind::IntLit(str, base) => Ok(Primary::new(
-                tok.span,
-                PrimaryKind::IntLit(Symbol::new(tok.span, str), base),
-            )),
-            TokenKind::FloatLit(str) => Ok(Primary::new(
-                tok.span,
-                PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
-            )),
-            TokenKind::U8 => Ok(Primary::new(tok.span, PrimaryKind::U8)),
-            TokenKind::U16 => Ok(Primary::new(tok.span, PrimaryKind::U16)),
-            TokenKind::U32 => Ok(Primary::new(tok.span, PrimaryKind::U32)),
-            TokenKind::U64 => Ok(Primary::new(tok.span, PrimaryKind::U64)),
-            TokenKind::I8 => Ok(Primary::new(tok.span, PrimaryKind::I8)),
-            TokenKind::I16 => Ok(Primary::new(tok.span, PrimaryKind::I16)),
-            TokenKind::I32 => Ok(Primary::new(tok.span, PrimaryKind::I32)),
-            TokenKind::I64 => Ok(Primary::new(tok.span, PrimaryKind::I64)),
+            TokenKind::Ident(ident) => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::Binding(Symbol::new(tok.span, ident)),
+            }),
+            TokenKind::IntLit(str, base) => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::IntLit(Symbol::new(tok.span, str), base),
+            }),
+            TokenKind::FloatLit(str) => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
+            }),
+            TokenKind::U8 => Ok(Primary { span: tok.span, kind: PrimaryKind::U8 }),
+            TokenKind::U16 => Ok(Primary { span: tok.span, kind: PrimaryKind::U16 }),
+            TokenKind::U32 => Ok(Primary { span: tok.span, kind: PrimaryKind::U32 }),
+            TokenKind::U64 => Ok(Primary { span: tok.span, kind: PrimaryKind::U64 }),
+            TokenKind::I8 => Ok(Primary { span: tok.span, kind: PrimaryKind::I8 }),
+            TokenKind::I16 => Ok(Primary { span: tok.span, kind: PrimaryKind::I16 }),
+            TokenKind::I32 => Ok(Primary { span: tok.span, kind: PrimaryKind::I32 }),
+            TokenKind::I64 => Ok(Primary { span: tok.span, kind: PrimaryKind::I64 }),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
@@ -88,7 +82,3 @@ impl AstNode for Primary {
         }
     }
 }
-
-// ExpressionKind::Primary(ident) => ident.display(global).to_string(),
-// ExpressionKind::IntLit(str, base) => format!("{base}{}", str.display(global)),
-// ExpressionKind::FloatLit(str) => str.display(global).to_string(),

@@ -4,7 +4,15 @@ expression: expr
 input_file: crates/tackc_parser/src/ast/expr-parse/trailing-comma-call.tck
 ---
 Ok(Expression(
+  span: Span(
+    start: 0,
+    end: 7,
+  ),
   kind: Call(Expression(
+    span: Span(
+      start: 0,
+      end: 1,
+    ),
     kind: Primary(Primary(
       span: Span(
         start: 0,
@@ -18,12 +26,12 @@ Ok(Expression(
         ident: Interned(6563574591185256773, PhantomData),
       )),
     )),
-    span: Span(
-      start: 0,
-      end: 1,
-    ),
   ), [
     Expression(
+      span: Span(
+        start: 2,
+        end: 3,
+      ),
       kind: Primary(Primary(
         span: Span(
           start: 2,
@@ -37,12 +45,12 @@ Ok(Expression(
           ident: Interned(14504427626919653262, PhantomData),
         )),
       )),
-      span: Span(
-        start: 2,
-        end: 3,
-      ),
     ),
     Expression(
+      span: Span(
+        start: 4,
+        end: 5,
+      ),
       kind: Primary(Primary(
         span: Span(
           start: 4,
@@ -56,14 +64,6 @@ Ok(Expression(
           ident: Interned(579860146683532731, PhantomData),
         )),
       )),
-      span: Span(
-        start: 4,
-        end: 5,
-      ),
     ),
   ]),
-  span: Span(
-    start: 0,
-    end: 7,
-  ),
 ))

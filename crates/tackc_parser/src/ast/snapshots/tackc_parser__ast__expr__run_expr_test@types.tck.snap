@@ -4,7 +4,15 @@ expression: expr
 input_file: crates/tackc_parser/src/ast/expr-parse/types.tck
 ---
 Ok(Expression(
+  span: Span(
+    start: 0,
+    end: 11,
+  ),
   kind: Call(Expression(
+    span: Span(
+      start: 0,
+      end: 1,
+    ),
     kind: Primary(Primary(
       span: Span(
         start: 0,
@@ -18,12 +26,12 @@ Ok(Expression(
         ident: Interned(6563574591185256773, PhantomData),
       )),
     )),
-    span: Span(
-      start: 0,
-      end: 1,
-    ),
   ), [
     Expression(
+      span: Span(
+        start: 2,
+        end: 5,
+      ),
       kind: Primary(Primary(
         span: Span(
           start: 2,
@@ -31,12 +39,12 @@ Ok(Expression(
         ),
         kind: I32,
       )),
-      span: Span(
-        start: 2,
-        end: 5,
-      ),
     ),
     Expression(
+      span: Span(
+        start: 7,
+        end: 10,
+      ),
       kind: Primary(Primary(
         span: Span(
           start: 7,
@@ -44,14 +52,6 @@ Ok(Expression(
         ),
         kind: U32,
       )),
-      span: Span(
-        start: 7,
-        end: 10,
-      ),
     ),
   ]),
-  span: Span(
-    start: 0,
-    end: 11,
-  ),
 ))
