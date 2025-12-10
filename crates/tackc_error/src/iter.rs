@@ -48,24 +48,21 @@ pub trait ReportMode: Clone + Copy + Default {
         F: FnMut(E);
 }
 
-pub struct Reporter<I, T, E, F, M>
+pub struct Reporter<I, F, M>
 where
-    I: Iterator<Item = Result<T, E>>,
-    F: FnMut(E),
-    M: ReportMode,
 {
     iter: I,
     callback: F,
     mode: M,
 }
 
-impl<I, T, E, F, M> Reporter<I, T, E, F, M>
+impl<I, T, E, F, M> Reporter<I, F, M>
 where
     I: Iterator<Item = Result<T, E>>,
     F: FnMut(E),
     M: ReportMode,
 {
-    pub fn new(iter: I, callback: F, mode: M) -> Reporter<I, T, E, F, M> {
+    pub fn new(iter: I, callback: F, mode: M) -> Self {
         Reporter {
             iter,
             callback,
@@ -74,7 +71,7 @@ where
     }
 }
 
-impl<I, T, E, F, M> Iterator for Reporter<I, T, E, F, M>
+impl<I, T, E, F, M> Iterator for Reporter<I, F, M>
 where
     I: Iterator<Item = Result<T, E>>,
     F: FnMut(E),
@@ -99,7 +96,7 @@ where
     }
 }
 
-impl<I, T, E, F, M> Clone for Reporter<I, T, E, F, M>
+impl<I, T, E, F, M> Clone for Reporter<I, F, M>
 where
     I: Iterator<Item = Result<T, E>> + Clone,
     F: FnMut(E) + Clone,
@@ -115,7 +112,7 @@ where
 }
 
 pub trait IteratorExt: Iterator {
-    fn reporter<M, T, E, F: FnMut(E)>(self, callback: F, mode: M) -> Reporter<Self, T, E, F, M>
+    fn reporter<M, T, E, F: FnMut(E)>(self, callback: F, mode: M) -> Reporter<Self, F, M>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
         M: ReportMode,
@@ -127,21 +124,21 @@ pub trait IteratorExt: Iterator {
         }
     }
 
-    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Skip>
+    fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Skip>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.reporter(callback, Skip)
     }
 
-    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Stop>
+    fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Stop>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
         self.reporter(callback, Stop)
     }
 
-    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, T, E, F, Consume>
+    fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Consume>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
     {
