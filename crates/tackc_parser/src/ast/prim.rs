@@ -49,14 +49,38 @@ impl AstNode for Primary {
                 span: tok.span,
                 kind: PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
             }),
-            TokenKind::U8 => Ok(Primary { span: tok.span, kind: PrimaryKind::U8 }),
-            TokenKind::U16 => Ok(Primary { span: tok.span, kind: PrimaryKind::U16 }),
-            TokenKind::U32 => Ok(Primary { span: tok.span, kind: PrimaryKind::U32 }),
-            TokenKind::U64 => Ok(Primary { span: tok.span, kind: PrimaryKind::U64 }),
-            TokenKind::I8 => Ok(Primary { span: tok.span, kind: PrimaryKind::I8 }),
-            TokenKind::I16 => Ok(Primary { span: tok.span, kind: PrimaryKind::I16 }),
-            TokenKind::I32 => Ok(Primary { span: tok.span, kind: PrimaryKind::I32 }),
-            TokenKind::I64 => Ok(Primary { span: tok.span, kind: PrimaryKind::I64 }),
+            TokenKind::U8 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::U8,
+            }),
+            TokenKind::U16 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::U16,
+            }),
+            TokenKind::U32 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::U32,
+            }),
+            TokenKind::U64 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::U64,
+            }),
+            TokenKind::I8 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::I8,
+            }),
+            TokenKind::I16 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::I16,
+            }),
+            TokenKind::I32 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::I32,
+            }),
+            TokenKind::I64 => Ok(Primary {
+                span: tok.span,
+                kind: PrimaryKind::I64,
+            }),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
