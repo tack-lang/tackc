@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::{Deserialize, Serialize};
 use tackc_span::SpanValue;
 
 pub trait File: Deref<Target = str> {
@@ -59,8 +60,7 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OwnedFile {
     src: String,
     path: PathBuf,

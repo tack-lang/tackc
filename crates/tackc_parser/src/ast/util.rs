@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -8,8 +9,7 @@ use crate::{
     error::{DiagResult, Result},
 };
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Path {
     pub span: Span,
     pub components: Vec<Symbol>,

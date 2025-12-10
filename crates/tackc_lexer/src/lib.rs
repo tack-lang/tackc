@@ -1,14 +1,14 @@
 use std::fmt::Display;
 
 use proptest::prelude::*;
+use serde::{Deserialize, Serialize};
 use tackc_span::Span;
 use thiserror::Error;
 
 use tackc_file::File;
 use tackc_global::{Global, Interned};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Token {
     pub span: Span,
     pub kind: TokenKind,
@@ -30,8 +30,7 @@ impl Display for Token {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenKind {
     Ident(Interned<str>),
 
@@ -172,8 +171,7 @@ impl Display for TokenKind {
     }
 }
 
-#[derive(Debug, Error, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Error {
     pub span: Span,
     pub kind: ErrorKind,
@@ -185,8 +183,7 @@ impl Display for Error {
     }
 }
 
-#[derive(Debug, Error, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
     #[error("unknown character {0}")]
     UnknownChar(char),
@@ -200,8 +197,7 @@ pub enum ErrorKind {
     MissingExponentDigits,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum IntegerBase {
     /// No prefix
     Decimal = 10,
@@ -598,15 +594,14 @@ proptest! {
 }
 
 #[test]
-#[cfg(feature = "serde")]
 fn lexer_test_glob() {
     insta::glob!("lexer/*.tck", run_lexer_test);
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 use std::path::Path;
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 fn run_lexer_test(path: &Path) {
     use tackc_file::OwnedFile;
 

@@ -2,14 +2,15 @@ use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     Parser,
     ast::{AstNode, Expression, Item, Symbol},
     error::{DiagResult, Result},
 };
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatementOrExpression {
     Expression(Expression),
     Statement(Statement),
@@ -74,8 +75,7 @@ impl AstNode for StatementOrExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Statement {
     ExpressionStatement(ExpressionStatement),
     LetStatement(LetStatement),
@@ -103,8 +103,7 @@ impl Statement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ExpressionStatement {
     pub span: Span,
     pub inner: Expression,
@@ -120,8 +119,7 @@ impl ExpressionStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LetStatement {
     pub span: Span,
     pub ident: Symbol,
@@ -181,8 +179,7 @@ impl AstNode for LetStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Assignment {
     pub span: Span,
     pub lvalue: Expression,
@@ -204,17 +201,16 @@ impl Assignment {
 }
 
 #[test]
-#[cfg(feature = "serde")]
 fn stmt_test_glob() {
     use insta::glob;
 
     glob!("stmt-parse/*.tck", run_stmt_test);
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 use std::path::Path;
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 fn run_stmt_test(path: &Path) {
     use tackc_error::iter::IteratorExt;
     use tackc_file::OwnedFile;

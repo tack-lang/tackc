@@ -5,6 +5,7 @@ use super::AstNode;
 use crate::Parser;
 use crate::ast::{Block, Primary, Symbol};
 use crate::error::{DiagResult, Result};
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -25,8 +26,7 @@ impl ParseMode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Expression {
     pub span: Span,
     pub kind: ExpressionKind,
@@ -106,17 +106,16 @@ impl AstNode for Expression {
 }
 
 #[test]
-#[cfg(feature = "serde")]
 fn expr_test_glob() {
     use insta::glob;
 
     glob!("expr-parse/*.tck", run_expr_test);
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 use std::path::Path;
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 fn run_expr_test(path: &Path) {
     use tackc_error::iter::IteratorExt;
     use tackc_file::OwnedFile;
@@ -131,8 +130,7 @@ fn run_expr_test(path: &Path) {
     insta::assert_ron_snapshot!(expr);
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ExpressionKind {
     Grouping(Box<Expression>),
 

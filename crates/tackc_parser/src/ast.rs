@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::error::Result;
+use serde::{Deserialize, Serialize};
 use tackc_global::{Global, Interned};
 use tackc_lexer::Token;
 use tackc_span::Span;
@@ -15,16 +16,9 @@ macro_rules! token_kind {
     };
 }
 
-#[cfg(feature = "serde")]
-pub trait Serde: serde::Serialize + for<'a> serde::Deserialize<'a> {}
-#[cfg(feature = "serde")]
-impl<T: serde::Serialize + for<'a> serde::Deserialize<'a>> Serde for T {}
-#[cfg(not(feature = "serde"))]
-pub trait Serde {}
-#[cfg(not(feature = "serde"))]
-impl<T> Serde for T {}
-
-pub trait AstNode: Debug + PartialEq + Eq + Hash + Sized + Serde {
+pub trait AstNode:
+    Debug + PartialEq + Eq + Hash + Sized + Serialize + for<'a> Deserialize<'a>
+{
     /// Parse the AST node using the given parser.
     ///
     /// # Errors
@@ -59,8 +53,7 @@ pub use prim::*;
 mod util;
 pub use util::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Symbol {
     pub span: Span,
     pub ident: Interned<str>,

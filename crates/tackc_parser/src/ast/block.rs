@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -40,8 +41,7 @@ where
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Block {
     pub span: Span,
     pub stmts: Vec<Statement>,
