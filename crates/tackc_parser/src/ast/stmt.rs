@@ -34,11 +34,10 @@ impl AstNode for StatementOrExpression {
             _ => {
                 let expr = p.parse::<Expression>(recursion + 1)?;
                 if let Some(tok) = p.consume(token_kind!(TokenKind::Semicolon)) {
-                    let expr_span = expr.span;
-                    let stmt = ExpressionStatement::new(
-                        expr,
-                        Span::new_from(expr_span.start, tok.span.end),
-                    );
+                    let stmt = ExpressionStatement {
+                        span: Span::new_from(expr.span.start, tok.span.end),
+                        inner: expr,
+                    };
                     Ok(StatementOrExpression::Statement(
                         Statement::ExpressionStatement(stmt),
                     ))
@@ -107,15 +106,11 @@ impl Statement {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExpressionStatement {
-    pub inner: Expression,
     pub span: Span,
+    pub inner: Expression,
 }
 
 impl ExpressionStatement {
-    fn new(inner: Expression, span: Span) -> Self {
-        ExpressionStatement { inner, span }
-    }
-
     pub fn span(&self) -> Span {
         self.span
     }
@@ -128,10 +123,10 @@ impl ExpressionStatement {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LetStatement {
+    pub span: Span,
     pub ident: Symbol,
     pub ty: Option<Expression>,
     pub expr: Option<Expression>,
-    pub span: Span,
 }
 
 impl AstNode for LetStatement {
@@ -159,10 +154,10 @@ impl AstNode for LetStatement {
         let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
 
         Ok(LetStatement {
+            span: Span::new_from(let_tok.span.start, semi.span.end),
             ident,
             ty,
             expr,
-            span: Span::new_from(let_tok.span.start, semi.span.end),
         })
     }
 

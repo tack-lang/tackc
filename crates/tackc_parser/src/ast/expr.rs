@@ -28,8 +28,8 @@ impl ParseMode {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Expression {
-    pub kind: ExpressionKind,
     pub span: Span,
+    pub kind: ExpressionKind,
 }
 
 impl AstNode for Expression {
@@ -131,12 +131,6 @@ fn run_expr_test(path: &Path) {
     insta::assert_ron_snapshot!(expr);
 }
 
-impl Expression {
-    fn new(kind: ExpressionKind, span: Span) -> Self {
-        Expression { kind, span }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExpressionKind {
@@ -200,11 +194,10 @@ where
             p.next_token();
 
             let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
-            let rhs_span = rhs.span;
-            Ok(Expression::new(
-                ExpressionKind::Neg(Box::new(rhs)),
-                Span::new_from(tok.span.start, rhs_span.end),
-            ))
+            Ok(Expression {
+                span: Span::new_from(tok.span.start, rhs.span.end),
+                kind: ExpressionKind::Neg(Box::new(rhs)),
+            })
         }
         TokenKind::LParen => {
             p.next_token();
@@ -212,29 +205,30 @@ where
             // Ignore parse mode
             let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
             let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
-            Ok(Expression::new(
-                ExpressionKind::Grouping(Box::new(inner)),
-                Span::new_from(tok.span.start, closing.span.end),
-            ))
+            Ok(Expression {
+                span: Span::new_from(tok.span.start, closing.span.end),
+                kind: ExpressionKind::Grouping(Box::new(inner)),
+            })
         }
         TokenKind::LBrace => {
             if mode == ParseMode::NoBlocks {
-                return p
-                    .parse::<Primary>(recursion + 1)
-                    .map(|prim| Expression::new(ExpressionKind::Primary(prim), prim.span()));
+                return p.parse::<Primary>(recursion + 1).map(|prim| Expression {
+                    span: prim.span(),
+                    kind: ExpressionKind::Primary(prim),
+                });
             }
 
             let block = p.parse::<Block>(recursion + 1)?;
-            let span = block.span;
 
-            Ok(Expression::new(
-                ExpressionKind::Block(Box::new(block)),
-                span,
-            ))
+            Ok(Expression {
+                span: block.span,
+                kind: ExpressionKind::Block(Box::new(block)),
+            })
         }
-        _ => p
-            .parse::<Primary>(recursion + 1)
-            .map(|prim| Expression::new(ExpressionKind::Primary(prim), prim.span())),
+        _ => p.parse::<Primary>(recursion + 1).map(|prim| Expression {
+            span: prim.span(),
+            kind: ExpressionKind::Primary(prim),
+        }),
     }
 }
 
@@ -266,12 +260,10 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     let rhs = parse_expression(p, rbp, recursion + 1, mode)?;
-    let lhs_span = lhs.span;
-    let rhs_span = rhs.span;
-    Ok(OperatorResult::Continue(Expression::new(
-        construct(Box::new(lhs), Box::new(rhs)),
-        Span::new_from(lhs_span.start, rhs_span.end),
-    )))
+    Ok(OperatorResult::Continue(Expression {
+        span: Span::new_from(lhs.span.start, rhs.span.end),
+        kind: construct(Box::new(lhs), Box::new(rhs)),
+    }))
 }
 
 enum OperatorResult {
@@ -284,27 +276,25 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     let ident = p.identifier()?;
-    let lhs_span = lhs.span;
 
-    Ok(OperatorResult::Continue(Expression::new(
-        ExpressionKind::Member(Box::new(lhs), ident),
-        Span::new_from(lhs_span.start, ident.span.end),
-    )))
+    Ok(OperatorResult::Continue(Expression {
+        span: Span::new_from(lhs.span.start, ident.span.end),
+        kind: ExpressionKind::Member(Box::new(lhs), ident),
+    }))
 }
 
 fn index<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let lhs_span = lhs.span;
     // Ignore parse mode
     let rhs = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
         .expected("expression")?;
     let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::RBracket))?;
-    Ok(OperatorResult::Continue(Expression::new(
-        ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
-        Span::new_from(lhs_span.start, closing.span.end),
-    )))
+    Ok(OperatorResult::Continue(Expression {
+        span: Span::new_from(lhs.span.start, closing.span.end),
+        kind: ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
+    }))
 }
 
 fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
@@ -325,11 +315,10 @@ where
 
     let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
 
-    let lhs_span = lhs.span;
-    Ok(OperatorResult::Continue(Expression::new(
-        ExpressionKind::Call(Box::new(lhs), args),
-        Span::new_from(lhs_span.start, tok.span.end),
-    )))
+    Ok(OperatorResult::Continue(Expression {
+        span: Span::new_from(lhs.span.start, tok.span.end),
+        kind: ExpressionKind::Call(Box::new(lhs), args),
+    }))
 }
 
 fn parse_postfix_or_infix<I>(

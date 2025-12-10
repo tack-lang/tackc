@@ -4,6 +4,10 @@ expression: expr
 input_file: crates/tackc_parser/src/ast/stmt-parse/let.tck
 ---
 Ok(LetStatement(LetStatement(
+  span: Span(
+    start: 0,
+    end: 21,
+  ),
   ident: Symbol(
     span: Span(
       start: 4,
@@ -12,6 +16,10 @@ Ok(LetStatement(LetStatement(
     ident: Interned(7125721452462380643, PhantomData),
   ),
   ty: Some(Expression(
+    span: Span(
+      start: 7,
+      end: 8,
+    ),
     kind: Primary(Primary(
       span: Span(
         start: 7,
@@ -25,13 +33,17 @@ Ok(LetStatement(LetStatement(
         ident: Interned(12543183117416492085, PhantomData),
       ), Decimal),
     )),
-    span: Span(
-      start: 7,
-      end: 8,
-    ),
   )),
   expr: Some(Expression(
+    span: Span(
+      start: 11,
+      end: 20,
+    ),
     kind: Add(Expression(
+      span: Span(
+        start: 11,
+        end: 12,
+      ),
       kind: Primary(Primary(
         span: Span(
           start: 11,
@@ -45,12 +57,16 @@ Ok(LetStatement(LetStatement(
           ident: Interned(12543183117416492085, PhantomData),
         ), Decimal),
       )),
-      span: Span(
-        start: 11,
-        end: 12,
-      ),
     ), Expression(
+      span: Span(
+        start: 15,
+        end: 20,
+      ),
       kind: Mul(Expression(
+        span: Span(
+          start: 15,
+          end: 16,
+        ),
         kind: Primary(Primary(
           span: Span(
             start: 15,
@@ -64,11 +80,11 @@ Ok(LetStatement(LetStatement(
             ident: Interned(4091593736821351671, PhantomData),
           ), Decimal),
         )),
-        span: Span(
-          start: 15,
-          end: 16,
-        ),
       ), Expression(
+        span: Span(
+          start: 19,
+          end: 20,
+        ),
         kind: Primary(Primary(
           span: Span(
             start: 19,
@@ -82,23 +98,7 @@ Ok(LetStatement(LetStatement(
             ident: Interned(14671982871472631300, PhantomData),
           ), Decimal),
         )),
-        span: Span(
-          start: 19,
-          end: 20,
-        ),
       )),
-      span: Span(
-        start: 15,
-        end: 20,
-      ),
     )),
-    span: Span(
-      start: 11,
-      end: 20,
-    ),
   )),
-  span: Span(
-    start: 0,
-    end: 21,
-  ),
 )))

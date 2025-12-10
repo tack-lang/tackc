@@ -48,10 +48,10 @@ impl AstNode for Item {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConstItem {
+    pub span: Span,
     pub ident: Symbol,
     pub ty: Option<Expression>,
     pub expr: Option<Expression>,
-    pub span: Span,
 }
 
 impl AstNode for ConstItem {
@@ -79,10 +79,10 @@ impl AstNode for ConstItem {
         let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
 
         Ok(ConstItem {
+            span: Span::new_from(const_tok.span.start, semi.span.end),
             ident,
             ty,
             expr,
-            span: Span::new_from(const_tok.span.start, semi.span.end),
         })
     }
 
@@ -109,11 +109,11 @@ impl AstNode for ConstItem {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FuncItem {
+    pub span: Span,
     pub ident: Symbol,
     pub params: Vec<(Symbol, Expression)>,
     pub ret_ty: Option<Expression>,
     pub block: Block,
-    pub span: Span,
 }
 
 impl AstNode for FuncItem {

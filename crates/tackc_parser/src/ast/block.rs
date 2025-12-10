@@ -43,9 +43,9 @@ where
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
+    pub span: Span,
     pub stmts: Vec<Statement>,
     pub expr: Option<Expression>,
-    pub span: Span,
 }
 
 impl AstNode for Block {
