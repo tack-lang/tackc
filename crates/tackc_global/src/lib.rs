@@ -133,13 +133,8 @@ impl Global {
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`, or in the event of a hash collision.
     pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
-        <dyn Any>::downcast_ref::<T>(
-            &**self
-                .interned
-                .get(&interned.0)
-                .unwrap_or_else(|| panic!("Wrong Global used!")),
-        )
-        .unwrap_or_else(|| panic!("Hash collision!"))
+        <dyn Any>::downcast_ref::<T>(&**self.interned.get(&interned.0).expect("Wrong Global used!"))
+            .expect("Hash collision!")
     }
 
     /// Interns a string value into the global map.
@@ -170,7 +165,7 @@ impl Global {
         *self
             .interned_strs
             .get(&interned.0)
-            .unwrap_or_else(|| panic!("Wrong Global used!"))
+            .expect("Wrong Global used!")
     }
 
     pub fn alloc<T>(&self, val: T) -> &mut T {
