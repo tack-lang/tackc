@@ -7,10 +7,9 @@ edition = "2024"
 bumpalo = { workspace = true, features = ["std"] }
 dashmap = { workspace = true }
 rustc-hash = { workspace = true }
-serde = { workspace = true, optional = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 
 [lints]
 workspace = true
 
 [features]
-serde = ["dep:serde"]

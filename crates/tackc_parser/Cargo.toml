@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 bumpalo = { workspace = true, features = ["std"] }
-ecow = { workspace = true }
-serde = { workspace = true, features = ["derive"], optional = true }
+ecow = { workspace = true, features = ["serde"] }
+serde = { workspace = true, features = ["derive"] }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true }
 tackc_lexer = { workspace = true }
@@ -15,9 +15,6 @@ thiserror = { workspace = true }
 
 [lints]
 workspace = true
-
-[features]
-serde = ["dep:serde", "ecow/serde", "tackc_file/serde", "tackc_lexer/serde", "tackc_span/serde", "tackc_global/serde"]
 
 [dev-dependencies]
 insta = { workspace = true, features = ["ron", "glob"] }

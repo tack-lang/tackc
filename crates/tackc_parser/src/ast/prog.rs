@@ -2,6 +2,8 @@ use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     Parser,
     ast::{AstNode, Item, Path},
@@ -38,8 +40,7 @@ where
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Program {
     pub mod_stmt: ModStatement,
     pub items: Vec<Item>,
@@ -113,8 +114,7 @@ impl Program {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ModStatement {
     pub span: Span,
     pub path: Path,
@@ -144,17 +144,16 @@ impl AstNode for ModStatement {
 }
 
 #[test]
-#[cfg(feature = "serde")]
 fn prog_test_glob() {
     use insta::glob;
 
     glob!("prog-parse/*.tck", run_prog_test);
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 use std::path::Path as StdPath;
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(test)]
 fn run_prog_test(path: &StdPath) {
     use tackc_error::iter::IteratorExt;
     use tackc_file::OwnedFile;

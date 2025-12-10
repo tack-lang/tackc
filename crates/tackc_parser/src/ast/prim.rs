@@ -2,19 +2,19 @@ use tackc_global::Global;
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
 
+use serde::{Deserialize, Serialize};
+
 use crate::Parser;
 use crate::ast::{AstNode, Symbol};
 use crate::error::{ParseError, ParseErrors, Result};
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub struct Primary {
     pub span: Span,
     pub kind: PrimaryKind,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub enum PrimaryKind {
     Binding(Symbol),
     IntLit(Symbol, IntegerBase),

@@ -5,6 +5,8 @@ use std::result::Result as StdResult;
 
 pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 
+use serde::{Deserialize, Serialize};
+
 use ecow::EcoVec;
 use tackc_file::File;
 use tackc_global::Global;
@@ -12,8 +14,7 @@ use tackc_lexer::Token;
 use tackc_lexer::TokenKind;
 use tackc_span::Span;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseErrors {
     // Length of errors will always be 1 or greater
     errors: EcoVec<ParseError>,
@@ -103,8 +104,7 @@ impl Deref for ParseErrors {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseError {
     pub kind: ParseErrorKind,
 }
@@ -181,8 +181,7 @@ impl ParseError {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ParseErrorKind {
     ExpectedFound {
         expected: Option<Cow<'static, str>>,

@@ -2,14 +2,15 @@ use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     Parser,
     ast::{AstNode, BindingPower, Block, Expression, ParseMode, Symbol, parse_expression},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Item {
     ConstItem(ConstItem),
     FuncItem(FuncItem),
@@ -45,8 +46,7 @@ impl AstNode for Item {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConstItem {
     pub span: Span,
     pub ident: Symbol,
@@ -106,8 +106,7 @@ impl AstNode for ConstItem {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FuncItem {
     pub span: Span,
     pub ident: Symbol,

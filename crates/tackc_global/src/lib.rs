@@ -8,6 +8,7 @@ use std::{
 use bumpalo::Bump;
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
+use serde::{Deserialize, Serialize};
 
 pub trait Internable: Any {
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
@@ -28,8 +29,7 @@ impl<T: Any + Hash + PartialEq> Internable for T {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
 
 impl<T: ?Sized> Debug for Interned<T> {

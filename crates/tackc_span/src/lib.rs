@@ -2,11 +2,12 @@
 
 use std::{cmp::Ordering, ops::Range};
 
+use serde::{Deserialize, Serialize};
+
 pub type SpanValue = u32;
 
 /// The `Span` type represents an area of a file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct Span {
     /// The start of the `Span` (Inclusive)
     pub start: SpanValue,
