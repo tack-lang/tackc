@@ -48,9 +48,7 @@ pub trait ReportMode: Clone + Copy + Default {
         F: FnMut(E);
 }
 
-pub struct Reporter<I, F, M>
-where
-{
+pub struct Reporter<I, F, M> {
     iter: I,
     callback: F,
     mode: M,
