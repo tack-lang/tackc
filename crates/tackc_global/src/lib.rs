@@ -1,7 +1,7 @@
 use std::{
     any::Any,
     fmt::Debug,
-    hash::{BuildHasherDefault, Hash, Hasher},
+    hash::{Hash, Hasher},
     marker::PhantomData,
 };
 
@@ -9,6 +9,7 @@ use bumpalo::Bump;
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
+use tackc_utils::IdentityHasherBuilder;
 
 pub trait Internable: Any {
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
@@ -55,34 +56,6 @@ impl Interned<str> {
         global.get_interned_str(*self)
     }
 }
-
-/// A hasher that just uses the key as the hash.
-#[derive(Default)]
-struct IdentityHasher {
-    hash: u64,
-}
-
-impl Hasher for IdentityHasher {
-    fn write(&mut self, bytes: &[u8]) {
-        // Expect exactly 8 bytes for u64 keys
-        assert_eq!(
-            bytes.len(),
-            8,
-            "IdentityHasher can only be used for u64-sized types!"
-        );
-        self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
-    }
-
-    fn write_u64(&mut self, i: u64) {
-        self.hash = i;
-    }
-
-    fn finish(&self) -> u64 {
-        self.hash
-    }
-}
-
-type IdentityHasherBuilder = BuildHasherDefault<IdentityHasher>;
 
 pub struct Global {
     arena: Bump,

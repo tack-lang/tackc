@@ -796,6 +796,7 @@ dependencies = [
  "dashmap",
  "rustc-hash",
  "serde",
+ "tackc_utils",
 ]
 
 [[package]]
@@ -858,6 +859,10 @@ dependencies = [
  "proptest",
  "serde",
 ]
+
+[[package]]
+name = "tackc_utils"
+version = "0.1.0"
 
 [[package]]
 name = "tempfile"
