@@ -18,7 +18,7 @@ pub trait File: Deref<Target = str> {
             return None;
         }
 
-        let src_len = self.src().len();
+        let src_len = self.len();
         // reject out-of-range indexes
         if (index as usize) > src_len {
             return None;
@@ -137,6 +137,6 @@ impl Deref for BorrowedFile<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.src()
+        self.src
     }
 }

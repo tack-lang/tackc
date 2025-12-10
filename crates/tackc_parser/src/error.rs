@@ -163,7 +163,7 @@ impl ParseError {
 
         let mut f = String::new();
 
-        let span = span.unwrap_or(Span::eof(file.src()));
+        let span = span.unwrap_or(Span::eof(file));
 
         _ = match found {
             TokenKind::Eof => write!(f, "unexpected EOF, expected {expected}"),
@@ -172,9 +172,7 @@ impl ParseError {
 
         _ = write!(f, "\n  --> {}", file.path().display());
 
-        let (line, column) = file
-            .line_and_column(span.start)
-            .unwrap_or_else(|| panic!("file is too short"));
+        let (line, column) = file.line_and_column(span.start).expect("file is too short");
         _ = write!(f, ":{line}:{column}");
 
         f
