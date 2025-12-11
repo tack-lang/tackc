@@ -34,7 +34,7 @@ pub fn run(data: &[u8]) {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Program::parse(tokens.iter().copied());
+    let res = Program::parse(tokens.iter().copied(), &global);
     match res {
         Ok(s) => {
             s.display(&global);
