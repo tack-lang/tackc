@@ -9,7 +9,7 @@ use bumpalo::Bump;
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use tackc_utils::IdentityHasherBuilder;
+use tackc_utils::hash::IdentityHasherBuilder;
 
 pub trait Internable: Any {
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
