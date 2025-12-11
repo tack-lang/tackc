@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Item, NodeId, Path},
+    ast::{AstNode, Item, NodeId, Path, Visitor},
     error::{DiagResult, ParseErrors, Result},
 };
 
@@ -47,6 +47,8 @@ pub struct Program {
     pub mod_stmt: ModStatement,
     /// The items of this program
     pub items: Vec<Item>,
+    #[allow(missing_docs)]
+    pub id: NodeId,
 }
 
 impl Program {
@@ -100,6 +102,7 @@ impl Program {
             Ok(Program {
                 mod_stmt: mod_stmt.expect("This is a bug. Please submit a bug report."),
                 items,
+                id: p.node_id(),
             })
         }
     }
@@ -154,6 +157,10 @@ impl AstNode for ModStatement {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_mod_statement(self);
     }
 }
 

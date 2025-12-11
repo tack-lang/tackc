@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Item, NodeId, Symbol},
+    ast::{AstNode, Expression, Item, NodeId, Symbol, Visitor},
     error::{DiagResult, Result},
 };
 
@@ -47,14 +47,14 @@ impl AstNode for StatementOrExpression {
                 } else if let Some(_tok) = p.consume(kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
                     let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
-                    Ok(StatementOrExpression::Statement(Statement::Assignment(
-                        AssignmentStatement {
+                    Ok(StatementOrExpression::Statement(
+                        Statement::AssignmentStatement(AssignmentStatement {
                             span: Span::new_from(expr.span.start, semi.span.end),
                             lvalue: expr,
                             rvalue,
                             id: p.node_id(),
-                        },
-                    )))
+                        }),
+                    ))
                 } else {
                     Ok(StatementOrExpression::Expression(expr))
                 }
@@ -82,6 +82,13 @@ impl AstNode for StatementOrExpression {
             StatementOrExpression::Statement(stmt) => stmt.id(),
         }
     }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        match self {
+            StatementOrExpression::Expression(expr) => expr.accept(v),
+            StatementOrExpression::Statement(stmt) => stmt.accept(v),
+        }
+    }
 }
 
 #[allow(missing_docs)]
@@ -89,7 +96,7 @@ impl AstNode for StatementOrExpression {
 pub enum Statement {
     ExpressionStatement(ExpressionStatement),
     LetStatement(LetStatement),
-    Assignment(AssignmentStatement),
+    AssignmentStatement(AssignmentStatement),
     Item(Item),
 }
 
@@ -100,7 +107,7 @@ impl Statement {
             Statement::ExpressionStatement(stmt) => stmt.span(),
             Statement::LetStatement(stmt) => stmt.span(),
             Statement::Item(item) => item.span(),
-            Statement::Assignment(stmt) => stmt.span(),
+            Statement::AssignmentStatement(stmt) => stmt.span(),
         }
     }
 
@@ -110,7 +117,7 @@ impl Statement {
             Statement::ExpressionStatement(stmt) => stmt.display(global),
             Statement::LetStatement(stmt) => stmt.display(global),
             Statement::Item(item) => item.display(global),
-            Statement::Assignment(stmt) => stmt.display(global),
+            Statement::AssignmentStatement(stmt) => stmt.display(global),
         }
     }
 
@@ -119,8 +126,18 @@ impl Statement {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.id,
             Statement::LetStatement(stmt) => stmt.id,
-            Statement::Assignment(stmt) => stmt.id,
+            Statement::AssignmentStatement(stmt) => stmt.id,
             Statement::Item(stmt) => stmt.id(),
+        }
+    }
+
+    #[allow(missing_docs)]
+    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        match self {
+            Statement::ExpressionStatement(stmt) => stmt.accept(v),
+            Statement::LetStatement(stmt) => stmt.accept(v),
+            Statement::AssignmentStatement(stmt) => stmt.accept(v),
+            Statement::Item(item) => item.accept(v),
         }
     }
 }
@@ -150,6 +167,11 @@ impl ExpressionStatement {
     #[allow(missing_docs)]
     pub fn id(&self) -> NodeId {
         self.id
+    }
+
+    #[allow(missing_docs)]
+    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_expression_statement(self);
     }
 }
 
@@ -223,6 +245,10 @@ impl AstNode for LetStatement {
     fn id(&self) -> NodeId {
         self.id
     }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_let_statement(self);
+    }
 }
 
 /// An assignment statement
@@ -251,6 +277,11 @@ impl AssignmentStatement {
             self.lvalue.display(global),
             self.rvalue.display(global)
         )
+    }
+
+    #[allow(missing_docs)]
+    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_assignment_statement(self);
     }
 }
 

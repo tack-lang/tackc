@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::{Block, NodeId, Primary, Symbol};
+use crate::ast::{Block, NodeId, Primary, Symbol, Visitor};
 use crate::error::{DiagResult, Result};
 use serde::{Deserialize, Serialize};
 use tackc_global::Global;
@@ -116,6 +116,10 @@ impl AstNode for Expression {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_expression(self);
     }
 }
 

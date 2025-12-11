@@ -7,7 +7,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression},
+    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression, Visitor},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
@@ -126,5 +126,9 @@ impl AstNode for Block {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_block(self);
     }
 }

@@ -267,4 +267,5 @@ Ok(Program(
       id: NodeId(25),
     )),
   ],
+  id: NodeId(26),
 ))

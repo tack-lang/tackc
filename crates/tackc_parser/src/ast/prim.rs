@@ -5,7 +5,7 @@ use tackc_span::Span;
 use serde::{Deserialize, Serialize};
 
 use crate::Parser;
-use crate::ast::{AstNode, NodeId, Symbol};
+use crate::ast::{AstNode, NodeId, Symbol, Visitor};
 use crate::error::{ParseError, ParseErrors, Result};
 
 /// A primary expression
@@ -125,5 +125,9 @@ impl AstNode for Primary {
 
     fn id(&self) -> super::NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_primary(self);
     }
 }

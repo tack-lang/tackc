@@ -36,6 +36,7 @@ pub trait AstNode:
     fn display(&self, global: &Global) -> String;
     /// Get the ID of the AST node
     fn id(&self) -> NodeId;
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V);
 }
 
 /// An index types for Node IDs.
@@ -81,5 +82,112 @@ impl Symbol {
     /// Display the symbol
     pub fn display<'a>(&self, global: &'a Global) -> &'a str {
         self.inner.display(global)
+    }
+}
+
+pub trait Visitor {
+    fn visit_program(&mut self, program: &Program) {
+        program.mod_stmt.accept(self);
+        for item in &program.items {
+            item.accept(self);
+        }
+    }
+
+    fn visit_mod_statement(&mut self, mod_statement: &ModStatement) {
+        mod_statement.path.accept(self);
+    }
+
+    fn visit_path(&mut self, path: &Path) {
+        let _ = path;
+    }
+
+    fn visit_const_item(&mut self, item: &ConstItem) {
+        if let Some(ty) = &item.ty {
+            ty.accept(self);
+        }
+        item.expr.accept(self);
+    }
+
+    fn visit_func_item(&mut self, item: &FuncItem) {
+        for (_, ty) in &item.params {
+            ty.accept(self);
+        }
+        if let Some(ty) = &item.ret_ty {
+            ty.accept(self);
+        }
+        item.block.accept(self);
+    }
+
+    fn visit_expression(&mut self, expr: &Expression) {
+        match &expr.kind {
+            ExpressionKind::Add(lhs, rhs)
+            | ExpressionKind::Sub(lhs, rhs)
+            | ExpressionKind::Mul(lhs, rhs)
+            | ExpressionKind::Div(lhs, rhs)
+            | ExpressionKind::Index(lhs, rhs)
+            | ExpressionKind::Equal(lhs, rhs)
+            | ExpressionKind::NotEqual(lhs, rhs)
+            | ExpressionKind::Gt(lhs, rhs)
+            | ExpressionKind::Lt(lhs, rhs)
+            | ExpressionKind::GtEq(lhs, rhs)
+            | ExpressionKind::LtEq(lhs, rhs) => {
+                lhs.accept(self);
+                rhs.accept(self);
+            }
+            ExpressionKind::Grouping(lhs) | ExpressionKind::Neg(lhs) => lhs.accept(self),
+            ExpressionKind::Call(lhs, args) => {
+                lhs.accept(self);
+                for arg in args {
+                    arg.accept(self);
+                }
+            }
+            ExpressionKind::Member(lhs, _symbol) => lhs.accept(self),
+            ExpressionKind::Primary(primary) => primary.accept(self),
+            ExpressionKind::Block(block) => block.accept(self),
+        }
+    }
+
+    fn visit_primary(&mut self, primary: &Primary) {
+        match primary.kind {
+            PrimaryKind::Binding(_)
+            | PrimaryKind::IntLit(_, _)
+            | PrimaryKind::FloatLit(_)
+            | PrimaryKind::U8
+            | PrimaryKind::U16
+            | PrimaryKind::U32
+            | PrimaryKind::U64
+            | PrimaryKind::I8
+            | PrimaryKind::I16
+            | PrimaryKind::I32
+            | PrimaryKind::I64 => {}
+        }
+    }
+
+    fn visit_block(&mut self, block: &Block) {
+        for stmt in &block.stmts {
+            stmt.accept(self);
+        }
+
+        if let Some(expr) = &block.expr {
+            expr.accept(self);
+        }
+    }
+
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement) {
+        stmt.inner.accept(self);
+    }
+
+    fn visit_let_statement(&mut self, stmt: &LetStatement) {
+        if let Some(ty) = &stmt.ty {
+            ty.accept(self);
+        }
+        if let Some(expr) = &stmt.expr {
+            expr.accept(self);
+        }
+    }
+
+    fn visit_assignment_statement(&mut self, stmt: &AssignmentStatement) {
+        stmt.lvalue.accept(self);
+        stmt.rvalue.accept(self);
     }
 }
