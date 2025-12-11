@@ -8,7 +8,7 @@ bumpalo = { workspace = true, features = ["std"] }
 dashmap = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-tackc_utils = { version = "0.1.0", path = "../tackc_utils" }
+tackc_utils = { workspace = true }
 
 [lints]
 workspace = true
