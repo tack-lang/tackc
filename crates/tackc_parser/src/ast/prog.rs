@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Item, Path},
+    ast::{AstNode, Item, NodeId, Path},
     error::{DiagResult, ParseErrors, Result},
 };
 
@@ -118,6 +118,7 @@ impl Program {
 pub struct ModStatement {
     pub span: Span,
     pub path: Path,
+    pub id: NodeId,
 }
 
 impl AstNode for ModStatement {
@@ -131,6 +132,7 @@ impl AstNode for ModStatement {
         Ok(ModStatement {
             span: Span::new_from(mod_tok.span.start, semi.span.end),
             path,
+            id: p.node_id(),
         })
     }
 
@@ -140,6 +142,10 @@ impl AstNode for ModStatement {
 
     fn display(&self, global: &Global) -> String {
         format!("mod {};", self.path.display(global))
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
     }
 }
 

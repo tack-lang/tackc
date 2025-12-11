@@ -7,7 +7,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Statement, StatementOrExpression},
+    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
@@ -46,6 +46,7 @@ pub struct Block {
     pub span: Span,
     pub stmts: Vec<Statement>,
     pub expr: Option<Expression>,
+    pub id: NodeId,
 }
 
 impl AstNode for Block {
@@ -98,6 +99,7 @@ impl AstNode for Block {
             span: Span::new_from(l_brace.span.start, r_brace.span.end),
             stmts,
             expr,
+            id: p.node_id(),
         })
     }
 
@@ -115,5 +117,9 @@ impl AstNode for Block {
         }
         str.push_str(" }");
         str
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
     }
 }

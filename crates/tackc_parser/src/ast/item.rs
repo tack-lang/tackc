@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, BindingPower, Block, Expression, ParseMode, Symbol, parse_expression},
+    ast::{AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, parse_expression},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
@@ -44,6 +44,13 @@ impl AstNode for Item {
             Item::FuncItem(item) => item.display(global),
         }
     }
+
+    fn id(&self) -> super::NodeId {
+        match self {
+            Item::ConstItem(item) => item.id,
+            Item::FuncItem(item) => item.id,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -52,6 +59,7 @@ pub struct ConstItem {
     pub ident: Symbol,
     pub ty: Option<Expression>,
     pub expr: Option<Expression>,
+    pub id: NodeId,
 }
 
 impl AstNode for ConstItem {
@@ -83,6 +91,7 @@ impl AstNode for ConstItem {
             ident,
             ty,
             expr,
+            id: p.node_id(),
         })
     }
 
@@ -104,6 +113,10 @@ impl AstNode for ConstItem {
                 .unwrap_or_default()
         )
     }
+
+    fn id(&self) -> NodeId {
+        self.id
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -113,6 +126,7 @@ pub struct FuncItem {
     pub params: Vec<(Symbol, Expression)>,
     pub ret_ty: Option<Expression>,
     pub block: Block,
+    pub id: NodeId,
 }
 
 impl AstNode for FuncItem {
@@ -157,6 +171,7 @@ impl AstNode for FuncItem {
             params,
             ret_ty,
             block,
+            id: p.node_id(),
         })
     }
 
@@ -188,5 +203,9 @@ impl AstNode for FuncItem {
                 self.block.display(global)
             )
         }
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
     }
 }

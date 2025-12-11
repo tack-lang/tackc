@@ -18,7 +18,7 @@ struct Args {
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
 enum DebugMode {
     Lexer,
-    //Parser,
+    Parser,
 }
 
 fn main() -> Result<()> {
@@ -55,12 +55,22 @@ fn main() -> Result<()> {
     }
 
     let res = Program::parse(tokens.iter().copied(), global);
-    match res {
+    let prog = match res {
         Ok(prog) => {
-            println!("{}", prog.display(global));
+            prog
         }
-        Err(diags) => println!("{}", diags.display(file_ref, global)),
+        Err(diags) => {
+            println!("{}", diags.display(file_ref, global));
+            return Ok(());
+        },
+    };
+
+    if args.debug == Some(DebugMode::Parser) {
+        println!("{prog:#?}");
+        return Ok(());
     }
+
+    println!("{}", prog.display(global));
 
     Ok(())
 }

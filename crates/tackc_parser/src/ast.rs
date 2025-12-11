@@ -30,7 +30,11 @@ pub trait AstNode:
         I: Iterator<Item = Token> + Clone;
     fn span(&self) -> Span;
     fn display(&self, global: &Global) -> String;
+    fn id(&self) -> NodeId;
 }
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq)]
+pub struct NodeId(pub(super) u64);
 
 mod expr;
 pub use expr::*;

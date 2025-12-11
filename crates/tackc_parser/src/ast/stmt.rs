@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Item, Symbol},
+    ast::{AstNode, Expression, Item, NodeId, Symbol},
     error::{DiagResult, Result},
 };
 
@@ -38,6 +38,7 @@ impl AstNode for StatementOrExpression {
                     let stmt = ExpressionStatement {
                         span: Span::new_from(expr.span.start, tok.span.end),
                         inner: expr,
+                        id: p.node_id(),
                     };
                     Ok(StatementOrExpression::Statement(
                         Statement::ExpressionStatement(stmt),
@@ -51,6 +52,7 @@ impl AstNode for StatementOrExpression {
                             span: Span::new_from(expr.span.start, semi.span.end),
                             lvalue: expr,
                             rvalue,
+                            id: p.node_id(),
                         },
                     )))
                 } else {
@@ -71,6 +73,13 @@ impl AstNode for StatementOrExpression {
         match self {
             StatementOrExpression::Expression(expr) => expr.display(global),
             StatementOrExpression::Statement(stmt) => stmt.display(global),
+        }
+    }
+
+    fn id(&self) -> super::NodeId {
+        match self {
+            StatementOrExpression::Expression(expr) => expr.id,
+            StatementOrExpression::Statement(stmt) => stmt.id(),
         }
     }
 }
@@ -101,12 +110,22 @@ impl Statement {
             Statement::Assignment(stmt) => stmt.display(global),
         }
     }
+
+    pub fn id(&self) -> NodeId {
+        match self {
+            Statement::ExpressionStatement(stmt) => stmt.id,
+            Statement::LetStatement(stmt) => stmt.id,
+            Statement::Assignment(stmt) => stmt.id,
+            Statement::Item(stmt) => stmt.id(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ExpressionStatement {
     pub span: Span,
     pub inner: Expression,
+    pub id: NodeId,
 }
 
 impl ExpressionStatement {
@@ -117,6 +136,10 @@ impl ExpressionStatement {
     pub fn display(&self, global: &Global) -> String {
         self.inner.display(global) + ";"
     }
+
+    pub fn id(&self) -> NodeId {
+        self.id
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -125,6 +148,7 @@ pub struct LetStatement {
     pub ident: Symbol,
     pub ty: Option<Expression>,
     pub expr: Option<Expression>,
+    pub id: NodeId,
 }
 
 impl AstNode for LetStatement {
@@ -156,6 +180,7 @@ impl AstNode for LetStatement {
             ident,
             ty,
             expr,
+            id: p.node_id(),
         })
     }
 
@@ -177,6 +202,10 @@ impl AstNode for LetStatement {
                 .unwrap_or_default()
         )
     }
+
+    fn id(&self) -> NodeId {
+        self.id
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -184,6 +213,7 @@ pub struct Assignment {
     pub span: Span,
     pub lvalue: Expression,
     pub rvalue: Expression,
+    pub id: NodeId,
 }
 
 impl Assignment {
