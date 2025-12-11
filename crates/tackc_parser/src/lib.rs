@@ -49,7 +49,11 @@ where
     /// Create a new parser
     #[inline]
     pub fn new(iter: I, global: &'a Global) -> Self {
-        Parser { iter, global, open_id: 0 }
+        Parser {
+            iter,
+            global,
+            open_id: 0,
+        }
     }
 
     /// Returns the next open [`NodeId`], and increments the open ID.

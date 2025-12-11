@@ -56,13 +56,11 @@ fn main() -> Result<()> {
 
     let res = Program::parse(tokens.iter().copied(), global);
     let prog = match res {
-        Ok(prog) => {
-            prog
-        }
+        Ok(prog) => prog,
         Err(diags) => {
             println!("{}", diags.display(file_ref, global));
             return Ok(());
-        },
+        }
     };
 
     if args.debug == Some(DebugMode::Parser) {

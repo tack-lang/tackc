@@ -50,7 +50,7 @@ impl ParseErrors {
         errors.last_mut().unwrap()
     }
 
-    /// Clears the `expected` field of the most recent error. 
+    /// Clears the `expected` field of the most recent error.
     pub fn clear_expected(&mut self) {
         let last = self.most_recent_mut();
         match &mut last.kind {

@@ -29,8 +29,7 @@ pub trait AstNode:
     /// If you need to, the parser can be cloned previous to calling this function.
     fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
     where
-        I: Iterator<Item = Token> + Clone
-    ;
+        I: Iterator<Item = Token> + Clone;
     /// Get the span of the AST node
     fn span(&self) -> Span;
     /// Display the AST node
