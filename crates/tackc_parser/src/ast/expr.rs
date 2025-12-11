@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::{Block, Primary, Symbol};
+use crate::ast::{Block, NodeId, Primary, Symbol};
 use crate::error::{DiagResult, Result};
 use serde::{Deserialize, Serialize};
 use tackc_global::Global;
@@ -30,6 +30,7 @@ impl ParseMode {
 pub struct Expression {
     pub span: Span,
     pub kind: ExpressionKind,
+    pub id: NodeId,
 }
 
 impl AstNode for Expression {
@@ -102,6 +103,10 @@ impl AstNode for Expression {
 
             ExpressionKind::Block(block) => block.display(global),
         }
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
     }
 }
 
@@ -195,6 +200,7 @@ where
             Ok(Expression {
                 span: Span::new_from(tok.span.start, rhs.span.end),
                 kind: ExpressionKind::Neg(Box::new(rhs)),
+                id: p.node_id(),
             })
         }
         TokenKind::LParen => {
@@ -206,6 +212,7 @@ where
             Ok(Expression {
                 span: Span::new_from(tok.span.start, closing.span.end),
                 kind: ExpressionKind::Grouping(Box::new(inner)),
+                id: p.node_id(),
             })
         }
         TokenKind::LBrace => {
@@ -213,6 +220,7 @@ where
                 return p.parse::<Primary>(recursion + 1).map(|prim| Expression {
                     span: prim.span(),
                     kind: ExpressionKind::Primary(prim),
+                    id: p.node_id(),
                 });
             }
 
@@ -221,11 +229,13 @@ where
             Ok(Expression {
                 span: block.span,
                 kind: ExpressionKind::Block(Box::new(block)),
+                id: p.node_id(),
             })
         }
         _ => p.parse::<Primary>(recursion + 1).map(|prim| Expression {
             span: prim.span(),
             kind: ExpressionKind::Primary(prim),
+            id: p.node_id(),
         }),
     }
 }
@@ -261,6 +271,7 @@ where
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, rhs.span.end),
         kind: construct(Box::new(lhs), Box::new(rhs)),
+        id: p.node_id(),
     }))
 }
 
@@ -278,6 +289,7 @@ where
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, ident.span.end),
         kind: ExpressionKind::Member(Box::new(lhs), ident),
+        id: p.node_id(),
     }))
 }
 
@@ -292,6 +304,7 @@ where
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, closing.span.end),
         kind: ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
+        id: p.node_id(),
     }))
 }
 
@@ -316,6 +329,7 @@ where
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, tok.span.end),
         kind: ExpressionKind::Call(Box::new(lhs), args),
+        id: p.node_id(),
     }))
 }
 

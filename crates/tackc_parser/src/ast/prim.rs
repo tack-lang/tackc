@@ -5,13 +5,14 @@ use tackc_span::Span;
 use serde::{Deserialize, Serialize};
 
 use crate::Parser;
-use crate::ast::{AstNode, Symbol};
+use crate::ast::{AstNode, NodeId, Symbol};
 use crate::error::{ParseError, ParseErrors, Result};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub struct Primary {
     pub span: Span,
     pub kind: PrimaryKind,
+    pub id: NodeId,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
@@ -40,46 +41,57 @@ impl AstNode for Primary {
             TokenKind::Ident(ident) => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::Binding(Symbol::new(tok.span, ident)),
+                id: p.node_id(),
             }),
             TokenKind::IntLit(str, base) => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::IntLit(Symbol::new(tok.span, str), base),
+                id: p.node_id(),
             }),
             TokenKind::FloatLit(str) => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
+                id: p.node_id(),
             }),
             TokenKind::U8 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::U8,
+                id: p.node_id(),
             }),
             TokenKind::U16 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::U16,
+                id: p.node_id(),
             }),
             TokenKind::U32 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::U32,
+                id: p.node_id(),
             }),
             TokenKind::U64 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::U64,
+                id: p.node_id(),
             }),
             TokenKind::I8 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::I8,
+                id: p.node_id(),
             }),
             TokenKind::I16 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::I16,
+                id: p.node_id(),
             }),
             TokenKind::I32 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::I32,
+                id: p.node_id(),
             }),
             TokenKind::I64 => Ok(Primary {
                 span: tok.span,
                 kind: PrimaryKind::I64,
+                id: p.node_id(),
             }),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
@@ -104,5 +116,9 @@ impl AstNode for Primary {
             PrimaryKind::I32 => "i32".to_string(),
             PrimaryKind::I64 => "i64".to_string(),
         }
+    }
+
+    fn id(&self) -> super::NodeId {
+        self.id
     }
 }

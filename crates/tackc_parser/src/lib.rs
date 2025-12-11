@@ -6,15 +6,16 @@ use error::{ParseError, ParseErrors, Result};
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 
-use crate::ast::{AstNode, Symbol};
+use crate::ast::{AstNode, NodeId, Symbol};
 
 pub const MAX_RECURSION_DEPTH: u32 = 256;
 
-pub struct ParserSnapshot<I>(I);
+pub struct ParserSnapshot<I>(I, u64);
 
 pub struct Parser<'a, I> {
     iter: I,
     global: &'a Global,
+    open_id: u64,
 }
 
 impl<'a, I> Parser<'a, I>
@@ -23,7 +24,7 @@ where
 {
     #[inline]
     pub fn snapshot(&self) -> ParserSnapshot<I> {
-        ParserSnapshot(self.iter.clone())
+        ParserSnapshot(self.iter.clone(), self.open_id)
     }
 
     #[inline]
@@ -31,12 +32,19 @@ where
         *self = Parser {
             iter: snapshot.0,
             global: self.global,
+            open_id: snapshot.1,
         };
     }
 
     #[inline]
     pub fn new(iter: I, global: &'a Global) -> Self {
-        Parser { iter, global }
+        Parser { iter, global, open_id: 0 }
+    }
+
+    pub fn node_id(&mut self) -> NodeId {
+        let old = self.open_id;
+        self.open_id += 1;
+        NodeId(old)
     }
 
     pub fn is_eof(&self) -> bool {

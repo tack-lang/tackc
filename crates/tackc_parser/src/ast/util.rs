@@ -5,7 +5,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Symbol},
+    ast::{AstNode, NodeId, Symbol},
     error::{DiagResult, Result},
 };
 
@@ -13,6 +13,7 @@ use crate::{
 pub struct Path {
     pub span: Span,
     pub components: Vec<Symbol>,
+    pub id: NodeId,
 }
 
 impl AstNode for Path {
@@ -33,6 +34,7 @@ impl AstNode for Path {
                 first.span.start,
                 components.last().unwrap_or(&first).span.end,
             ),
+            id: p.node_id(),
             components,
         })
     }
@@ -47,5 +49,9 @@ impl AstNode for Path {
             .map(|ident| ident.display(global))
             .collect::<Vec<_>>()
             .join(".")
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
     }
 }
