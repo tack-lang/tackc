@@ -28,9 +28,11 @@ Ok(ExpressionStatement(ExpressionStatement(
             start: 0,
             end: 1,
           ),
-          ident: Interned(12543183117416492085, PhantomData),
+          inner: Interned(12543183117416492085, PhantomData),
         ), Decimal),
+        id: NodeId(0),
       )),
+      id: NodeId(1),
     ), Expression(
       span: Span(
         start: 4,
@@ -51,9 +53,11 @@ Ok(ExpressionStatement(ExpressionStatement(
               start: 4,
               end: 5,
             ),
-            ident: Interned(14671982871472631300, PhantomData),
+            inner: Interned(14671982871472631300, PhantomData),
           ), Decimal),
+          id: NodeId(2),
         )),
+        id: NodeId(3),
       ), Expression(
         span: Span(
           start: 8,
@@ -69,10 +73,15 @@ Ok(ExpressionStatement(ExpressionStatement(
               start: 8,
               end: 9,
             ),
-            ident: Interned(14894071113539278494, PhantomData),
+            inner: Interned(14894071113539278494, PhantomData),
           ), Decimal),
+          id: NodeId(4),
         )),
+        id: NodeId(5),
       )),
+      id: NodeId(6),
     )),
+    id: NodeId(7),
   ),
+  id: NodeId(8),
 )))
