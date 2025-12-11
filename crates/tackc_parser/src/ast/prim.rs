@@ -8,13 +8,18 @@ use crate::Parser;
 use crate::ast::{AstNode, NodeId, Symbol};
 use crate::error::{ParseError, ParseErrors, Result};
 
+/// A primary expression
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub struct Primary {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub kind: PrimaryKind,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub enum PrimaryKind {
     Binding(Symbol),

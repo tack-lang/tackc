@@ -1,3 +1,5 @@
+//! The lexer for tackc.
+
 use std::fmt::Display;
 
 use proptest::prelude::*;
@@ -8,17 +10,22 @@ use thiserror::Error;
 use tackc_file::File;
 use tackc_global::{Global, Interned};
 
+/// The struct representing tokens in tackc.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Token {
+    /// The space in the file taken up by this token.
     pub span: Span,
+    /// The kind of token this token is.
     pub kind: TokenKind,
 }
 
 impl Token {
+    /// Create a new token.
     pub fn new(span: Span, kind: TokenKind) -> Self {
         Token { span, kind }
     }
 
+    /// Display this token, using `global`.
     pub fn display(&self, global: &Global) -> String {
         self.kind.display(global)
     }
@@ -30,73 +37,119 @@ impl Display for Token {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenKind {
+    /// Identifiers
     Ident(Interned<str>),
 
     // Literals
+    /// String literals
     StringLit(Interned<str>),
+    /// Integer literals
     IntLit(Interned<str>, IntegerBase),
+    /// Float literals
     FloatLit(Interned<str>),
 
+    /// End of file
     Eof,
 
     // Keywords
+    /// `func`
     Func,
+    /// `let`
     Let,
+    /// `const`
     Const,
+    /// `mod`
     Mod,
+    /// `u8`
     U8,
+    /// `u16`
     U16,
+    /// `u32`
     U32,
+    /// `u64`
     U64,
+    /// `i8`
     I8,
+    /// `i16`
     I16,
+    /// `i32`
     I32,
+    /// `i64`
     I64,
 
     // Delimeters
+    /// `(`
     LParen,
+    /// `)`
     RParen,
+    /// `{`
     LBrace,
+    /// `}`
     RBrace,
+    /// `[`
     LBracket,
+    /// `]`
     RBracket,
 
     // Assignment operators
+    /// `=`
     Eq,
+    /// `+=`
     PlusEq,
+    /// `-=`
     MinusEq,
+    /// `*=`
     StarEq,
+    /// `/=`
     SlashEq,
 
     // Symbols
+    /// `,`
     Comma,
+    /// `;`
     Semicolon,
+    /// `.`
     Dot,
+    /// `:`
     Colon,
+    /// `|`
     Pipe,
 
     // Arithmatic operators
+    /// `+`
     Plus,
+    /// `-`
     Minus,
+    /// `*`
     Star,
+    /// `/`
     Slash,
 
     // Comparison operators
+    /// `==`
     EqEq,
+    /// `!=`
     BangEq,
 
+    /// `>`
     Gt,
+    /// `<`
     Lt,
+    /// `>=`
     GtEq,
+    /// `<=`
     LtEq,
 
     // Bitwise operators
+    /// `||`
     PipePipe,
 }
 
 impl TokenKind {
+    /// Gets the string representation of this token kind, using the given global.
     pub fn display(&self, global: &Global) -> String {
         match self {
             TokenKind::Ident(ident) => ident.display(global).to_string(),
@@ -171,9 +224,12 @@ impl Display for TokenKind {
     }
 }
 
+/// An error in the lexer.
 #[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Error {
+    /// The span of the file that caused the error
     pub span: Span,
+    /// This kind of error this error is.
     pub kind: ErrorKind,
 }
 
@@ -183,6 +239,7 @@ impl Display for Error {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
     #[error("unknown character {0}")]
@@ -197,6 +254,7 @@ pub enum ErrorKind {
     MissingExponentDigits,
 }
 
+/// Different integer bases representable by this lexer
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum IntegerBase {
     /// No prefix
@@ -220,6 +278,9 @@ impl Display for IntegerBase {
     }
 }
 
+/// Tack's lexer. `Lexer` implements iterator, but [`next_token`](Lexer::next_token) can also be called.
+/// `Lexer`'s `Iterator` implementation returns `None` when `next_token` returns `Ok` with a token kind of [`TokenKind::Eof`].
+/// `Lexer` should be easily cloneable.
 pub struct Lexer<'src, F: File> {
     src: &'src F,
     span: Span,
@@ -227,6 +288,7 @@ pub struct Lexer<'src, F: File> {
 }
 
 impl<'src, F: File> Lexer<'src, F> {
+    /// Create a new lexer
     pub fn new(src: &'src F, global: &'src Global) -> Self {
         Lexer {
             src,
@@ -235,6 +297,7 @@ impl<'src, F: File> Lexer<'src, F> {
         }
     }
 
+    /// Returns true if the lexer is at the end of the given file.
     pub fn at_eof(&self) -> bool {
         self.src.len() <= self.span.end as usize
     }

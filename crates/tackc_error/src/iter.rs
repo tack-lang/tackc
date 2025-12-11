@@ -1,7 +1,10 @@
+/// A report mode that ignores errors.
 #[derive(Clone, Copy, Default)]
 pub struct Skip;
+/// A report mode that stops when receiving an error.
 #[derive(Clone, Copy, Default)]
 pub struct Stop;
+/// A report mode that when receiving an errors, consumes the rest of the iterators, reporting any errors.
 #[derive(Clone, Copy, Default)]
 pub struct Consume;
 
@@ -41,13 +44,17 @@ impl ReportMode for Consume {
     }
 }
 
+/// A trait for "report modes."
+/// Report modes can be used in conjunction with the [`Reporter`] iterator in order to control how they act on an error.
 pub trait ReportMode: Clone + Copy + Default {
+    /// When an error is received, this function will be called.
     fn on_error<I, T, E, F>(iter: &mut I, callback: &mut F) -> bool
     where
         I: Iterator<Item = Result<T, E>>,
         F: FnMut(E);
 }
 
+/// The reporter iterator is a complex iterator adapter that can be used for error handling.
 pub struct Reporter<I, F, M> {
     iter: I,
     callback: F,
@@ -60,6 +67,7 @@ where
     F: FnMut(E),
     M: ReportMode,
 {
+    /// Create a new reporter iterator.
     pub fn new(iter: I, callback: F, mode: M) -> Self {
         Reporter {
             iter,
@@ -109,7 +117,9 @@ where
     }
 }
 
+#[allow(missing_docs)]
 pub trait IteratorExt: Iterator {
+    /// Wrap the `self` iterator with a reporter iterator, using report mode `mode`.
     fn reporter<M, T, E, F: FnMut(E)>(self, callback: F, mode: M) -> Reporter<Self, F, M>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
@@ -122,6 +132,7 @@ pub trait IteratorExt: Iterator {
         }
     }
 
+    /// Wrap the `self` iterator with a reporter iterator, using report mode [`Skip`].
     fn skip_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Skip>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
@@ -129,6 +140,7 @@ pub trait IteratorExt: Iterator {
         self.reporter(callback, Skip)
     }
 
+    /// Wrap the `self` iterator with a reporter iterator, using report mode [`Stop`].
     fn stop_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Stop>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,
@@ -136,6 +148,7 @@ pub trait IteratorExt: Iterator {
         self.reporter(callback, Stop)
     }
 
+    /// Wrap the `self` iterator with a reporter iterator, using report mode [`Consume`].
     fn consume_reporter<T, E, F: FnMut(E)>(self, callback: F) -> Reporter<Self, F, Consume>
     where
         Self: Iterator<Item = Result<T, E>> + Sized,

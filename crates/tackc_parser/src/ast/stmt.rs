@@ -10,6 +10,7 @@ use crate::{
     error::{DiagResult, Result},
 };
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatementOrExpression {
     Expression(Expression),
@@ -34,7 +35,7 @@ impl AstNode for StatementOrExpression {
                 .map(StatementOrExpression::Statement),
             _ => {
                 let expr = p.parse::<Expression>(recursion + 1)?;
-                if let Some(tok) = p.consume(token_kind!(TokenKind::Semicolon)) {
+                if let Some(tok) = p.consume(kind!(TokenKind::Semicolon)) {
                     let stmt = ExpressionStatement {
                         span: Span::new_from(expr.span.start, tok.span.end),
                         inner: expr,
@@ -43,12 +44,12 @@ impl AstNode for StatementOrExpression {
                     Ok(StatementOrExpression::Statement(
                         Statement::ExpressionStatement(stmt),
                     ))
-                } else if let Some(_tok) = p.consume(token_kind!(TokenKind::Eq)) {
+                } else if let Some(_tok) = p.consume(kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
                     let semi =
-                        p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+                        p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
                     Ok(StatementOrExpression::Statement(Statement::Assignment(
-                        Assignment {
+                        AssignmentStatement {
                             span: Span::new_from(expr.span.start, semi.span.end),
                             lvalue: expr,
                             rvalue,
@@ -84,15 +85,17 @@ impl AstNode for StatementOrExpression {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Statement {
     ExpressionStatement(ExpressionStatement),
     LetStatement(LetStatement),
-    Assignment(Assignment),
+    Assignment(AssignmentStatement),
     Item(Item),
 }
 
 impl Statement {
+    #[allow(missing_docs)]
     pub fn span(&self) -> Span {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.span(),
@@ -102,6 +105,7 @@ impl Statement {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn display(&self, global: &Global) -> String {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.display(global),
@@ -111,6 +115,7 @@ impl Statement {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn id(&self) -> NodeId {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.id,
@@ -121,33 +126,46 @@ impl Statement {
     }
 }
 
+/// An expression ending with a semicolon.
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ExpressionStatement {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The inner expression for this expression statement
     pub inner: Expression,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
 impl ExpressionStatement {
+    #[allow(missing_docs)]
     pub fn span(&self) -> Span {
         self.span
     }
 
+    #[allow(missing_docs)]
     pub fn display(&self, global: &Global) -> String {
         self.inner.display(global) + ";"
     }
 
+    #[allow(missing_docs)]
     pub fn id(&self) -> NodeId {
         self.id
     }
 }
 
+/// A let statement, e.g. `let x = 5;`
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LetStatement {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The symbol being defined
     pub ident: Symbol,
+    /// The type annotation given
     pub ty: Option<Expression>,
+    /// The initial value given
     pub expr: Option<Expression>,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -156,15 +174,15 @@ impl AstNode for LetStatement {
     where
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
-        let let_tok = p.expect_token_kind(None, token_kind!(TokenKind::Let))?;
+        let let_tok = p.expect_token_kind(None, kind!(TokenKind::Let))?;
         let ident = p.identifier()?;
-        let ty = if p.consume(token_kind!(TokenKind::Colon)).is_some() {
+        let ty = if p.consume(kind!(TokenKind::Colon)).is_some() {
             Some(p.parse::<Expression>(recursion + 1).expected("type")?)
         } else {
             None
         };
 
-        let expr = if p.consume(token_kind!(TokenKind::Eq)).is_some() {
+        let expr = if p.consume(kind!(TokenKind::Eq)).is_some() {
             Some(
                 p.parse::<Expression>(recursion + 1)
                     .expected("expression")?,
@@ -173,7 +191,7 @@ impl AstNode for LetStatement {
             None
         };
 
-        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+        let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
 
         Ok(LetStatement {
             span: Span::new_from(let_tok.span.start, semi.span.end),
@@ -208,19 +226,26 @@ impl AstNode for LetStatement {
     }
 }
 
+/// An assignment statement
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Assignment {
+pub struct AssignmentStatement {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The value on the left of the `=`
     pub lvalue: Expression,
+    /// The value on the right of the `=`
     pub rvalue: Expression,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
-impl Assignment {
+impl AssignmentStatement {
+    #[allow(missing_docs)]
     pub fn span(&self) -> Span {
         self.span
     }
 
+    #[allow(missing_docs)]
     pub fn display(&self, global: &Global) -> String {
         format!(
             "{} = {};",

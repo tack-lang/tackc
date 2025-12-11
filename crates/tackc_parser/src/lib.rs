@@ -1,4 +1,8 @@
+//! `tackc`'s parser.
+
+/// AST nodes
 pub mod ast;
+/// Error types for the parser
 pub mod error;
 
 use error::{ParseError, ParseErrors, Result};
@@ -8,10 +12,14 @@ use tackc_lexer::{Token, TokenKind};
 
 use crate::ast::{AstNode, NodeId, Symbol};
 
+/// The largest possible recursion depth. If a reasonable file exceeds this limit, please open an issue or a pull request.
 pub const MAX_RECURSION_DEPTH: u32 = 256;
 
+/// This struct contains a snapshotted version of [`Parser`].
+/// This can be created by [`Parser::snapshot`], and restored by [`Parser::restore`].
 pub struct ParserSnapshot<I>(I, u64);
 
+/// The parser struct, containing a stream of tokens, a [`Global`] reference, and the first open `AstNode` ID.
 pub struct Parser<'a, I> {
     iter: I,
     global: &'a Global,
@@ -22,11 +30,13 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Token> + Clone,
 {
+    /// Create a snapshot of this parser
     #[inline]
     pub fn snapshot(&self) -> ParserSnapshot<I> {
         ParserSnapshot(self.iter.clone(), self.open_id)
     }
 
+    /// Restore a snapshot of this parser
     #[inline]
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
         *self = Parser {
@@ -36,17 +46,20 @@ where
         };
     }
 
+    /// Create a new parser
     #[inline]
     pub fn new(iter: I, global: &'a Global) -> Self {
         Parser { iter, global, open_id: 0 }
     }
 
+    /// Returns the next open [`NodeId`], and increments the open ID.
     pub fn node_id(&mut self) -> NodeId {
         let old = self.open_id;
         self.open_id += 1;
         NodeId(old)
     }
 
+    /// Returns true if the inner token stream has reached an end of file.
     pub fn is_eof(&self) -> bool {
         self.peek_token().is_none()
     }
@@ -152,7 +165,7 @@ where
         let Token {
             span,
             kind: TokenKind::Ident(ident),
-        } = self.expect_token_kind(Some("identifier"), token_kind!(TokenKind::Ident(_)))?
+        } = self.expect_token_kind(Some("identifier"), kind!(TokenKind::Ident(_)))?
         else {
             unreachable!()
         };

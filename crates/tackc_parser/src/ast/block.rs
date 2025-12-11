@@ -41,11 +41,16 @@ where
     }
 }
 
+/// A block containing statements, and an optional expression.
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Block {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// A list of statements in this block
     pub stmts: Vec<Statement>,
+    /// The last expression of this block
     pub expr: Option<Expression>,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -56,13 +61,13 @@ impl AstNode for Block {
     {
         p.check_recursion(recursion)?;
 
-        let l_brace = p.expect_token_kind(None, token_kind!(TokenKind::LBrace))?;
+        let l_brace = p.expect_token_kind(None, kind!(TokenKind::LBrace))?;
 
         let mut errors: Option<ParseErrors> = None;
 
         let mut stmts = Vec::new();
         let expr = loop {
-            if p.peek_is(token_kind!(TokenKind::RBrace)) {
+            if p.peek_is(kind!(TokenKind::RBrace)) {
                 break None;
             }
             if p.is_eof() {
@@ -89,7 +94,7 @@ impl AstNode for Block {
             }
         };
 
-        let r_brace = p.expect_token_kind(Some("'}'"), token_kind!(TokenKind::RBrace))?;
+        let r_brace = p.expect_token_kind(Some("'}'"), kind!(TokenKind::RBrace))?;
 
         if let Some(e) = errors {
             return Err(e);

@@ -3,6 +3,7 @@ use std::fmt::Write;
 use std::ops::Deref;
 use std::result::Result as StdResult;
 
+/// Result type using [`ParseErrors`] as the error type
 pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,8 @@ use tackc_lexer::Token;
 use tackc_lexer::TokenKind;
 use tackc_span::Span;
 
+/// A list of [`ParseError`]s. This is easily cloneable, since it uses a Clone-on-Write vector.
+/// This struct should always contain at least one error.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseErrors {
     // Length of errors will always be 1 or greater
@@ -21,27 +24,33 @@ pub struct ParseErrors {
 }
 
 impl ParseErrors {
+    /// Create a new [`ParseErrors`]
     pub fn new(error: ParseError) -> Self {
         ParseErrors {
             errors: EcoVec::from([error]),
         }
     }
 
+    /// Add a new [`ParseError`] to the list
     pub fn push(&mut self, diag: ParseError) {
         self.errors.push(diag);
     }
 
-    /*fn most_recent(&self) -> &ParseError {
+    /*
+    /// Returns a reference to the most recent [`ParseError`]
+    fn most_recent(&self) -> &ParseError {
         debug_assert!(!self.errors.is_empty());
 
         self.errors.last().unwrap()
     }*/
 
+    /// Returns a mutable reference to the most recent [`ParseError`]
     fn most_recent_mut(&mut self) -> &mut ParseError {
         let errors = self.errors.make_mut();
         errors.last_mut().unwrap()
     }
 
+    /// Clears the `expected` field of the most recent error. 
     pub fn clear_expected(&mut self) {
         let last = self.most_recent_mut();
         match &mut last.kind {
@@ -57,7 +66,6 @@ impl ParseErrors {
     }
 
     /// This function takes the most recent error from `self` and changes it's `expected` field to `Some(str)` if it's `None`.
-    #[allow(clippy::missing_panics_doc)]
     pub fn expected(&mut self, str: &'static str) {
         let last = self.most_recent_mut();
 
@@ -75,6 +83,7 @@ impl ParseErrors {
         }
     }
 
+    /// Return a string representation of the errors.
     #[allow(clippy::missing_panics_doc)]
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
         debug_assert!(!self.is_empty());
@@ -90,6 +99,7 @@ impl ParseErrors {
         str
     }
 
+    /// Add a new list of parse errors to `self`.
     #[allow(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: ParseErrors) {
         self.errors.extend_from_slice(&other);
@@ -104,12 +114,15 @@ impl Deref for ParseErrors {
     }
 }
 
+/// A single parsing error
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseError {
+    /// The kind of error this is
     pub kind: ParseErrorKind,
 }
 
 impl ParseError {
+    /// Create a new expected-found parse error
     #[must_use]
     pub fn new(expected: Option<&'static str>, found: Token) -> Self {
         ParseError {
@@ -121,6 +134,7 @@ impl ParseError {
         }
     }
 
+    /// Create a new expected-found-eof parse error
     #[must_use]
     pub fn eof(expected: Option<&'static str>) -> Self {
         ParseError {
@@ -132,6 +146,7 @@ impl ParseError {
         }
     }
 
+    /// Create a new recursion parse error
     #[must_use]
     pub const fn recursion() -> Self {
         ParseError {
@@ -179,6 +194,7 @@ impl ParseError {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ParseErrorKind {
     ExpectedFound {
@@ -189,23 +205,17 @@ pub enum ParseErrorKind {
     Recursion,
 }
 
+/// An extension trait to [`Result<T, ParseErrors>`].
 pub trait DiagResult {
-    #[must_use]
-    fn pushed_with<F: FnOnce() -> ParseError>(self, diag: F) -> Self;
+    /// If an `Err` is passed, this function applies [`ParseErrors::expected`] to the [`ParseErrors`].
     #[must_use]
     fn expected(self, str: &'static str) -> Self;
+    /// If an `Err` is passed, this function applies [`ParseErrors::clear_expected`] to the [`ParseErrors`].
     #[must_use]
     fn clear_expected(self) -> Self;
 }
 
 impl<T> DiagResult for Result<T> {
-    fn pushed_with<F: FnOnce() -> ParseError>(self, diag: F) -> Self {
-        self.map_err(|mut e| {
-            e.push(diag());
-            e
-        })
-    }
-
     fn expected(self, str: &'static str) -> Self {
         self.map_err(|mut e| {
             e.expected(str);
