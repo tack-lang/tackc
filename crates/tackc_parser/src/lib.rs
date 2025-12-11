@@ -3,6 +3,7 @@ pub mod error;
 
 use error::{ParseError, ParseErrors, Result};
 
+use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 
 use crate::ast::{AstNode, Symbol};
@@ -11,11 +12,12 @@ pub const MAX_RECURSION_DEPTH: u32 = 256;
 
 pub struct ParserSnapshot<I>(I);
 
-pub struct Parser<I> {
+pub struct Parser<'a, I> {
     iter: I,
+    global: &'a Global,
 }
 
-impl<I> Parser<I>
+impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -26,12 +28,15 @@ where
 
     #[inline]
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
-        *self = Parser { iter: snapshot.0 };
+        *self = Parser {
+            iter: snapshot.0,
+            global: self.global,
+        };
     }
 
     #[inline]
-    pub fn new(iter: I) -> Self {
-        Parser { iter }
+    pub fn new(iter: I, global: &'a Global) -> Self {
+        Parser { iter, global }
     }
 
     pub fn is_eof(&self) -> bool {

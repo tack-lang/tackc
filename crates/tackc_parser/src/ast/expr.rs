@@ -125,7 +125,7 @@ fn run_expr_test(path: &Path) {
     let src = OwnedFile::try_from(path.to_path_buf())
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let mut p = Parser::new(lexer);
+    let mut p = Parser::new(lexer, &global);
     let expr = Expression::parse(&mut p, 0).expected("expression");
     insta::assert_ron_snapshot!(expr);
 }
