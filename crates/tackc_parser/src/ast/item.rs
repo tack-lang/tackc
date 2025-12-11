@@ -10,6 +10,7 @@ use crate::{
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Item {
     ConstItem(ConstItem),
@@ -53,12 +54,18 @@ impl AstNode for Item {
     }
 }
 
+/// A constant declaration
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConstItem {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The identifier being bound to
     pub ident: Symbol,
+    /// The type annotation given
     pub ty: Option<Expression>,
-    pub expr: Option<Expression>,
+    /// The value given
+    pub expr: Expression,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -67,24 +74,20 @@ impl AstNode for ConstItem {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let const_tok = p.expect_token_kind(None, token_kind!(TokenKind::Const))?;
+        let const_tok = p.expect_token_kind(None, kind!(TokenKind::Const))?;
         let ident = p.identifier()?;
-        let ty = if p.consume(token_kind!(TokenKind::Colon)).is_some() {
+        let ty = if p.consume(kind!(TokenKind::Colon)).is_some() {
             Some(p.parse::<Expression>(recursion + 1).expected("type")?)
         } else {
             None
         };
 
-        let expr = if p.consume(token_kind!(TokenKind::Eq)).is_some() {
-            Some(
-                p.parse::<Expression>(recursion + 1)
-                    .expected("expression")?,
-            )
-        } else {
-            None
-        };
+        let _eq = p.expect_token(Some("'='"))?;
 
-        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+        let expr = p.parse::<Expression>(recursion + 1)
+            .expected("expression")?;
+
+        let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
 
         Ok(ConstItem {
             span: Span::new_from(const_tok.span.start, semi.span.end),
@@ -101,16 +104,13 @@ impl AstNode for ConstItem {
 
     fn display(&self, global: &Global) -> String {
         format!(
-            "const {}{}{};",
+            "const {}{} = {};",
             self.ident.display(global),
             self.ty
                 .as_ref()
                 .map(|ty| format!(": {}", ty.display(global)))
                 .unwrap_or_default(),
-            self.expr
-                .as_ref()
-                .map(|expr| format!(" = {}", expr.display(global)))
-                .unwrap_or_default()
+            self.expr.display(global),
         )
     }
 
@@ -119,13 +119,20 @@ impl AstNode for ConstItem {
     }
 }
 
+/// A function declaration
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FuncItem {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The name of this function
     pub ident: Symbol,
+    /// The parameters of this function
     pub params: Vec<(Symbol, Expression)>,
+    /// The return type of this function
     pub ret_ty: Option<Expression>,
+    /// The code of this function
     pub block: Block,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -134,9 +141,9 @@ impl AstNode for FuncItem {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let func = p.expect_token_kind(None, token_kind!(TokenKind::Func))?;
+        let func = p.expect_token_kind(None, kind!(TokenKind::Func))?;
         let ident = p.identifier()?;
-        p.expect_token_kind(Some("'('"), token_kind!(TokenKind::LParen))?;
+        p.expect_token_kind(Some("'('"), kind!(TokenKind::LParen))?;
 
         // Parameter list
         let mut params = Vec::new();
@@ -144,18 +151,18 @@ impl AstNode for FuncItem {
             && tok.kind != TokenKind::RParen
         {
             let ident = p.identifier()?;
-            p.expect_token_kind(Some("':'"), token_kind!(TokenKind::Colon))?;
+            p.expect_token_kind(Some("':'"), kind!(TokenKind::Colon))?;
             let ty = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
                 .expected("type")?;
             params.push((ident, ty));
-            if p.consume(token_kind!(TokenKind::Comma)).is_none() {
+            if p.consume(kind!(TokenKind::Comma)).is_none() {
                 break;
             }
         }
 
-        p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
+        p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
 
-        let ret_ty = if p.peek_is(token_kind!(TokenKind::LBrace)) {
+        let ret_ty = if p.peek_is(kind!(TokenKind::LBrace)) {
             None
         } else {
             Some(

@@ -1,3 +1,5 @@
+//! A crate containing structs for files.
+
 use std::{
     fs, io,
     ops::Deref,
@@ -7,11 +9,17 @@ use std::{
 use serde::{Deserialize, Serialize};
 use tackc_span::SpanValue;
 
+/// The main trait of `tackc_file`.
+/// To implement this trait, a source, path, and line starts must be provided. Line starts can be calculated by the [`line_starts`] function.
 pub trait File: Deref<Target = str> {
+    /// Get the file's source.
     fn src(&self) -> &str;
+    /// Get the file's path.
     fn path(&self) -> &Path;
+    /// Get the file's line starts.
     fn line_starts(&self) -> &[SpanValue];
 
+    /// Find the line and column numbers of an index using the given line starts.
     fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
         let starts = self.line_starts();
         if starts.is_empty() {
@@ -60,6 +68,10 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
+/// An implementor of [`File`].
+/// This implementation uses an owned source ([`String`]), and an owned path ([`Path`]).
+/// This implementation should be used when files should be opened.
+/// This struct implements [`TryFrom<PathBuf>`], which will open the given path, and save it to a file.
 #[derive(Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OwnedFile {
     src: String,
@@ -102,6 +114,9 @@ impl Deref for OwnedFile {
     }
 }
 
+/// An implementor of [`File`].
+/// This implementor uses a [`&'src str`](str) for the source, and a [`&'static Path`](Path) for the path.
+/// This implementor should be used in testing, when real files shouldn't be opened.
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct BorrowedFile<'src> {
     src: &'src str,
@@ -110,6 +125,7 @@ pub struct BorrowedFile<'src> {
 }
 
 impl<'src> BorrowedFile<'src> {
+    /// Create a new [`BorrowedFile`] from a source and a path.
     pub fn new<P: AsRef<Path> + ?Sized>(src: &'src str, path: &'static P) -> Self {
         BorrowedFile {
             src,

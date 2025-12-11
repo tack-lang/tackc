@@ -1,3 +1,5 @@
+//! The crate containing [`Global`], tackc's global context.
+
 use std::{
     any::Any,
     fmt::Debug,
@@ -11,8 +13,11 @@ use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
 use tackc_utils::hash::IdentityHasherBuilder;
 
+/// A trait representing values that are able to be interned by [`Global`].
 pub trait Internable: Any {
+    /// Hash the value using the given hasher.
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
+    /// Check if the value is equal to `other`.
     fn dyn_eq(&self, other: &dyn Any) -> bool;
 }
 
@@ -30,8 +35,21 @@ impl<T: Any + Hash + PartialEq> Internable for T {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// A token type used for 
+#[derive(Eq, Serialize, Deserialize)]
 pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
+
+impl<T: ?Sized> Hash for Interned<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u64(self.0);
+    }
+}
+
+impl<T: ?Sized> PartialEq for Interned<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
 
 impl<T: ?Sized> Debug for Interned<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -57,6 +75,7 @@ impl Interned<str> {
     }
 }
 
+/// tackc's global context.
 pub struct Global {
     arena: Bump,
     interned: DashMap<u64, &'static dyn Internable, IdentityHasherBuilder>,
@@ -168,6 +187,7 @@ impl Global {
             .expect("Wrong Global used!")
     }
 
+    /// Allocates a value within the arena of this [`Global`] without interning it.
     pub fn alloc<T>(&self, val: T) -> &mut T {
         self.arena.alloc(val)
     }

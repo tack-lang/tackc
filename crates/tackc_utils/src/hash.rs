@@ -1,6 +1,6 @@
 use std::hash::{BuildHasherDefault, Hasher};
 
-/// A hasher that just uses the key as the hash.
+/// A hasher that will do nothing with the value. If given a value greater than 8 bytes, the hasher will panic.
 #[derive(Default)]
 pub struct IdentityHasher {
     hash: u64,
@@ -26,4 +26,5 @@ impl Hasher for IdentityHasher {
     }
 }
 
+/// This hasher builder can be used as the third generic parameter in many hashmap types in order to use [`IdentityHasher`] as the hasher.
 pub type IdentityHasherBuilder = BuildHasherDefault<IdentityHasher>;

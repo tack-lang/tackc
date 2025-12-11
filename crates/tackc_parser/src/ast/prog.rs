@@ -14,7 +14,7 @@ fn sync_item<I>(p: &mut Parser<I>)
 where
     I: Iterator<Item = Token> + Clone,
 {
-    p.consume(token_kind!(TokenKind::Func | TokenKind::Const)); // Don't stop on first item
+    p.consume(kind!(TokenKind::Func | TokenKind::Const)); // Don't stop on first item
 
     let mut depth: u32 = 0;
 
@@ -40,9 +40,12 @@ where
     }
 }
 
+/// A full program
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Program {
+    /// The initial mod statement for this program.
     pub mod_stmt: ModStatement,
+    /// The items of this program
     pub items: Vec<Item>,
 }
 
@@ -101,6 +104,7 @@ impl Program {
         }
     }
 
+    /// Get the string representation of this program
     pub fn display(&self, global: &Global) -> String {
         format!(
             "{}\n{}",
@@ -114,10 +118,14 @@ impl Program {
     }
 }
 
+/// The mod statement of a program
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ModStatement {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The path of this mod statement
     pub path: Path,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -126,9 +134,9 @@ impl AstNode for ModStatement {
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let mod_tok = p.expect_token_kind(None, token_kind!(TokenKind::Mod))?;
+        let mod_tok = p.expect_token_kind(None, kind!(TokenKind::Mod))?;
         let path = p.parse::<Path>(recursion + 1)?;
-        let semi = p.expect_token_kind(Some("';'"), token_kind!(TokenKind::Semicolon))?;
+        let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
         Ok(ModStatement {
             span: Span::new_from(mod_tok.span.start, semi.span.end),
             path,

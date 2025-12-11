@@ -10,26 +10,35 @@ use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
+/// Different ways to parse an expression
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum ParseMode {
+    /// Parse normally
     Normal,
+    /// Parse without blocks
     NoBlocks,
 }
 
 impl ParseMode {
+    #[allow(missing_docs)]
     pub fn is_normal(self) -> bool {
         matches!(self, Self::Normal)
     }
 
+    #[allow(missing_docs)]
     pub fn is_no_blocks(self) -> bool {
         matches!(self, Self::NoBlocks)
     }
 }
 
+/// The parser's representation of an expression
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Expression {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub kind: ExpressionKind,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -135,6 +144,7 @@ fn run_expr_test(path: &Path) {
     insta::assert_ron_snapshot!(expr);
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ExpressionKind {
     Grouping(Box<Expression>),
@@ -161,21 +171,31 @@ pub enum ExpressionKind {
     Block(Box<Block>),
 }
 
+/// The binding power of operators
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum BindingPower {
+    /// Used for "any binding power" in minimum binding power
     None = 0,
 
+    /// The left binding power for comparison operators (`>`, `<`, `==`, `!=`, `>=`, `<=`)
     ComparisonLeft = 10,
+    /// The right binding power for comparison operators (`>`, `<`, `==`, `!=`, `>=`, `<=`)
     ComparisonRight = 11,
 
+    /// The left binding power for `+` and `-`
     TermLeft = 20,
+    /// The right binding power for `+` and `-`
     TermRight = 21,
 
+    /// The left binding power for `*` and `/`
     FactorLeft = 30,
+    /// The right binding power for `*` and `/`
     FactorRight = 31,
 
+    /// The binding power of prefix operators
     Prefix = 50,
 
+    /// The binding power of postfix operators
     Postfix = 60,
 }
 
@@ -208,7 +228,7 @@ where
 
             // Ignore parse mode
             let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
-            let closing = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
+            let closing = p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, closing.span.end),
                 kind: ExpressionKind::Grouping(Box::new(inner)),
@@ -300,7 +320,7 @@ where
     // Ignore parse mode
     let rhs = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
         .expected("expression")?;
-    let closing = p.expect_token_kind(Some("']'"), token_kind!(TokenKind::RBracket))?;
+    let closing = p.expect_token_kind(Some("']'"), kind!(TokenKind::RBracket))?;
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, closing.span.end),
         kind: ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
@@ -319,12 +339,12 @@ where
         let expr = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
             .expected("expression")?;
         args.push(expr);
-        if p.consume(token_kind!(TokenKind::Comma)).is_none() {
+        if p.consume(kind!(TokenKind::Comma)).is_none() {
             break;
         }
     }
 
-    let tok = p.expect_token_kind(Some("')'"), token_kind!(TokenKind::RParen))?;
+    let tok = p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
 
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, tok.span.end),

@@ -4,6 +4,7 @@ use std::{cmp::Ordering, ops::Range};
 
 use serde::{Deserialize, Serialize};
 
+/// The value used as an index in the [`Span`] type.
 pub type SpanValue = u32;
 
 /// The `Span` type represents an area of a file.

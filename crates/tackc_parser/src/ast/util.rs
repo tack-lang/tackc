@@ -9,10 +9,14 @@ use crate::{
     error::{DiagResult, Result},
 };
 
+/// A path to an item
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Path {
+    #[allow(missing_docs)]
     pub span: Span,
+    /// The components of this path, seperated by `.`
     pub components: Vec<Symbol>,
+    #[allow(missing_docs)]
     pub id: NodeId,
 }
 
@@ -24,7 +28,7 @@ impl AstNode for Path {
         let first = p.identifier().clear_expected()?;
         let mut components = vec![first];
 
-        while p.consume(token_kind!(TokenKind::Dot)).is_some() {
+        while p.consume(kind!(TokenKind::Dot)).is_some() {
             let next = p.identifier()?;
             components.push(next);
         }
