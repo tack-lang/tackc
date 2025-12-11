@@ -5,7 +5,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, NodeId, Symbol},
+    ast::{AstNode, NodeId, Symbol, Visitor},
     error::{DiagResult, Result},
 };
 
@@ -57,5 +57,9 @@ impl AstNode for Path {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_path(self);
     }
 }

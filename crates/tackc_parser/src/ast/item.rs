@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, parse_expression},
+    ast::{
+        AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, Visitor,
+        parse_expression,
+    },
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
@@ -50,6 +53,13 @@ impl AstNode for Item {
         match self {
             Item::ConstItem(item) => item.id,
             Item::FuncItem(item) => item.id,
+        }
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        match self {
+            Item::ConstItem(item) => item.accept(v),
+            Item::FuncItem(item) => item.accept(v),
         }
     }
 }
@@ -117,6 +127,10 @@ impl AstNode for ConstItem {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_const_item(self);
     }
 }
 
@@ -215,5 +229,9 @@ impl AstNode for FuncItem {
 
     fn id(&self) -> NodeId {
         self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_func_item(self);
     }
 }
