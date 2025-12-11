@@ -53,11 +53,11 @@ impl Program {
     /// # Errors
     /// This function will return an error if it fails to parse a full program.
     #[allow(clippy::missing_panics_doc)]
-    pub fn parse<I>(iter: I) -> Result<Self>
+    pub fn parse<I>(iter: I, global: &Global) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let mut p = Parser::new(iter);
+        let mut p = Parser::new(iter, global);
         let mut errors: Option<ParseErrors> = None;
 
         let mod_stmt = p
@@ -163,6 +163,6 @@ fn run_prog_test(path: &StdPath) {
     let src = OwnedFile::try_from(path.to_path_buf())
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let expr = Program::parse(lexer);
+    let expr = Program::parse(lexer, &global);
     insta::assert_ron_snapshot!(expr);
 }

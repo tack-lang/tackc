@@ -54,7 +54,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let res = Program::parse(tokens.iter().copied());
+    let res = Program::parse(tokens.iter().copied(), global);
     match res {
         Ok(prog) => {
             println!("{}", prog.display(global));
