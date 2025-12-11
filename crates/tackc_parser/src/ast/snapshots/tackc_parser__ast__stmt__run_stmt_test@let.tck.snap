@@ -13,7 +13,7 @@ Ok(LetStatement(LetStatement(
       start: 4,
       end: 5,
     ),
-    ident: Interned(7125721452462380643, PhantomData),
+    inner: Interned(7125721452462380643, PhantomData),
   ),
   ty: Some(Expression(
     span: Span(
@@ -30,9 +30,11 @@ Ok(LetStatement(LetStatement(
           start: 7,
           end: 8,
         ),
-        ident: Interned(12543183117416492085, PhantomData),
+        inner: Interned(12543183117416492085, PhantomData),
       ), Decimal),
+      id: NodeId(0),
     )),
+    id: NodeId(1),
   )),
   expr: Some(Expression(
     span: Span(
@@ -54,9 +56,11 @@ Ok(LetStatement(LetStatement(
             start: 11,
             end: 12,
           ),
-          ident: Interned(12543183117416492085, PhantomData),
+          inner: Interned(12543183117416492085, PhantomData),
         ), Decimal),
+        id: NodeId(2),
       )),
+      id: NodeId(3),
     ), Expression(
       span: Span(
         start: 15,
@@ -77,9 +81,11 @@ Ok(LetStatement(LetStatement(
               start: 15,
               end: 16,
             ),
-            ident: Interned(4091593736821351671, PhantomData),
+            inner: Interned(4091593736821351671, PhantomData),
           ), Decimal),
+          id: NodeId(4),
         )),
+        id: NodeId(5),
       ), Expression(
         span: Span(
           start: 19,
@@ -95,10 +101,15 @@ Ok(LetStatement(LetStatement(
               start: 19,
               end: 20,
             ),
-            ident: Interned(14671982871472631300, PhantomData),
+            inner: Interned(14671982871472631300, PhantomData),
           ), Decimal),
+          id: NodeId(6),
         )),
+        id: NodeId(7),
       )),
+      id: NodeId(8),
     )),
+    id: NodeId(9),
   )),
+  id: NodeId(10),
 )))

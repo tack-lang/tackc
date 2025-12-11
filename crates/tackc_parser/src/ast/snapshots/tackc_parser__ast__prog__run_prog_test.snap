@@ -20,10 +20,12 @@ Ok(Program(
             start: 4,
             end: 8,
           ),
-          ident: Interned(7250452609033638561, PhantomData),
+          inner: Interned(7250452609033638561, PhantomData),
         ),
       ],
+      id: NodeId(0),
     ),
+    id: NodeId(1),
   ),
   items: [
     FuncItem(FuncItem(
@@ -36,7 +38,7 @@ Ok(Program(
           start: 16,
           end: 20,
         ),
-        ident: Interned(812864953376315205, PhantomData),
+        inner: Interned(812864953376315205, PhantomData),
       ),
       params: [],
       ret_ty: Some(Expression(
@@ -50,7 +52,9 @@ Ok(Program(
             end: 26,
           ),
           kind: I32,
+          id: NodeId(2),
         )),
+        id: NodeId(3),
       )),
       block: Block(
         span: Span(
@@ -78,9 +82,11 @@ Ok(Program(
                   start: 33,
                   end: 36,
                 ),
-                ident: Interned(1515349274698079117, PhantomData),
+                inner: Interned(1515349274698079117, PhantomData),
               )),
+              id: NodeId(4),
             )),
+            id: NodeId(5),
           ), [
             Expression(
               span: Span(
@@ -97,9 +103,11 @@ Ok(Program(
                     start: 37,
                     end: 38,
                   ),
-                  ident: Interned(12543183117416492085, PhantomData),
+                  inner: Interned(12543183117416492085, PhantomData),
                 ), Decimal),
+                id: NodeId(6),
               )),
+              id: NodeId(7),
             ),
             Expression(
               span: Span(
@@ -116,13 +124,18 @@ Ok(Program(
                     start: 40,
                     end: 41,
                   ),
-                  ident: Interned(14671982871472631300, PhantomData),
+                  inner: Interned(14671982871472631300, PhantomData),
                 ), Decimal),
+                id: NodeId(8),
               )),
+              id: NodeId(9),
             ),
           ]),
+          id: NodeId(10),
         )),
+        id: NodeId(11),
       ),
+      id: NodeId(12),
     )),
     FuncItem(FuncItem(
       span: Span(
@@ -134,7 +147,7 @@ Ok(Program(
           start: 51,
           end: 54,
         ),
-        ident: Interned(1515349274698079117, PhantomData),
+        inner: Interned(1515349274698079117, PhantomData),
       ),
       params: [
         (Symbol(
@@ -142,7 +155,7 @@ Ok(Program(
             start: 55,
             end: 56,
           ),
-          ident: Interned(14504427626919653262, PhantomData),
+          inner: Interned(14504427626919653262, PhantomData),
         ), Expression(
           span: Span(
             start: 58,
@@ -154,14 +167,16 @@ Ok(Program(
               end: 61,
             ),
             kind: I32,
+            id: NodeId(13),
           )),
+          id: NodeId(14),
         )),
         (Symbol(
           span: Span(
             start: 63,
             end: 64,
           ),
-          ident: Interned(579860146683532731, PhantomData),
+          inner: Interned(579860146683532731, PhantomData),
         ), Expression(
           span: Span(
             start: 66,
@@ -173,7 +188,9 @@ Ok(Program(
               end: 69,
             ),
             kind: I32,
+            id: NodeId(15),
           )),
+          id: NodeId(16),
         )),
       ],
       ret_ty: Some(Expression(
@@ -187,7 +204,9 @@ Ok(Program(
             end: 74,
           ),
           kind: I32,
+          id: NodeId(17),
         )),
+        id: NodeId(18),
       )),
       block: Block(
         span: Span(
@@ -215,9 +234,11 @@ Ok(Program(
                   start: 81,
                   end: 82,
                 ),
-                ident: Interned(14504427626919653262, PhantomData),
+                inner: Interned(14504427626919653262, PhantomData),
               )),
+              id: NodeId(19),
             )),
+            id: NodeId(20),
           ), Expression(
             span: Span(
               start: 85,
@@ -233,12 +254,17 @@ Ok(Program(
                   start: 85,
                   end: 86,
                 ),
-                ident: Interned(579860146683532731, PhantomData),
+                inner: Interned(579860146683532731, PhantomData),
               )),
+              id: NodeId(21),
             )),
+            id: NodeId(22),
           )),
+          id: NodeId(23),
         )),
+        id: NodeId(24),
       ),
+      id: NodeId(25),
     )),
   ],
 ))
