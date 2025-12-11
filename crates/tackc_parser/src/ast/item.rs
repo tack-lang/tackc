@@ -84,7 +84,8 @@ impl AstNode for ConstItem {
 
         let _eq = p.expect_token(Some("'='"))?;
 
-        let expr = p.parse::<Expression>(recursion + 1)
+        let expr = p
+            .parse::<Expression>(recursion + 1)
             .expected("expression")?;
 
         let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;

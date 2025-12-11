@@ -35,7 +35,7 @@ impl<T: Any + Hash + PartialEq> Internable for T {
     }
 }
 
-/// A token type used for 
+/// A token type used for
 #[derive(Eq, Serialize, Deserialize)]
 pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
 

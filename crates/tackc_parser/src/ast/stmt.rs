@@ -46,8 +46,7 @@ impl AstNode for StatementOrExpression {
                     ))
                 } else if let Some(_tok) = p.consume(kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
-                    let semi =
-                        p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
+                    let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
                     Ok(StatementOrExpression::Statement(Statement::Assignment(
                         AssignmentStatement {
                             span: Span::new_from(expr.span.start, semi.span.end),
