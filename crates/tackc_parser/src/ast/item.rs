@@ -1,3 +1,4 @@
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -7,8 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     Parser,
     ast::{
-        AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, Visitor,
-        parse_expression,
+        AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, Visitor, VisitorMut, parse_expression
     },
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
@@ -22,7 +22,7 @@ pub enum Item {
 }
 
 impl AstNode for Item {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -62,6 +62,13 @@ impl AstNode for Item {
             Item::FuncItem(item) => item.accept(v),
         }
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        match self {
+            Item::ConstItem(item) => item.accept_mut(v),
+            Item::FuncItem(item) => item.accept_mut(v),
+        }
+    }
 }
 
 /// A constant declaration
@@ -80,7 +87,7 @@ pub struct ConstItem {
 }
 
 impl AstNode for ConstItem {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -132,6 +139,10 @@ impl AstNode for ConstItem {
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_const_item(self);
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_const_item_mut(self);
+    }
 }
 
 /// A function declaration
@@ -152,7 +163,7 @@ pub struct FuncItem {
 }
 
 impl AstNode for FuncItem {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -233,5 +244,9 @@ impl AstNode for FuncItem {
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_func_item(self);
+    }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_func_item_mut(self);
     }
 }

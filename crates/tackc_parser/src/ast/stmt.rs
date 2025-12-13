@@ -1,3 +1,4 @@
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -6,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Item, NodeId, Symbol, Visitor},
+    ast::{AstNode, Expression, Item, NodeId, Symbol, Visitor, VisitorMut},
     error::{DiagResult, Result},
 };
 
@@ -18,7 +19,7 @@ pub enum StatementOrExpression {
 }
 
 impl AstNode for StatementOrExpression {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -89,6 +90,13 @@ impl AstNode for StatementOrExpression {
             StatementOrExpression::Statement(stmt) => stmt.accept(v),
         }
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        match self {
+            StatementOrExpression::Expression(expr) => expr.accept_mut(v),
+            StatementOrExpression::Statement(stmt) => stmt.accept_mut(v),
+        }
+    }
 }
 
 #[allow(missing_docs)]
@@ -140,6 +148,16 @@ impl Statement {
             Statement::Item(item) => item.accept(v),
         }
     }
+
+    #[allow(missing_docs)]
+    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        match self {
+            Statement::ExpressionStatement(stmt) => stmt.accept_mut(v),
+            Statement::LetStatement(stmt) => stmt.accept_mut(v),
+            Statement::AssignmentStatement(stmt) => stmt.accept_mut(v),
+            Statement::Item(item) => item.accept_mut(v),
+        }
+    }
 }
 
 /// An expression ending with a semicolon.
@@ -173,6 +191,11 @@ impl ExpressionStatement {
     pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_expression_statement(self);
     }
+
+    #[allow(missing_docs)]
+    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_expression_statement_mut(self);
+    }
 }
 
 /// A let statement, e.g. `let x = 5;`
@@ -191,7 +214,7 @@ pub struct LetStatement {
 }
 
 impl AstNode for LetStatement {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = tackc_lexer::Token> + Clone,
     {
@@ -249,6 +272,10 @@ impl AstNode for LetStatement {
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_let_statement(self);
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_let_statement_mut(self);
+    }
 }
 
 /// An assignment statement
@@ -283,6 +310,11 @@ impl AssignmentStatement {
     pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_assignment_statement(self);
     }
+
+    #[allow(missing_docs)]
+    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_assignment_statement_mut(self);
+    }
 }
 
 #[test]
@@ -307,7 +339,7 @@ fn run_stmt_test(path: &Path) {
     let src = OwnedFile::try_from(path.to_path_buf())
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let mut p = Parser::new(lexer, &global);
+    let mut p = Parser::new(lexer, &global, &src);
     let expr = StatementOrExpression::parse(&mut p, 0)
         .expected("statement")
         .map(|stmt_or_expr| {

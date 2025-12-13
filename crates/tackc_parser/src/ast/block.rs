@@ -1,17 +1,18 @@
 use std::fmt::Write;
 
 use serde::{Deserialize, Serialize};
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression, Visitor},
+    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression, Visitor, VisitorMut},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
-fn sync_block<I>(p: &mut Parser<I>)
+fn sync_block<I, F: File>(p: &mut Parser<I, F>)
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -55,7 +56,7 @@ pub struct Block {
 }
 
 impl AstNode for Block {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -130,5 +131,9 @@ impl AstNode for Block {
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_block(self);
+    }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_block_mut(self);
     }
 }

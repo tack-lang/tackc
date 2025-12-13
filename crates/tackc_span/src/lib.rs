@@ -49,6 +49,23 @@ impl Span {
         }
     }
 
+    /// Creates a new `Span` pointing to an entire string.
+    ///
+    /// # Panics
+    /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
+    pub fn full(string: &str) -> Self {
+        assert!(
+            string.len() < SpanValue::MAX as usize,
+            "Length of `Span::full` input must be less than `SpanValue::MAX!`"
+        );
+
+        #[allow(clippy::cast_possible_truncation)]
+        Span {
+            start: 0,
+            end: string.len() as SpanValue,
+        }
+    }
+
     /// Grows the span from the front. This moves the end value up by `amount`.
     pub fn grow_front(&mut self, amount: SpanValue) {
         self.end += amount;

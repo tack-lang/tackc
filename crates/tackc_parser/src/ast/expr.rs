@@ -3,9 +3,10 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::{Block, NodeId, Primary, Symbol, Visitor};
+use crate::ast::{Block, NodeId, Primary, Symbol, Visitor, VisitorMut};
 use crate::error::{DiagResult, Result};
 use serde::{Deserialize, Serialize};
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -43,7 +44,7 @@ pub struct Expression {
 }
 
 impl AstNode for Expression {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -121,6 +122,10 @@ impl AstNode for Expression {
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_expression(self);
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_expression_mut(self);
+    }
 }
 
 #[test]
@@ -143,7 +148,7 @@ fn run_expr_test(path: &Path) {
     let src = OwnedFile::try_from(path.to_path_buf())
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let mut p = Parser::new(lexer, &global);
+    let mut p = Parser::new(lexer, &global, &src);
     let expr = Expression::parse(&mut p, 0).expected("expression");
     insta::assert_ron_snapshot!(expr);
 }
@@ -203,7 +208,7 @@ pub enum BindingPower {
     Postfix = 60,
 }
 
-fn parse_prefix<I>(p: &mut Parser<I>, recursion: u32, mode: ParseMode) -> Result<Expression>
+fn parse_prefix<I, F: File>(p: &mut Parser<I, F>, recursion: u32, mode: ParseMode) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -280,8 +285,8 @@ fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     }
 }
 
-fn led_binary<I>(
-    p: &mut Parser<I>,
+fn led_binary<I, F: File>(
+    p: &mut Parser<I, F>,
     lhs: Expression,
     recursion: u32,
     rbp: BindingPower,
@@ -304,7 +309,7 @@ enum OperatorResult {
     Break(Expression),
 }
 
-fn member<I>(p: &mut Parser<I>, lhs: Expression) -> Result<OperatorResult>
+fn member<I, F: File>(p: &mut Parser<I, F>, lhs: Expression) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -317,7 +322,7 @@ where
     }))
 }
 
-fn index<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
+fn index<I, F: File>(p: &mut Parser<I, F>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -332,7 +337,7 @@ where
     }))
 }
 
-fn call<I>(p: &mut Parser<I>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
+fn call<I, F: File>(p: &mut Parser<I, F>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -357,8 +362,8 @@ where
     }))
 }
 
-fn parse_postfix_or_infix<I>(
-    p: &mut Parser<I>,
+fn parse_postfix_or_infix<I, F: File>(
+    p: &mut Parser<I, F>,
     lhs: Expression,
     tok: Token,
     min_bp: BindingPower,
@@ -470,8 +475,8 @@ where
 ///
 /// # Errors
 /// This function will return an error if it fails to parse an expression.
-pub fn parse_expression<I>(
-    p: &mut Parser<I>,
+pub fn parse_expression<I, F: File>(
+    p: &mut Parser<I, F>,
     min_bp: BindingPower,
     recursion: u32,
     mode: ParseMode,

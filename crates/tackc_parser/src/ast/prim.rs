@@ -1,3 +1,4 @@
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{IntegerBase, Token, TokenKind};
 use tackc_span::Span;
@@ -5,7 +6,7 @@ use tackc_span::Span;
 use serde::{Deserialize, Serialize};
 
 use crate::Parser;
-use crate::ast::{AstNode, NodeId, Symbol, Visitor};
+use crate::ast::{AstNode, NodeId, Symbol, Visitor, VisitorMut};
 use crate::error::{ParseError, ParseErrors, Result};
 
 /// A primary expression
@@ -37,7 +38,7 @@ pub enum PrimaryKind {
 }
 
 impl AstNode for Primary {
-    fn parse<I>(p: &mut Parser<I>, _: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, _: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -129,5 +130,9 @@ impl AstNode for Primary {
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_primary(self);
+    }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_primary_mut(self);
     }
 }

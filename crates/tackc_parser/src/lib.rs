@@ -7,6 +7,7 @@ pub mod error;
 
 use error::{ParseError, ParseErrors, Result};
 
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 
@@ -20,13 +21,14 @@ pub const MAX_RECURSION_DEPTH: u32 = 256;
 pub struct ParserSnapshot<I>(I, u64);
 
 /// The parser struct, containing a stream of tokens, a [`Global`] reference, and the first open `AstNode` ID.
-pub struct Parser<'a, I> {
+pub struct Parser<'a, I, F> {
     iter: I,
+    file: &'a F,
     global: &'a Global,
     open_id: u64,
 }
 
-impl<'a, I> Parser<'a, I>
+impl<'a, I, F: File> Parser<'a, I, F>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -41,6 +43,7 @@ where
     pub fn restore(&mut self, snapshot: ParserSnapshot<I>) {
         *self = Parser {
             iter: snapshot.0,
+            file: self.file,
             global: self.global,
             open_id: snapshot.1,
         };
@@ -48,9 +51,10 @@ where
 
     /// Create a new parser
     #[inline]
-    pub fn new(iter: I, global: &'a Global) -> Self {
+    pub fn new(iter: I, global: &'a Global, file: &'a F) -> Self {
         Parser {
             iter,
+            file,
             global,
             open_id: 0,
         }
@@ -114,9 +118,9 @@ where
     }
 
     /// Peeks a token, and if `callback(token.kind) == true`, consumes the token and returns true. Otherwise, returns false.
-    pub fn consume<F>(&mut self, callback: F) -> Option<Token>
+    pub fn consume<K>(&mut self, callback: K) -> Option<Token>
     where
-        F: FnOnce(TokenKind) -> bool,
+        K: FnOnce(TokenKind) -> bool,
     {
         if self.peek_is(callback) {
             self.next_token()
@@ -126,9 +130,9 @@ where
     }
 
     /// Peeks a token, and if `callback(token.kind) == true`, returns true. Otherwise, returns false.
-    pub fn peek_is<F>(&self, callback: F) -> bool
+    pub fn peek_is<K>(&self, callback: K) -> bool
     where
-        F: FnOnce(TokenKind) -> bool,
+        K: FnOnce(TokenKind) -> bool,
     {
         let tok = self.peek_token();
         if let Some(tok) = tok
@@ -144,13 +148,13 @@ where
     ///
     /// # Errors
     /// This function returns an error if the lexer is at the EOF, or if `callback(token.kind) == false`.
-    pub fn expect_token_kind<F>(
+    pub fn expect_token_kind<K>(
         &mut self,
         expected: Option<&'static str>,
-        callback: F,
+        callback: K,
     ) -> Result<Token>
     where
-        F: FnOnce(TokenKind) -> bool,
+        K: FnOnce(TokenKind) -> bool,
     {
         let tok = self.expect_token(expected)?;
 
