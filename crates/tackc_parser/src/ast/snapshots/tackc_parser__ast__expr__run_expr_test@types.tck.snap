@@ -24,7 +24,7 @@ Ok(Expression(
           end: 1,
         ),
         inner: Interned(6563574591185256773, PhantomData),
-      )),
+      ), None),
       id: NodeId(0),
     )),
     id: NodeId(1),

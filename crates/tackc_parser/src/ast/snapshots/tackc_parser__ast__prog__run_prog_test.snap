@@ -4,6 +4,10 @@ expression: expr
 input_file: crates/tackc_parser/src/ast/prog-parse/basic.tck
 ---
 Ok(Program(
+  span: Span(
+    start: 0,
+    end: 89,
+  ),
   mod_stmt: ModStatement(
     span: Span(
       start: 0,
@@ -83,7 +87,7 @@ Ok(Program(
                   end: 36,
                 ),
                 inner: Interned(1515349274698079117, PhantomData),
-              )),
+              ), None),
               id: NodeId(4),
             )),
             id: NodeId(5),
@@ -235,7 +239,7 @@ Ok(Program(
                   end: 82,
                 ),
                 inner: Interned(14504427626919653262, PhantomData),
-              )),
+              ), None),
               id: NodeId(19),
             )),
             id: NodeId(20),
@@ -255,7 +259,7 @@ Ok(Program(
                   end: 86,
                 ),
                 inner: Interned(579860146683532731, PhantomData),
-              )),
+              ), None),
               id: NodeId(21),
             )),
             id: NodeId(22),
