@@ -1,10 +1,10 @@
 use std::{collections::HashMap, mem};
 
 use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item};
+use tackc_error::Diag;
 use tackc_global::{Global, Interned};
 use tackc_parser::ast::{AstNode, LetStatement, Primary, PrimaryKind, Program, Symbol, VisitorMut};
 use tackc_utils::hash::IdentityHasherBuilder;
-use tackc_error::Diag;
 
 pub type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBuilder>;
 
@@ -34,11 +34,17 @@ impl<'a> SymbolResolver<'a> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Scope> {
-        self.scopes.iter().rev().chain(std::iter::once(&self.global_scope))
+        self.scopes
+            .iter()
+            .rev()
+            .chain(std::iter::once(&self.global_scope))
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Scope> {
-        self.scopes.iter_mut().rev().chain(std::iter::once(&mut self.global_scope))
+        self.scopes
+            .iter_mut()
+            .rev()
+            .chain(std::iter::once(&mut self.global_scope))
     }
 
     fn get_entry_mut(&mut self, str: Interned<str>) -> Option<&mut (Interned<Binding>, bool)> {
@@ -64,13 +70,17 @@ impl<'a> SymbolResolver<'a> {
 
     pub fn disable(&mut self, str: Interned<str>) {
         let str_display = str.display(self.global);
-        let (_, enabled) = self.get_entry_mut(str).unwrap_or_else(|| panic!("cannot disable non-existant binding {str_display}!"));
+        let (_, enabled) = self
+            .get_entry_mut(str)
+            .unwrap_or_else(|| panic!("cannot disable non-existant binding {str_display}!"));
         *enabled = false;
     }
 
     pub fn enable(&mut self, str: Interned<str>) {
         let str_display = str.display(self.global);
-        let (_, enabled) = self.get_entry_mut(str).unwrap_or_else(|| panic!("cannot enable non-existant binding {str_display}!"));
+        let (_, enabled) = self
+            .get_entry_mut(str)
+            .unwrap_or_else(|| panic!("cannot enable non-existant binding {str_display}!"));
         *enabled = true;
     }
 
@@ -80,23 +90,17 @@ impl<'a> SymbolResolver<'a> {
         self.current_scope().get(&str).unwrap().0
     }
 
-    pub fn current_scope(
-        &self,
-    ) -> &Scope {
+    pub fn current_scope(&self) -> &Scope {
         self.scopes.last().unwrap_or(&self.global_scope)
     }
 
-    pub fn current_scope_mut(
-        &mut self,
-    ) -> &mut Scope {
+    pub fn current_scope_mut(&mut self) -> &mut Scope {
         self.scopes.last_mut().unwrap_or(&mut self.global_scope)
     }
 }
 
 impl SymbolResolver<'_> {
     fn visit_const_item_shallow(&mut self, item: &mut ConstItem) {
-
-
         item.binding = Some(self.define(
             item.ident.inner,
             Binding {
@@ -200,7 +204,16 @@ pub fn resolve(prog: &mut Program, global: &Global) -> Vec<Diag> {
     let mut v = SymbolResolver::new(global);
     prog.accept_mut(&mut v);
 
-    v.missing.into_iter().map(|symbol| {
-        Diag::with_span(format!("cannot find value `{}` in this scope", symbol.display(global)), symbol.span)
-    }).collect::<Vec<_>>()
+    v.missing
+        .into_iter()
+        .map(|symbol| {
+            Diag::with_span(
+                format!(
+                    "cannot find value `{}` in this scope",
+                    symbol.display(global)
+                ),
+                symbol.span,
+            )
+        })
+        .collect::<Vec<_>>()
 }

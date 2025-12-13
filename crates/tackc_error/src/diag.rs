@@ -42,7 +42,7 @@ impl Diag {
     }
 
     /// Returns the string representation of this `Diag`.
-    /// 
+    ///
     /// # Panics
     /// This function panics if the file given is too short for the span inside of this `Diag`.
     pub fn display<F: File>(&self, file: &F) -> String {
