@@ -2,9 +2,7 @@ use tackc_span::Span;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    Item, NodeId, Path,
-};
+use crate::{Item, NodeId, Path};
 
 /// A full program
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

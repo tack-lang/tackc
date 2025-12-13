@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tackc_span::Span;
 
-use crate::{
-    Expression, NodeId, Statement,
-};
+use crate::{Expression, NodeId, Statement};
 
 /// A block containing statements, and an optional expression.
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

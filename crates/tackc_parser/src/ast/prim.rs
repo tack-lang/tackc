@@ -1,5 +1,5 @@
 use tackc_file::File;
-use tackc_global::{Global};
+use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 

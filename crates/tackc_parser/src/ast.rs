@@ -1,5 +1,5 @@
-use std::{any::Any, fmt::Debug};
 use std::hash::Hash;
+use std::{any::Any, fmt::Debug};
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -44,10 +44,10 @@ pub trait AstNode:
 
 mod expr;
 pub use expr::*;
-mod stmt;
 mod block;
 mod item;
 mod prog;
+mod stmt;
 pub use prog::*;
 mod prim;
 mod util;

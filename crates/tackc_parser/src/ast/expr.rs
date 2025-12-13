@@ -170,7 +170,11 @@ pub enum BindingPower {
     Postfix = 60,
 }
 
-fn parse_prefix<I, F: File>(p: &mut Parser<I, F>, recursion: u32, mode: ParseMode) -> Result<Expression>
+fn parse_prefix<I, F: File>(
+    p: &mut Parser<I, F>,
+    recursion: u32,
+    mode: ParseMode,
+) -> Result<Expression>
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -284,7 +288,11 @@ where
     }))
 }
 
-fn index<I, F: File>(p: &mut Parser<I, F>, lhs: Expression, recursion: u32) -> Result<OperatorResult>
+fn index<I, F: File>(
+    p: &mut Parser<I, F>,
+    lhs: Expression,
+    recursion: u32,
+) -> Result<OperatorResult>
 where
     I: Iterator<Item = Token> + Clone,
 {

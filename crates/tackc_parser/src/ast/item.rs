@@ -6,9 +6,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{
-        AstNode, BindingPower, ParseMode, Visitor, VisitorMut, parse_expression
-    },
+    ast::{AstNode, BindingPower, ParseMode, Visitor, VisitorMut, parse_expression},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
