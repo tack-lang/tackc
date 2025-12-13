@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use serde::{Deserialize, Serialize};
+use tackc_ast::{Block, NodeId, StatementOrExpression};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -8,7 +8,7 @@ use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, Expression, NodeId, Statement, StatementOrExpression, Visitor, VisitorMut},
+    ast::{AstNode, Visitor, VisitorMut},
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
 
@@ -40,19 +40,6 @@ where
             }
         }
     }
-}
-
-/// A block containing statements, and an optional expression.
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Block {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// A list of statements in this block
-    pub stmts: Vec<Statement>,
-    /// The last expression of this block
-    pub expr: Option<Expression>,
-    #[allow(missing_docs)]
-    pub id: NodeId,
 }
 
 impl AstNode for Block {

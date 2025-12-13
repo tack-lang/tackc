@@ -5,7 +5,7 @@ use tackc_error::iter::IteratorExt;
 use tackc_file::BorrowedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::ast::{AstNode, Program};
+use tackc_parser::ast::{AstNode, Program, ProgramExt};
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {

@@ -1,10 +1,10 @@
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug};
 use std::hash::Hash;
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use tackc_file::File;
-use tackc_global::{Global, Interned};
+use tackc_global::Global;
 use tackc_lexer::Token;
 use tackc_span::Span;
 
@@ -20,7 +20,7 @@ macro_rules! kind {
 
 /// This trait is implemented by all AST nodes.
 pub trait AstNode:
-    Debug + PartialEq + Eq + Hash + Sized + Serialize + for<'a> Deserialize<'a>
+    Debug + PartialEq + Eq + Hash + Sized + Serialize + for<'a> Deserialize<'a> + Any
 {
     /// Parse the AST node using the given parser.
     ///
@@ -42,51 +42,16 @@ pub trait AstNode:
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V);
 }
 
-/// An index types for Node IDs.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq)]
-pub struct NodeId(pub(super) u64);
-
 mod expr;
 pub use expr::*;
-
 mod stmt;
-pub use stmt::*;
-
 mod block;
-pub use block::*;
-
 mod item;
-pub use item::*;
-
 mod prog;
 pub use prog::*;
-
 mod prim;
-pub use prim::*;
-
 mod util;
-pub use util::*;
-
-/// Representation of a symbol in the file. This contains a [`Span`], and an [`Interned<str>`].
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Symbol {
-    /// Span of the symbol
-    pub span: Span,
-    /// Value of the symbol, interned
-    pub inner: Interned<str>,
-}
-
-impl Symbol {
-    /// Create a new symbol
-    pub fn new(span: Span, ident: Interned<str>) -> Self {
-        Symbol { span, inner: ident }
-    }
-
-    /// Display the symbol
-    pub fn display<'a>(&self, global: &'a Global) -> &'a str {
-        self.inner.display(global)
-    }
-}
+pub use tackc_ast::*;
 
 pub trait Visitor {
     fn visit_program(&mut self, program: &Program) {
@@ -152,7 +117,7 @@ pub trait Visitor {
 
     fn visit_primary(&mut self, primary: &Primary) {
         match primary.kind {
-            PrimaryKind::Binding(_)
+            PrimaryKind::Binding(_, _)
             | PrimaryKind::IntLit(_, _)
             | PrimaryKind::FloatLit(_)
             | PrimaryKind::U8
@@ -259,7 +224,7 @@ pub trait VisitorMut {
 
     fn visit_primary_mut(&mut self, primary: &mut Primary) {
         match primary.kind {
-            PrimaryKind::Binding(_)
+            PrimaryKind::Binding(_, _)
             | PrimaryKind::IntLit(_, _)
             | PrimaryKind::FloatLit(_)
             | PrimaryKind::U8

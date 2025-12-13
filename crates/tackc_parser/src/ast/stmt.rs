@@ -1,22 +1,14 @@
+use tackc_ast::{AssignmentStatement, Expression, ExpressionStatement, Item, LetStatement, NodeId, Statement, StatementOrExpression};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
-use serde::{Deserialize, Serialize};
-
 use crate::{
     Parser,
-    ast::{AstNode, Expression, Item, NodeId, Symbol, Visitor, VisitorMut},
+    ast::{AstNode, Visitor, VisitorMut},
     error::{DiagResult, Result},
 };
-
-#[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum StatementOrExpression {
-    Expression(Expression),
-    Statement(Statement),
-}
 
 impl AstNode for StatementOrExpression {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
@@ -77,7 +69,7 @@ impl AstNode for StatementOrExpression {
         }
     }
 
-    fn id(&self) -> super::NodeId {
+    fn id(&self) -> NodeId {
         match self {
             StatementOrExpression::Expression(expr) => expr.id,
             StatementOrExpression::Statement(stmt) => stmt.id(),
@@ -99,18 +91,17 @@ impl AstNode for StatementOrExpression {
     }
 }
 
-#[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Statement {
-    ExpressionStatement(ExpressionStatement),
-    LetStatement(LetStatement),
-    AssignmentStatement(AssignmentStatement),
-    Item(Item),
-}
+impl AstNode for Statement {
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone
+    {
+        _ = p;
+        _ = recursion;
+        unimplemented!()
+    }
 
-impl Statement {
-    #[allow(missing_docs)]
-    pub fn span(&self) -> Span {
+    fn span(&self) -> Span {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.span(),
             Statement::LetStatement(stmt) => stmt.span(),
@@ -119,8 +110,7 @@ impl Statement {
         }
     }
 
-    #[allow(missing_docs)]
-    pub fn display(&self, global: &Global) -> String {
+    fn display(&self, global: &Global) -> String {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.display(global),
             Statement::LetStatement(stmt) => stmt.display(global),
@@ -129,8 +119,7 @@ impl Statement {
         }
     }
 
-    #[allow(missing_docs)]
-    pub fn id(&self) -> NodeId {
+    fn id(&self) -> NodeId {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.id,
             Statement::LetStatement(stmt) => stmt.id,
@@ -139,8 +128,7 @@ impl Statement {
         }
     }
 
-    #[allow(missing_docs)]
-    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.accept(v),
             Statement::LetStatement(stmt) => stmt.accept(v),
@@ -149,8 +137,7 @@ impl Statement {
         }
     }
 
-    #[allow(missing_docs)]
-    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         match self {
             Statement::ExpressionStatement(stmt) => stmt.accept_mut(v),
             Statement::LetStatement(stmt) => stmt.accept_mut(v),
@@ -160,57 +147,34 @@ impl Statement {
     }
 }
 
-/// An expression ending with a semicolon.
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ExpressionStatement {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The inner expression for this expression statement
-    pub inner: Expression,
-    #[allow(missing_docs)]
-    pub id: NodeId,
-}
+impl AstNode for ExpressionStatement {
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
+        where
+            I: Iterator<Item = Token> + Clone {
+        _ = p;
+        _ = recursion;
+        unimplemented!()
+    }
 
-impl ExpressionStatement {
-    #[allow(missing_docs)]
-    pub fn span(&self) -> Span {
+    fn span(&self) -> Span {
         self.span
     }
 
-    #[allow(missing_docs)]
-    pub fn display(&self, global: &Global) -> String {
+    fn display(&self, global: &Global) -> String {
         self.inner.display(global) + ";"
     }
 
-    #[allow(missing_docs)]
-    pub fn id(&self) -> NodeId {
+    fn id(&self) -> NodeId {
         self.id
     }
 
-    #[allow(missing_docs)]
-    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_expression_statement(self);
     }
 
-    #[allow(missing_docs)]
-    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         v.visit_expression_statement_mut(self);
     }
-}
-
-/// A let statement, e.g. `let x = 5;`
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct LetStatement {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The symbol being defined
-    pub ident: Symbol,
-    /// The type annotation given
-    pub ty: Option<Expression>,
-    /// The initial value given
-    pub expr: Option<Expression>,
-    #[allow(missing_docs)]
-    pub id: NodeId,
 }
 
 impl AstNode for LetStatement {
@@ -221,7 +185,8 @@ impl AstNode for LetStatement {
         let let_tok = p.expect_token_kind(None, kind!(TokenKind::Let))?;
         let ident = p.identifier()?;
         let ty = if p.consume(kind!(TokenKind::Colon)).is_some() {
-            Some(p.parse::<Expression>(recursion + 1).expected("type")?)
+            let ty = p.parse::<Expression>(recursion + 1).expected("type")?;
+            Some(ty)
         } else {
             None
         };
@@ -278,27 +243,20 @@ impl AstNode for LetStatement {
     }
 }
 
-/// An assignment statement
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct AssignmentStatement {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The value on the left of the `=`
-    pub lvalue: Expression,
-    /// The value on the right of the `=`
-    pub rvalue: Expression,
-    #[allow(missing_docs)]
-    pub id: NodeId,
-}
+impl AstNode for AssignmentStatement {
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
+        where
+            I: Iterator<Item = Token> + Clone {
+        _ = recursion;
+        _ = p;
+        unimplemented!()
+    }
 
-impl AssignmentStatement {
-    #[allow(missing_docs)]
-    pub fn span(&self) -> Span {
+    fn span(&self) -> Span {
         self.span
     }
 
-    #[allow(missing_docs)]
-    pub fn display(&self, global: &Global) -> String {
+    fn display(&self, global: &Global) -> String {
         format!(
             "{} = {};",
             self.lvalue.display(global),
@@ -306,13 +264,15 @@ impl AssignmentStatement {
         )
     }
 
-    #[allow(missing_docs)]
-    pub fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+    fn id(&self) -> NodeId {
+        self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_assignment_statement(self);
     }
 
-    #[allow(missing_docs)]
-    pub fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         v.visit_assignment_statement_mut(self);
     }
 }

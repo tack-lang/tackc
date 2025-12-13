@@ -1,25 +1,16 @@
+use tackc_ast::{Block, ConstItem, Expression, FuncItem, Item, NodeId};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
-use serde::{Deserialize, Serialize};
-
 use crate::{
     Parser,
     ast::{
-        AstNode, BindingPower, Block, Expression, NodeId, ParseMode, Symbol, Visitor, VisitorMut, parse_expression
+        AstNode, BindingPower, ParseMode, Visitor, VisitorMut, parse_expression
     },
     error::{DiagResult, ParseError, ParseErrors, Result},
 };
-
-#[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Item {
-    ConstItem(ConstItem),
-    FuncItem(FuncItem),
-    // When adding to `Item`, update `prog::sync_item`.
-}
 
 impl AstNode for Item {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
@@ -49,7 +40,7 @@ impl AstNode for Item {
         }
     }
 
-    fn id(&self) -> super::NodeId {
+    fn id(&self) -> NodeId {
         match self {
             Item::ConstItem(item) => item.id,
             Item::FuncItem(item) => item.id,
@@ -71,21 +62,6 @@ impl AstNode for Item {
     }
 }
 
-/// A constant declaration
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ConstItem {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The identifier being bound to
-    pub ident: Symbol,
-    /// The type annotation given
-    pub ty: Option<Expression>,
-    /// The value given
-    pub expr: Expression,
-    #[allow(missing_docs)]
-    pub id: NodeId,
-}
-
 impl AstNode for ConstItem {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
@@ -94,7 +70,8 @@ impl AstNode for ConstItem {
         let const_tok = p.expect_token_kind(None, kind!(TokenKind::Const))?;
         let ident = p.identifier()?;
         let ty = if p.consume(kind!(TokenKind::Colon)).is_some() {
-            Some(p.parse::<Expression>(recursion + 1).expected("type")?)
+            let ty = p.parse::<Expression>(recursion + 1).expected("type")?;
+            Some(ty)
         } else {
             None
         };
@@ -143,23 +120,6 @@ impl AstNode for ConstItem {
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         v.visit_const_item_mut(self);
     }
-}
-
-/// A function declaration
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct FuncItem {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The name of this function
-    pub ident: Symbol,
-    /// The parameters of this function
-    pub params: Vec<(Symbol, Expression)>,
-    /// The return type of this function
-    pub ret_ty: Option<Expression>,
-    /// The code of this function
-    pub block: Block,
-    #[allow(missing_docs)]
-    pub id: NodeId,
 }
 
 impl AstNode for FuncItem {

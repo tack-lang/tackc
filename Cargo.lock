@@ -766,6 +766,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tackc_ast"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tackc_global",
+ "tackc_lexer",
+ "tackc_span",
+]
+
+[[package]]
 name = "tackc_error"
 version = "0.1.0"
 
@@ -844,6 +854,7 @@ dependencies = [
  "ecow",
  "insta",
  "serde",
+ "tackc_ast",
  "tackc_error",
  "tackc_file",
  "tackc_global",
