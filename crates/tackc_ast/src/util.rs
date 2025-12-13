@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tackc_span::Span;
 
-use crate::{
-    NodeId, Symbol,
-};
+use crate::{NodeId, Symbol};
 
 /// A path to an item
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

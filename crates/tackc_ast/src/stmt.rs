@@ -2,9 +2,7 @@ use tackc_span::Span;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    Expression, Item, NodeId, Symbol,
-};
+use crate::{Expression, Item, NodeId, Symbol};
 
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

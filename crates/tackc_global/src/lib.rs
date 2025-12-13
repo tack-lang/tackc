@@ -67,7 +67,7 @@ impl<T: ?Sized> Copy for Interned<T> {}
 
 impl<T: Internable> Interned<T> {
     /// Returns a reference to the interned value.
-    /// 
+    ///
     /// # Panics
     /// This function will panic if the global given was not the global used to create this interned value.
     pub fn get(self, global: &Global) -> &T {
@@ -77,7 +77,7 @@ impl<T: Internable> Interned<T> {
 
 impl Interned<str> {
     /// Returns a reference to the interned string.
-    /// 
+    ///
     /// # Panics
     /// This function will panic if the global given was not the global used to create this interned string.
     pub fn get(self, global: &Global) -> &str {

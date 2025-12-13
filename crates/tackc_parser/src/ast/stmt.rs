@@ -1,4 +1,7 @@
-use tackc_ast::{AssignmentStatement, Expression, ExpressionStatement, Item, LetStatement, NodeId, Statement, StatementOrExpression};
+use tackc_ast::{
+    AssignmentStatement, Expression, ExpressionStatement, Item, LetStatement, NodeId, Statement,
+    StatementOrExpression,
+};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -94,7 +97,7 @@ impl AstNode for StatementOrExpression {
 impl AstNode for Statement {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
-        I: Iterator<Item = Token> + Clone
+        I: Iterator<Item = Token> + Clone,
     {
         _ = p;
         _ = recursion;
@@ -149,8 +152,9 @@ impl AstNode for Statement {
 
 impl AstNode for ExpressionStatement {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
-        where
-            I: Iterator<Item = Token> + Clone {
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
         _ = p;
         _ = recursion;
         unimplemented!()
@@ -245,8 +249,9 @@ impl AstNode for LetStatement {
 
 impl AstNode for AssignmentStatement {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
-        where
-            I: Iterator<Item = Token> + Clone {
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
         _ = recursion;
         _ = p;
         unimplemented!()
