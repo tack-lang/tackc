@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
 use clap::{Parser, ValueEnum};
 
 use tackc_analyze::resolution::resolve;
@@ -10,71 +9,120 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::ast::{AstNode, Program, ProgramExt};
 
+use tackc_lexer::Token;
+
 #[derive(Parser)]
 struct Args {
+    #[cfg(debug_assertions)]
     #[clap(short, long)]
-    debug: Option<DebugMode>,
+    debug: Vec<Stage>,
+    #[cfg(debug_assertions)]
+    #[clap(short, long)]
+    show: Vec<Stage>,
 }
 
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
-enum DebugMode {
+enum Stage {
     Lexer,
     Parser,
+    //BindingResolution,
 }
 
-fn main() -> Result<()> {
+fn main() {
     let args = Args::parse();
 
     let global = Global::new();
 
-    /*let file: OwnedFile = PathBuf::from("../test.tck")
-    .try_into()
-    .context("Failed to open test.tck!")?;*/
     let file = OwnedFile::try_from(PathBuf::from("../test.tck")).unwrap();
-    let file_interned = global.intern(file);
-    let file_ref = global.get_interned(file_interned);
 
-    let mut errors = Vec::new();
-    let lexer = Lexer::new(file_ref, global).consume_reporter(|e| {
-        errors.push(e);
-    });
-
-    if args.debug == Some(DebugMode::Lexer) {
-        for i in lexer {
-            println!("{i:?}");
-        }
-        return Ok(());
-    }
-
-    let tokens = lexer.collect::<Vec<_>>();
-
-    if !errors.is_empty() {
-        for e in errors {
-            println!("{e}");
-        }
-        return Ok(());
-    }
-
-    let res = Program::parse_file(tokens.iter().copied(), global, file_ref);
-    let mut prog = match res {
-        Ok(prog) => prog,
-        Err(diags) => {
-            println!("{}", diags.display(file_ref, global));
-            return Ok(());
-        }
+    let Some(tokens) = run_lexer(&file, global, &args) else {
+        return;
     };
 
-    if args.debug == Some(DebugMode::Parser) {
-        println!("{prog:#?}");
-        println!("{}", prog.display(global));
-        return Ok(());
+    let Some(mut prog) = run_parser(tokens, &file, global, &args) else {
+        return;
+    };
+
+    if !run_resolver(&mut prog, &file, global, &args) {}
+}
+
+fn run_lexer(file: &OwnedFile, global: &Global, args: &Args) -> Option<Vec<Token>> {
+    let lexer = Lexer::new(file, global);
+    let tokens = lexer.collect::<Vec<_>>();
+
+    #[cfg(debug_assertions)]
+    if args.debug.contains(&Stage::Lexer) {
+        for token in &tokens {
+            eprintln!("{token:?}");
+        }
+    }
+    #[cfg(debug_assertions)]
+    if args.show.contains(&Stage::Lexer) {
+        for token in &tokens {
+            match token {
+                Ok(token) => eprintln!("{}", token.display(global)),
+                Err(e) => eprintln!("{e}"),
+            }
+        }
     }
 
-    let missing = resolve(&mut prog, global).into_iter();
-    for diag in missing {
-        let string = diag.display(file_ref);
-        println!("\n{string}");
-    }
+    let mut errors = Vec::new();
+    let tokens = tokens
+        .into_iter()
+        .consume_reporter(|e| {
+            errors.push(e);
+        })
+        .collect();
 
-    Ok(())
+    let out = errors.is_empty().then_some(tokens).ok_or(errors);
+    match out {
+        Ok(tokens) => Some(tokens),
+        Err(errors) => {
+            for e in errors {
+                eprintln!("{e}");
+            }
+            None
+        }
+    }
+}
+
+fn run_parser(
+    tokens: Vec<Token>,
+    file: &OwnedFile,
+    global: &Global,
+    args: &Args,
+) -> Option<Program> {
+    let res = Program::parse_file(tokens.iter().copied(), global, file);
+
+    match res {
+        Ok(prog) => {
+            if args.debug.contains(&Stage::Parser) {
+                eprintln!("{prog:#?}");
+            }
+            if args.show.contains(&Stage::Parser) {
+                eprintln!("{}", prog.display(global));
+            }
+            Some(prog)
+        }
+        Err(errs) => {
+            if args.debug.contains(&Stage::Parser) {
+                eprintln!("{errs:#?}");
+            }
+            eprintln!("{}", errs.display(file, global));
+
+            None
+        }
+    }
+}
+
+fn run_resolver(program: &mut Program, file: &OwnedFile, global: &Global, _: &Args) -> bool {
+    let errors = resolve(program, global);
+    if !errors.is_empty() {
+        for e in errors {
+            eprintln!("{}", e.display(file));
+        }
+        false
+    } else {
+        true
+    }
 }

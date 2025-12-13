@@ -226,14 +226,14 @@ impl Display for TokenKind {
 
 /// An error in the lexer.
 #[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Error {
+pub struct LexError {
     /// The span of the file that caused the error
     pub span: Span,
     /// This kind of error this error is.
     pub kind: ErrorKind,
 }
 
-impl Display for Error {
+impl Display for LexError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.kind)
     }
@@ -339,14 +339,14 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.apply_bytes(self.src)
     }
 
-    fn make_error(&mut self, ty: ErrorKind) -> Error {
+    fn make_error(&mut self, ty: ErrorKind) -> LexError {
         let span = self.span;
         self.span.reset();
 
-        Error { span, kind: ty }
+        LexError { span, kind: ty }
     }
 
-    fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, Error> {
+    fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, LexError> {
         let c2 = self.current_byte();
         let ty = match (c1, c2) {
             ('(', _) => TokenKind::LParen,
@@ -428,7 +428,7 @@ impl<'src, F: File> Lexer<'src, F> {
             .expect("This is a bug. Please submit a bug report.")
     }
 
-    fn handle_string_lit(&mut self) -> Result<Token, Error> {
+    fn handle_string_lit(&mut self) -> Result<Token, LexError> {
         let mut string = String::new();
         loop {
             match self.next_byte() {
@@ -473,7 +473,7 @@ impl<'src, F: File> Lexer<'src, F> {
         lexeme.chars().filter(|&c| c != '_').collect()
     }
 
-    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, Error> {
+    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, LexError> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
 
@@ -486,7 +486,7 @@ impl<'src, F: File> Lexer<'src, F> {
         Ok(self.make_token(TokenKind::IntLit(self.global.intern_str(digits), prefix)))
     }
 
-    fn handle_num_lit(&mut self, c: u8) -> Result<Token, Error> {
+    fn handle_num_lit(&mut self, c: u8) -> Result<Token, LexError> {
         // Prefixed integer literals (0b, 0o, 0x)
         if let (b'0', Some(prefix)) = (c, self.current_byte()) {
             let prefix = match prefix {
@@ -546,7 +546,7 @@ impl<'src, F: File> Lexer<'src, F> {
         }
     }
 
-    fn handle_float_with_exponent(&mut self) -> Result<Token, Error> {
+    fn handle_float_with_exponent(&mut self) -> Result<Token, LexError> {
         if let Some(b'-' | b'+') = self.current_byte() {
             self.next_byte();
         }
@@ -596,7 +596,7 @@ impl<'src, F: File> Lexer<'src, F> {
     ///
     /// # Errors
     /// See [`ErrorKind`].
-    pub fn next_token(&mut self) -> Result<Token, Error> {
+    pub fn next_token(&mut self) -> Result<Token, LexError> {
         self.skip_whitespace();
         let Some(c) = self.next_byte() else {
             return Ok(self.make_token(TokenKind::Eof));
@@ -618,7 +618,7 @@ impl<'src, F: File> Lexer<'src, F> {
 }
 
 impl<F: File> Iterator for Lexer<'_, F> {
-    type Item = Result<Token, Error>;
+    type Item = Result<Token, LexError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let tok = self.next_token();

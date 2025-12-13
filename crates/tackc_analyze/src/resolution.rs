@@ -240,7 +240,10 @@ pub fn resolve(prog: &mut Program, global: &Global) -> Vec<Diag> {
                 symbol.span,
             ),
             ErrorType::Duplicated => Diag::with_span(
-                format!("name `{}` defined multiple times in scope!", symbol.display(global)),
+                format!(
+                    "name `{}` defined multiple times in scope!",
+                    symbol.display(global)
+                ),
                 symbol.span,
             ),
         })
