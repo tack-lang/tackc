@@ -3,9 +3,9 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
-use crate::ast::{Block, NodeId, Primary, Symbol, Visitor, VisitorMut};
+use crate::ast::{Primary, Visitor, VisitorMut};
 use crate::error::{DiagResult, Result};
-use serde::{Deserialize, Serialize};
+use tackc_ast::{Block, Expression, ExpressionKind, NodeId};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -30,17 +30,6 @@ impl ParseMode {
     pub fn is_no_blocks(self) -> bool {
         matches!(self, Self::NoBlocks)
     }
-}
-
-/// The parser's representation of an expression
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Expression {
-    #[allow(missing_docs)]
-    pub span: Span,
-    #[allow(missing_docs)]
-    pub kind: ExpressionKind,
-    #[allow(missing_docs)]
-    pub id: NodeId,
 }
 
 impl AstNode for Expression {
@@ -151,33 +140,6 @@ fn run_expr_test(path: &Path) {
     let mut p = Parser::new(lexer, &global, &src);
     let expr = Expression::parse(&mut p, 0).expected("expression");
     insta::assert_ron_snapshot!(expr);
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum ExpressionKind {
-    Grouping(Box<Expression>),
-
-    Add(Box<Expression>, Box<Expression>),
-    Sub(Box<Expression>, Box<Expression>),
-    Mul(Box<Expression>, Box<Expression>),
-    Div(Box<Expression>, Box<Expression>),
-    Neg(Box<Expression>),
-
-    Call(Box<Expression>, Vec<Expression>),
-    Index(Box<Expression>, Box<Expression>),
-    Member(Box<Expression>, Symbol),
-
-    Equal(Box<Expression>, Box<Expression>),
-    NotEqual(Box<Expression>, Box<Expression>),
-    Gt(Box<Expression>, Box<Expression>),
-    Lt(Box<Expression>, Box<Expression>),
-    GtEq(Box<Expression>, Box<Expression>),
-    LtEq(Box<Expression>, Box<Expression>),
-
-    Primary(Primary),
-
-    Block(Box<Block>),
 }
 
 /// The binding power of operators

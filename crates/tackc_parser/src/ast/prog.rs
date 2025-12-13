@@ -1,13 +1,12 @@
+use tackc_ast::{Item, ModStatement, NodeId, Path, Program};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
-use serde::{Deserialize, Serialize};
-
 use crate::{
     Parser,
-    ast::{AstNode, Item, NodeId, Path, Visitor, VisitorMut},
+    ast::{AstNode, Visitor, VisitorMut},
     error::{DiagResult, ParseErrors, Result},
 };
 
@@ -41,26 +40,19 @@ where
     }
 }
 
-/// A full program
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Program {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The initial mod statement for this program.
-    pub mod_stmt: ModStatement,
-    /// The items of this program
-    pub items: Vec<Item>,
-    #[allow(missing_docs)]
-    pub id: NodeId,
-}
-
-impl Program {
+pub trait ProgramExt: Sized {
     /// This function will take an input of tokens, and parse a program from it.
     /// The inputted iterator should be easily clonable.
     ///
     /// # Errors
     /// This function will return an error if it fails to parse a full program.
-    pub fn parse_file<I, F: File>(iter: I, global: &Global, file: &F) -> Result<Self>
+    fn parse_file<I, F: File>(iter: I, global: &Global, file: &F) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone;
+}
+
+impl ProgramExt for Program {
+    fn parse_file<I, F: File>(iter: I, global: &Global, file: &F) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -147,17 +139,6 @@ impl AstNode for Program {
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         v.visit_program_mut(self);
     }
-}
-
-/// The mod statement of a program
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ModStatement {
-    #[allow(missing_docs)]
-    pub span: Span,
-    /// The path of this mod statement
-    pub path: Path,
-    #[allow(missing_docs)]
-    pub id: NodeId,
 }
 
 impl AstNode for ModStatement {

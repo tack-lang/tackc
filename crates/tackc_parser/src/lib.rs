@@ -7,11 +7,12 @@ pub mod error;
 
 use error::{ParseError, ParseErrors, Result};
 
+use tackc_ast::{NodeId, Symbol};
 use tackc_file::File;
-use tackc_global::Global;
+use tackc_global::{Global, Internable, Interned};
 use tackc_lexer::{Token, TokenKind};
 
-use crate::ast::{AstNode, NodeId, Symbol};
+use crate::ast::AstNode;
 
 /// The largest possible recursion depth. If a reasonable file exceeds this limit, please open an issue or a pull request.
 pub const MAX_RECURSION_DEPTH: u32 = 256;
@@ -58,6 +59,10 @@ where
             global,
             open_id: 0,
         }
+    }
+
+    pub fn intern<T: Internable>(&self, val: T) -> Interned<T> {
+        self.global.intern(val)
     }
 
     /// Returns the next open [`NodeId`], and increments the open ID.

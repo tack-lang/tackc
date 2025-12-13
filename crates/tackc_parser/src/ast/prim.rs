@@ -1,41 +1,13 @@
 use tackc_file::File;
-use tackc_global::Global;
-use tackc_lexer::{IntegerBase, Token, TokenKind};
+use tackc_global::{Global};
+use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
-use serde::{Deserialize, Serialize};
-
 use crate::Parser;
-use crate::ast::{AstNode, NodeId, Symbol, Visitor, VisitorMut};
+use crate::ast::{AstNode, Visitor, VisitorMut};
 use crate::error::{ParseError, ParseErrors, Result};
 
-/// A primary expression
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
-pub struct Primary {
-    #[allow(missing_docs)]
-    pub span: Span,
-    #[allow(missing_docs)]
-    pub kind: PrimaryKind,
-    #[allow(missing_docs)]
-    pub id: NodeId,
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
-pub enum PrimaryKind {
-    Binding(Symbol),
-    IntLit(Symbol, IntegerBase),
-    FloatLit(Symbol),
-
-    U8,
-    U16,
-    U32,
-    U64,
-    I8,
-    I16,
-    I32,
-    I64,
-}
+use tackc_ast::{NodeId, Primary, PrimaryKind, Symbol};
 
 impl AstNode for Primary {
     fn parse<I, F: File>(p: &mut Parser<I, F>, _: u32) -> Result<Self>
@@ -46,7 +18,7 @@ impl AstNode for Primary {
         match tok.kind {
             TokenKind::Ident(ident) => Ok(Primary {
                 span: tok.span,
-                kind: PrimaryKind::Binding(Symbol::new(tok.span, ident)),
+                kind: PrimaryKind::Binding(Symbol::new(tok.span, ident), None),
                 id: p.node_id(),
             }),
             TokenKind::IntLit(str, base) => Ok(Primary {
@@ -109,7 +81,7 @@ impl AstNode for Primary {
 
     fn display(&self, global: &Global) -> String {
         match self.kind {
-            PrimaryKind::Binding(sym) | PrimaryKind::FloatLit(sym) => {
+            PrimaryKind::Binding(sym, _) | PrimaryKind::FloatLit(sym) => {
                 sym.display(global).to_string()
             }
             PrimaryKind::IntLit(sym, base) => format!("{base}{}", sym.display(global)),
@@ -124,7 +96,7 @@ impl AstNode for Primary {
         }
     }
 
-    fn id(&self) -> super::NodeId {
+    fn id(&self) -> NodeId {
         self.id
     }
 

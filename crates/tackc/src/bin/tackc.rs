@@ -7,7 +7,7 @@ use tackc_error::prelude::*;
 use tackc_file::OwnedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::ast::{AstNode, Program};
+use tackc_parser::ast::{AstNode, Program, ProgramExt};
 
 #[derive(Parser)]
 struct Args {
