@@ -810,6 +810,7 @@ dependencies = [
 name = "tackc_fuzz"
 version = "0.0.0"
 dependencies = [
+ "tackc_analyze",
  "tackc_error",
  "tackc_file",
  "tackc_global",

@@ -66,19 +66,14 @@ fn main() -> Result<()> {
 
     if args.debug == Some(DebugMode::Parser) {
         println!("{prog:#?}");
+        println!("{}", prog.display(global));
         return Ok(());
     }
 
-    println!("{}", prog.display(global));
-
-    let mut missing = resolve(&mut prog, global).into_iter();
-    if let Some(diag) = missing.next() {
-        let string = diag.display(file_ref);
-        println!("\n{string}");
-    }
+    let missing = resolve(&mut prog, global).into_iter();
     for diag in missing {
         let string = diag.display(file_ref);
-        println!("\n\n{string}");
+        println!("\n{string}");
     }
 
     Ok(())
