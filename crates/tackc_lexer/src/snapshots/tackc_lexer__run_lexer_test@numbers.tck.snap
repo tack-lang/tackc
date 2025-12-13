@@ -81,35 +81,35 @@ input_file: crates/tackc_lexer/src/lexer/numbers.tck
     ),
     kind: FloatLit(Interned(5094947213300474516, PhantomData)),
   )),
-  Err(Error(
+  Err(LexError(
     span: Span(
       start: 52,
       end: 56,
     ),
     kind: MissingExponentDigits,
   )),
-  Err(Error(
+  Err(LexError(
     span: Span(
       start: 57,
       end: 61,
     ),
     kind: MissingExponentDigits,
   )),
-  Err(Error(
+  Err(LexError(
     span: Span(
       start: 62,
       end: 67,
     ),
     kind: MissingExponentDigits,
   )),
-  Err(Error(
+  Err(LexError(
     span: Span(
       start: 68,
       end: 74,
     ),
     kind: MissingExponentDigits,
   )),
-  Err(Error(
+  Err(LexError(
     span: Span(
       start: 75,
       end: 83,
