@@ -13,11 +13,12 @@ use tackc_lexer::Token;
 
 #[derive(Parser)]
 struct Args {
-    #[cfg(debug_assertions)]
-    #[clap(short, long)]
+    #[cfg_attr(debug_assertions, clap(short, long))]
+    #[cfg_attr(not(debug_assertions), clap(skip))]
     debug: Vec<Stage>,
-    #[cfg(debug_assertions)]
-    #[clap(short, long)]
+    
+    #[cfg_attr(debug_assertions, clap(short, long))]
+    #[cfg_attr(not(debug_assertions), clap(skip))]
     show: Vec<Stage>,
 }
 
