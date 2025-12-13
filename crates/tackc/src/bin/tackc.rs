@@ -7,7 +7,7 @@ use tackc_error::prelude::*;
 use tackc_file::OwnedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::ast::Program;
+use tackc_parser::ast::{AstNode, Program};
 
 #[derive(Parser)]
 struct Args {
@@ -54,7 +54,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let res = Program::parse(tokens.iter().copied(), global);
+    let res = Program::parse_file(tokens.iter().copied(), global, file_ref);
     let prog = match res {
         Ok(prog) => prog,
         Err(diags) => {

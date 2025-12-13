@@ -1,3 +1,4 @@
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
@@ -6,11 +7,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Parser,
-    ast::{AstNode, Item, NodeId, Path, Visitor},
+    ast::{AstNode, Item, NodeId, Path, Visitor, VisitorMut},
     error::{DiagResult, ParseErrors, Result},
 };
 
-fn sync_item<I>(p: &mut Parser<I>)
+fn sync_item<I, F: File>(p: &mut Parser<I, F>)
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -43,6 +44,8 @@ where
 /// A full program
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Program {
+    #[allow(missing_docs)]
+    pub span: Span,
     /// The initial mod statement for this program.
     pub mod_stmt: ModStatement,
     /// The items of this program
@@ -57,16 +60,24 @@ impl Program {
     ///
     /// # Errors
     /// This function will return an error if it fails to parse a full program.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn parse<I>(iter: I, global: &Global) -> Result<Self>
+    pub fn parse_file<I, F: File>(iter: I, global: &Global, file: &F) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
-        let mut p = Parser::new(iter, global);
+        let mut p = Parser::new(iter, global, file);
+        p.parse(0)
+    }
+}
+
+impl AstNode for Program {
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
+    where
+        I: Iterator<Item = Token> + Clone,
+    {
         let mut errors: Option<ParseErrors> = None;
 
         let mod_stmt = p
-            .try_parse::<ModStatement>(0)
+            .try_parse::<ModStatement>(recursion)
             .expected("`mod`")
             .map_err(|e| {
                 match &mut errors {
@@ -75,14 +86,14 @@ impl Program {
                     }
                     None => errors = Some(e),
                 }
-                sync_item(&mut p);
+                sync_item(p);
             })
             .ok();
 
         let mut items = Vec::new();
 
         while !p.is_eof() {
-            match p.try_parse::<Item>(0).expected("item") {
+            match p.try_parse::<Item>(recursion).expected("item") {
                 Ok(item) => items.push(item),
                 Err(e) => {
                     match &mut errors {
@@ -91,7 +102,7 @@ impl Program {
                         }
                         None => errors = Some(e),
                     }
-                    sync_item(&mut p);
+                    sync_item(p);
                 }
             }
         }
@@ -100,6 +111,7 @@ impl Program {
             Err(e)
         } else {
             Ok(Program {
+                span: Span::full(p.file),
                 mod_stmt: mod_stmt.expect("This is a bug. Please submit a bug report."),
                 items,
                 id: p.node_id(),
@@ -107,8 +119,12 @@ impl Program {
         }
     }
 
+    fn span(&self) -> Span {
+        self.span
+    }
+
     /// Get the string representation of this program
-    pub fn display(&self, global: &Global) -> String {
+    fn display(&self, global: &Global) -> String {
         format!(
             "{}\n{}",
             self.mod_stmt.display(global),
@@ -118,6 +134,18 @@ impl Program {
                 .collect::<Vec<_>>()
                 .join("\n")
         )
+    }
+
+    fn id(&self) -> NodeId {
+        self.id
+    }
+
+    fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
+        v.visit_program(self);
+    }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_program_mut(self);
     }
 }
 
@@ -133,7 +161,7 @@ pub struct ModStatement {
 }
 
 impl AstNode for ModStatement {
-    fn parse<I>(p: &mut Parser<I>, recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -162,6 +190,10 @@ impl AstNode for ModStatement {
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_mod_statement(self);
     }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_mod_statement_mut(self);
+    }
 }
 
 #[test]
@@ -184,6 +216,6 @@ fn run_prog_test(path: &StdPath) {
     let src = OwnedFile::try_from(path.to_path_buf())
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let expr = Program::parse(lexer, &global);
+    let expr = Program::parse_file(lexer, &global, &src);
     insta::assert_ron_snapshot!(expr);
 }

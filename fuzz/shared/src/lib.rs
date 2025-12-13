@@ -5,7 +5,7 @@ use tackc_error::iter::IteratorExt;
 use tackc_file::BorrowedFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::ast::Program;
+use tackc_parser::ast::{AstNode, Program};
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
@@ -34,7 +34,7 @@ pub fn run(data: &[u8]) {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let res = Program::parse(tokens.iter().copied(), &global);
+    let res = Program::parse_file(tokens.iter().copied(), &global, &file);
     match res {
         Ok(s) => {
             s.display(&global);

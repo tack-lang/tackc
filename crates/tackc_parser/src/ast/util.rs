@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::Span;
 
 use crate::{
     Parser,
-    ast::{AstNode, NodeId, Symbol, Visitor},
+    ast::{AstNode, NodeId, Symbol, Visitor, VisitorMut},
     error::{DiagResult, Result},
 };
 
@@ -21,7 +22,7 @@ pub struct Path {
 }
 
 impl AstNode for Path {
-    fn parse<I>(p: &mut Parser<I>, _recursion: u32) -> Result<Self>
+    fn parse<I, F: File>(p: &mut Parser<I, F>, _recursion: u32) -> Result<Self>
     where
         I: Iterator<Item = Token> + Clone,
     {
@@ -61,5 +62,9 @@ impl AstNode for Path {
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         v.visit_path(self);
+    }
+
+    fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
+        v.visit_path_mut(self);
     }
 }
