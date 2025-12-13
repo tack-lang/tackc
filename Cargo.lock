@@ -758,11 +758,25 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "tackc_analyze",
  "tackc_error",
  "tackc_file",
  "tackc_global",
  "tackc_lexer",
  "tackc_parser",
+]
+
+[[package]]
+name = "tackc_analyze"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tackc_ast",
+ "tackc_error",
+ "tackc_global",
+ "tackc_parser",
+ "tackc_span",
+ "tackc_utils",
 ]
 
 [[package]]
@@ -778,6 +792,11 @@ dependencies = [
 [[package]]
 name = "tackc_error"
 version = "0.1.0"
+dependencies = [
+ "tackc_file",
+ "tackc_global",
+ "tackc_span",
+]
 
 [[package]]
 name = "tackc_file"

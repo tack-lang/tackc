@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
 
+use tackc_analyze::resolution::resolve;
 use tackc_error::prelude::*;
 use tackc_file::OwnedFile;
 use tackc_global::Global;
@@ -55,7 +56,7 @@ fn main() -> Result<()> {
     }
 
     let res = Program::parse_file(tokens.iter().copied(), global, file_ref);
-    let prog = match res {
+    let mut prog = match res {
         Ok(prog) => prog,
         Err(diags) => {
             println!("{}", diags.display(file_ref, global));
@@ -69,6 +70,16 @@ fn main() -> Result<()> {
     }
 
     println!("{}", prog.display(global));
+
+    let mut missing = resolve(&mut prog, global).into_iter();
+    if let Some(diag) = missing.next() {
+        let string = diag.display(file_ref);
+        println!("\n{string}");
+    }
+    for diag in missing {
+        let string = diag.display(file_ref);
+        println!("\n\n{string}");
+    }
 
     Ok(())
 }

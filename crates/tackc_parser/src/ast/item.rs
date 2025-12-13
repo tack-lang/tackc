@@ -87,6 +87,7 @@ impl AstNode for ConstItem {
             ident,
             ty,
             expr,
+            binding: None,
             id: p.node_id(),
         })
     }
@@ -138,7 +139,7 @@ impl AstNode for FuncItem {
             p.expect_token_kind(Some("':'"), kind!(TokenKind::Colon))?;
             let ty = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
                 .expected("type")?;
-            params.push((ident, ty));
+            params.push((ident, ty, None));
             if p.consume(kind!(TokenKind::Comma)).is_none() {
                 break;
             }
@@ -162,6 +163,7 @@ impl AstNode for FuncItem {
             params,
             ret_ty,
             block,
+            binding: None,
             id: p.node_id(),
         })
     }
@@ -172,7 +174,7 @@ impl AstNode for FuncItem {
 
     fn display(&self, global: &Global) -> String {
         let mut parts = Vec::with_capacity(self.params.len());
-        for (ident, ty) in &self.params {
+        for (ident, ty, _) in &self.params {
             parts.push(format!("{}: {}", ident.display(global), ty.display(global)));
         }
         let ret = self

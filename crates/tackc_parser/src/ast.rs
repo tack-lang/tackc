@@ -77,7 +77,7 @@ pub trait Visitor {
     }
 
     fn visit_func_item(&mut self, item: &FuncItem) {
-        for (_, ty) in &item.params {
+        for (_, ty, _) in &item.params {
             ty.accept(self);
         }
         if let Some(ty) = &item.ret_ty {
@@ -184,7 +184,7 @@ pub trait VisitorMut {
     }
 
     fn visit_func_item_mut(&mut self, item: &mut FuncItem) {
-        for (_, ty) in &mut item.params {
+        for (_, ty, _) in &mut item.params {
             ty.accept_mut(self);
         }
         if let Some(ty) = &mut item.ret_ty {
