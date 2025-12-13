@@ -5,6 +5,7 @@ publish = false
 edition = "2024"
 
 [dependencies]
+tackc_analyze.workspace = true
 tackc_error = { workspace = true }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true }

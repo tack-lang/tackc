@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use tackc_analyze::resolution::resolve;
 // Bring in the compiler pieces we want to fuzz
 use tackc_error::iter::IteratorExt;
 use tackc_file::BorrowedFile;
@@ -35,12 +36,19 @@ pub fn run(data: &[u8]) {
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
     let res = Program::parse_file(tokens.iter().copied(), &global, &file);
-    match res {
+    let mut prog = match res {
         Ok(s) => {
             s.display(&global);
+            s
         }
         Err(e) => {
             e.display(&file, &global);
+            return;
         }
     };
+
+    let errors = resolve(&mut prog, &global);
+    for e in errors {
+        e.display(&file);
+    }
 }

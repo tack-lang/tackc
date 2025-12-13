@@ -6,12 +6,18 @@ use tackc_global::{Global, Interned};
 use tackc_parser::ast::{AstNode, LetStatement, Primary, PrimaryKind, Program, Symbol, VisitorMut};
 use tackc_utils::hash::IdentityHasherBuilder;
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+enum ErrorType {
+    Missing,
+    Duplicated,
+}
+
 pub type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBuilder>;
 
 struct SymbolResolver<'a> {
     global_scope: Scope,
     scopes: Vec<Scope>,
-    missing: Vec<Symbol>,
+    errors: Vec<(Symbol, ErrorType)>,
     global: &'a Global,
 }
 
@@ -20,7 +26,7 @@ impl<'a> SymbolResolver<'a> {
         SymbolResolver {
             global_scope: HashMap::default(),
             scopes: vec![],
-            missing: Vec::new(),
+            errors: Vec::new(),
             global,
         }
     }
@@ -54,6 +60,15 @@ impl<'a> SymbolResolver<'a> {
             }
         }
         None
+    }
+
+    pub fn exists(&self, str: Interned<str>) -> bool {
+        for scope in self.iter() {
+            if scope.get(&str).is_some() {
+                return true;
+            }
+        }
+        false
     }
 
     pub fn resolve(&self, str: Interned<str>) -> Option<Interned<Binding>> {
@@ -101,6 +116,11 @@ impl<'a> SymbolResolver<'a> {
 
 impl SymbolResolver<'_> {
     fn visit_const_item_shallow(&mut self, item: &mut ConstItem) {
+        if self.exists(item.ident.inner) {
+            self.errors.push((item.ident, ErrorType::Duplicated));
+            return;
+        }
+
         item.binding = Some(self.define(
             item.ident.inner,
             Binding {
@@ -111,6 +131,11 @@ impl SymbolResolver<'_> {
     }
 
     fn visit_func_item_shallow(&mut self, item: &mut FuncItem) {
+        if self.exists(item.ident.inner) {
+            self.errors.push((item.ident, ErrorType::Duplicated));
+            return;
+        }
+
         item.binding = Some(self.define(
             item.ident.inner,
             Binding {
@@ -174,7 +199,7 @@ impl VisitorMut for SymbolResolver<'_> {
     fn visit_primary_mut(&mut self, primary: &mut Primary) {
         if let PrimaryKind::Binding(ident, binding) = &mut primary.kind {
             let Some(new) = self.resolve(ident.inner) else {
-                self.missing.push(*ident);
+                self.errors.push((*ident, ErrorType::Missing));
                 return;
             };
 
@@ -204,16 +229,20 @@ pub fn resolve(prog: &mut Program, global: &Global) -> Vec<Diag> {
     let mut v = SymbolResolver::new(global);
     prog.accept_mut(&mut v);
 
-    v.missing
+    v.errors
         .into_iter()
-        .map(|symbol| {
-            Diag::with_span(
+        .map(|(symbol, error)| match error {
+            ErrorType::Missing => Diag::with_span(
                 format!(
                     "cannot find value `{}` in this scope",
                     symbol.display(global)
                 ),
                 symbol.span,
-            )
+            ),
+            ErrorType::Duplicated => Diag::with_span(
+                format!("name `{}` defined multiple times in scope!", symbol.display(global)),
+                symbol.span,
+            ),
         })
         .collect::<Vec<_>>()
 }
