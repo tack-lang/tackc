@@ -7,10 +7,7 @@ serde = "1.0"
 thiserror = "2.0"
 dashmap = "6.1"
 anyhow = "1.0"
-toml = "0.9.8"
 clap = "4.5"
-colored = "3.0"
-flate2 = "1.1"
 walkdir = "2.5"
 tackc_error = { version = "0.1.0", path = "crates/tackc_error" }
 tackc_file = { version = "0.1.0", path = "crates/tackc_file" }
@@ -18,6 +15,9 @@ tackc_global = { version = "0.1.0", path = "crates/tackc_global" }
 tackc_lexer = { version = "0.1.0", path = "crates/tackc_lexer" }
 tackc_span = { version = "0.1.0", path = "crates/tackc_span" }
 tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
+tackc_utils = { version = "0.1.0", path = "crates/tackc_utils" }
+tackc_analyze = { version = "0.1.0", path = "crates/tackc_analyze" }
+tackc_ast = { version = "0.1.0", path = "crates/tackc_ast" }
 tackc_fuzz = { version = "0.0.0", path = "fuzz/shared" }
 bumpalo = "3.19"
 ecow = "0.2.6"
@@ -27,8 +27,6 @@ sha2 = "0.10.9"
 honggfuzz = "0.5.58"
 insta = "1.44"
 proptest = "1.9"
-im = "15.1.0"
-tackc_utils = { version = "0.1.0", path = "crates/tackc_utils" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

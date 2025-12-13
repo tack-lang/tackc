@@ -139,6 +139,7 @@ Ok(Program(
         )),
         id: NodeId(11),
       ),
+      binding: None,
       id: NodeId(12),
     )),
     FuncItem(FuncItem(
@@ -174,7 +175,7 @@ Ok(Program(
             id: NodeId(13),
           )),
           id: NodeId(14),
-        )),
+        ), None),
         (Symbol(
           span: Span(
             start: 63,
@@ -195,7 +196,7 @@ Ok(Program(
             id: NodeId(15),
           )),
           id: NodeId(16),
-        )),
+        ), None),
       ],
       ret_ty: Some(Expression(
         span: Span(
@@ -268,6 +269,7 @@ Ok(Program(
         )),
         id: NodeId(24),
       ),
+      binding: None,
       id: NodeId(25),
     )),
   ],

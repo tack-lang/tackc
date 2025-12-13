@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tackc_file.workspace = true
+tackc_global.workspace = true
+tackc_span.workspace = true
 
 [lints]
 workspace = true

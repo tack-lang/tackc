@@ -50,5 +50,5 @@ impl Symbol {
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Binding {
     pub span: Span,
-    pub ty_annotation: Option<Expression>,
+    pub ty_annotation: Option<NodeId>,
 }
