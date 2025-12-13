@@ -48,16 +48,17 @@ fn main() {
 }
 
 fn run_lexer(file: &OwnedFile, global: &Global, args: &Args) -> Option<Vec<Token>> {
+    #[cfg(not(debug_assertions))]
+    {_ = args;}
+
     let lexer = Lexer::new(file, global);
     let tokens = lexer.collect::<Vec<_>>();
 
-    #[cfg(debug_assertions)]
     if args.debug.contains(&Stage::Lexer) {
         for token in &tokens {
             eprintln!("{token:?}");
         }
     }
-    #[cfg(debug_assertions)]
     if args.show.contains(&Stage::Lexer) {
         for token in &tokens {
             match token {
