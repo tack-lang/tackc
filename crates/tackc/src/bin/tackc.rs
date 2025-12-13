@@ -16,7 +16,7 @@ struct Args {
     #[cfg_attr(debug_assertions, clap(short, long))]
     #[cfg_attr(not(debug_assertions), clap(skip))]
     debug: Vec<Stage>,
-    
+
     #[cfg_attr(debug_assertions, clap(short, long))]
     #[cfg_attr(not(debug_assertions), clap(skip))]
     show: Vec<Stage>,
@@ -49,7 +49,9 @@ fn main() {
 
 fn run_lexer(file: &OwnedFile, global: &Global, args: &Args) -> Option<Vec<Token>> {
     #[cfg(not(debug_assertions))]
-    {_ = args;}
+    {
+        _ = args;
+    }
 
     let lexer = Lexer::new(file, global);
     let tokens = lexer.collect::<Vec<_>>();
