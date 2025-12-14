@@ -19,7 +19,6 @@ tackc_analyze = { version = "0.1.0", path = "crates/tackc_analyze" }
 tackc_ast = { version = "0.1.0", path = "crates/tackc_ast" }
 tackc_fuzz = { version = "0.0.0", path = "fuzz/shared" }
 bumpalo = "3.19"
-ecow = "0.2.6"
 libfuzzer-sys = "0.4"
 rustc-hash = "2.1"
 sha2 = "0.10.9"

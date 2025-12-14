@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 bumpalo = { workspace = true, features = ["std"] }
-ecow = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true }

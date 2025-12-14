@@ -248,15 +248,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ecow"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78e4f79b296fbaab6ce2e22d52cb4c7f010fe0ebe7a32e34fa25885fd797bd02"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "encode_unicode"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -864,7 +855,6 @@ name = "tackc_parser"
 version = "0.1.0"
 dependencies = [
  "bumpalo",
- "ecow",
  "insta",
  "serde",
  "tackc_ast",

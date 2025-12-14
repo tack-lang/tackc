@@ -8,7 +8,6 @@ pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 
 use serde::{Deserialize, Serialize};
 
-use ecow::EcoVec;
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::Token;
@@ -20,14 +19,14 @@ use tackc_span::Span;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseErrors {
     // Length of errors will always be 1 or greater
-    errors: EcoVec<ParseError>,
+    errors: Vec<ParseError>,
 }
 
 impl ParseErrors {
     /// Create a new [`ParseErrors`]
     pub fn new(error: ParseError) -> Self {
         ParseErrors {
-            errors: EcoVec::from([error]),
+            errors: Vec::from([error]),
         }
     }
 
@@ -46,8 +45,7 @@ impl ParseErrors {
 
     /// Returns a mutable reference to the most recent [`ParseError`]
     fn most_recent_mut(&mut self) -> &mut ParseError {
-        let errors = self.errors.make_mut();
-        errors.last_mut().unwrap()
+        self.errors.last_mut().unwrap()
     }
 
     /// Clears the `expected` field of the most recent error.
@@ -100,9 +98,8 @@ impl ParseErrors {
     }
 
     /// Add a new list of parse errors to `self`.
-    #[allow(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: ParseErrors) {
-        self.errors.extend_from_slice(&other);
+        self.errors.extend(other.errors);
     }
 }
 
