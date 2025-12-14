@@ -22,6 +22,20 @@ struct Args {
     show: Vec<Stage>,
 }
 
+struct DebugModes<'a> {
+    debug: &'a [Stage],
+    show: &'a [Stage],
+}
+
+impl<'a> DebugModes<'a> {
+    fn new(args: &'a Args) -> Self {
+        DebugModes {
+            debug: &args.debug,
+            show: &args.show,
+        }
+    }
+}
+
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
 enum Stage {
     Lexer,
@@ -31,37 +45,36 @@ enum Stage {
 
 fn main() {
     let args = Args::parse();
-
+    let debug_modes = DebugModes::new(&args);
     let global = Global::new();
-
     let file = OwnedFile::try_from(PathBuf::from("../test.tck")).unwrap();
 
-    let Some(tokens) = run_lexer(&file, global, &args) else {
+    let Some(tokens) = run_lexer(&file, global, &debug_modes) else {
         return;
     };
 
-    let Some(mut prog) = run_parser(tokens, &file, global, &args) else {
+    let Some(mut prog) = run_parser(tokens, &file, global, &debug_modes) else {
         return;
     };
 
-    if !run_resolver(&mut prog, &file, global, &args) {}
+    if !run_resolver(&mut prog, &file, global, &debug_modes) {}
 }
 
-fn run_lexer(file: &OwnedFile, global: &Global, args: &Args) -> Option<Vec<Token>> {
+fn run_lexer(file: &OwnedFile, global: &Global, debug_modes: &DebugModes) -> Option<Vec<Token>> {
     #[cfg(not(debug_assertions))]
     {
-        _ = args;
+        _ = debug_modes;
     }
 
     let lexer = Lexer::new(file, global);
     let tokens = lexer.collect::<Vec<_>>();
 
-    if args.debug.contains(&Stage::Lexer) {
+    if debug_modes.debug.contains(&Stage::Lexer) {
         for token in &tokens {
             eprintln!("{token:?}");
         }
     }
-    if args.show.contains(&Stage::Lexer) {
+    if debug_modes.show.contains(&Stage::Lexer) {
         for token in &tokens {
             match token {
                 Ok(token) => eprintln!("{}", token.display(global)),
@@ -94,22 +107,22 @@ fn run_parser(
     tokens: Vec<Token>,
     file: &OwnedFile,
     global: &Global,
-    args: &Args,
+    debug_modes: &DebugModes,
 ) -> Option<Program> {
     let res = Program::parse_file(tokens.iter().copied(), global, file);
 
     match res {
         Ok(prog) => {
-            if args.debug.contains(&Stage::Parser) {
+            if debug_modes.debug.contains(&Stage::Parser) {
                 eprintln!("{prog:#?}");
             }
-            if args.show.contains(&Stage::Parser) {
+            if debug_modes.show.contains(&Stage::Parser) {
                 eprintln!("{}", prog.display(global));
             }
             Some(prog)
         }
         Err(errs) => {
-            if args.debug.contains(&Stage::Parser) {
+            if debug_modes.debug.contains(&Stage::Parser) {
                 eprintln!("{errs:#?}");
             }
             eprintln!("{}", errs.display(file, global));
@@ -119,7 +132,7 @@ fn run_parser(
     }
 }
 
-fn run_resolver(program: &mut Program, file: &OwnedFile, global: &Global, _: &Args) -> bool {
+fn run_resolver(program: &mut Program, file: &OwnedFile, global: &Global, _: &DebugModes) -> bool {
     let errors = resolve(program, global);
     if !errors.is_empty() {
         for e in errors {
