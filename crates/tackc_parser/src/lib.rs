@@ -50,6 +50,33 @@ where
         };
     }
 
+    pub fn sync<O: FnOnce(&mut Self)>(
+        &mut self,
+        errors: &mut Option<ParseErrors>,
+        e: ParseErrors,
+        routine: O,
+    ) {
+        if let Some(err) = errors {
+            err.merge(e);
+        } else {
+            *errors = Some(e);
+        }
+        routine(self);
+    }
+
+    /// Try to run `op` by passing `self`. On error, restore parser to before trying to run `op`.
+    ///
+    /// # Errors
+    /// This function returns the same value as `op`, so it will only return an error if `op` returns an error.
+    pub fn try_run<T, O: FnOnce(&mut Self) -> Result<T>>(&mut self, op: O) -> Result<T> {
+        let snapshot = self.snapshot();
+        let res = op(self);
+        if res.is_err() {
+            self.restore(snapshot);
+        }
+        res
+    }
+
     /// Create a new parser
     #[inline]
     pub fn new(iter: I, global: &'a Global, file: &'a F) -> Self {
@@ -92,12 +119,7 @@ where
     /// # Errors
     /// This function will return an error when it fails to parse the `AstNode`.
     pub fn try_parse<N: AstNode>(&mut self, recursion: u32) -> Result<N> {
-        let snapshot = self.snapshot();
-        let res = N::parse(self, recursion + 1);
-        if res.is_err() {
-            self.restore(snapshot);
-        }
-        res
+        self.try_run(|p| N::parse(p, recursion + 1))
     }
 
     /// Consumes the next token from the lexer.

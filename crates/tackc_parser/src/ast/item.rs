@@ -121,6 +121,66 @@ impl AstNode for ConstItem {
     }
 }
 
+fn param_list_sync<I, F: File>(p: &mut Parser<I, F>)
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let mut depth = 0;
+    loop {
+        let Some(tok) = p.peek_token() else {
+            return;
+        };
+        match tok.kind {
+            TokenKind::RParen if depth == 0 => {
+                return;
+            }
+            TokenKind::Comma if depth == 0 => {
+                p.next_token();
+                return;
+            }
+            TokenKind::LBrace | TokenKind::LBracket | TokenKind::LParen => {
+                depth += 1;
+                p.next_token();
+            }
+            TokenKind::RBrace | TokenKind::RBracket | TokenKind::RParen => {
+                depth -= 1;
+                p.next_token();
+            }
+            _ => {
+                p.next_token();
+            }
+        }
+    }
+}
+
+fn ret_type_sync<I, F: File>(p: &mut Parser<I, F>)
+where
+    I: Iterator<Item = Token> + Clone,
+{
+    let mut depth = 0;
+    loop {
+        let Some(tok) = p.peek_token() else {
+            return;
+        };
+        match tok.kind {
+            TokenKind::LBrace if depth == 0 => {
+                return;
+            }
+            TokenKind::LBrace => {
+                depth += 1;
+                p.next_token();
+            }
+            TokenKind::RBrace => {
+                depth -= 1;
+                p.next_token();
+            }
+            _ => {
+                p.next_token();
+            }
+        }
+    }
+}
+
 impl AstNode for FuncItem {
     fn parse<I, F: File>(p: &mut Parser<I, F>, recursion: u32) -> Result<Self>
     where
@@ -129,6 +189,7 @@ impl AstNode for FuncItem {
         let func = p.expect_token_kind(None, kind!(TokenKind::Func))?;
         let ident = p.identifier()?;
         p.expect_token_kind(Some("'('"), kind!(TokenKind::LParen))?;
+        let mut errors: Option<ParseErrors> = None;
 
         // Parameter list
         let mut params = Vec::new();
@@ -137,8 +198,18 @@ impl AstNode for FuncItem {
         {
             let ident = p.identifier()?;
             p.expect_token_kind(Some("':'"), kind!(TokenKind::Colon))?;
-            let ty = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
-                .expected("type")?;
+
+            let ty = match p.try_run(|p| {
+                parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
+                    .expected("type")
+            }) {
+                Ok(ty) => ty,
+                Err(e) => {
+                    p.sync(&mut errors, e, param_list_sync);
+                    continue;
+                }
+            };
+
             params.push((ident, ty, None));
             if p.consume(kind!(TokenKind::Comma)).is_none() {
                 break;
@@ -150,12 +221,33 @@ impl AstNode for FuncItem {
         let ret_ty = if p.peek_is(kind!(TokenKind::LBrace)) {
             None
         } else {
-            Some(
+            let res = p.try_run(|p| {
                 parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
-                    .expected("type")?,
-            )
+                    .expected("type")
+            });
+            match res {
+                Ok(expr) => Some(expr),
+                Err(e) => {
+                    p.sync(&mut errors, e, ret_type_sync);
+                    None
+                }
+            }
         };
-        let block = p.parse::<Block>(recursion + 1).expected("block")?;
+
+        let block = match p.parse::<Block>(recursion + 1).expected("block") {
+            Ok(block) => block,
+            Err(e) => {
+                if let Some(mut err) = errors {
+                    err.merge(e);
+                    return Err(err);
+                }
+                return Err(e);
+            }
+        };
+
+        if let Some(err) = errors {
+            return Err(err);
+        }
 
         Ok(FuncItem {
             span: Span::new_from(func.span.start, block.span.end),
