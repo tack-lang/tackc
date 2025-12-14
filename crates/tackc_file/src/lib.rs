@@ -1,7 +1,10 @@
 //! A crate containing structs for files.
 
 use std::{
-    borrow::Cow, fs, io, ops::Deref, path::{Path, PathBuf}
+    borrow::Cow,
+    fs, io,
+    ops::Deref,
+    path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};

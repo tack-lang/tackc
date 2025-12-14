@@ -20,7 +20,7 @@ struct Args {
     #[cfg_attr(debug_assertions, clap(short, long))]
     #[cfg_attr(not(debug_assertions), clap(skip))]
     show: Vec<Stage>,
-    
+
     #[clap(required = true)]
     files: Vec<PathBuf>,
 }
@@ -45,21 +45,29 @@ fn main() {
     };
     let global = Global::new();
     let mut error = false;
-    let files = args.files.iter().map(PathBuf::as_ref).map(|path| {
-        BasicFile::try_from(path).map_err(|x| (x, path)).map(|file| (file, path))
-    }).consume_reporter(|(e, path)| {
-        error = true;
-        println!("failed to open file {}: {e:?}", path.display());
-    }).collect::<Vec<_>>();
+    let files = args
+        .files
+        .iter()
+        .map(PathBuf::as_ref)
+        .map(|path| {
+            BasicFile::try_from(path)
+                .map_err(|x| (x, path))
+                .map(|file| (file, path))
+        })
+        .consume_reporter(|(e, path)| {
+            error = true;
+            println!("failed to open file {}: {e:?}", path.display());
+        })
+        .collect::<Vec<_>>();
     if error {
         return;
     }
 
-    let asts = files.into_iter().map(|(file, path)| {
-        (run_lexer(&file, global, &debug_modes), file, path)
-    }).map(|(tokens, file, path)| {
-        (run_parser(tokens, &file, global, &debug_modes), path)
-    }).collect::<Vec<_>>();
+    let asts = files
+        .into_iter()
+        .map(|(file, path)| (run_lexer(&file, global, &debug_modes), file, path))
+        .map(|(tokens, file, path)| (run_parser(tokens, &file, global, &debug_modes), path))
+        .collect::<Vec<_>>();
 
     drop(asts);
 }
