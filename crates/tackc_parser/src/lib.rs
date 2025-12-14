@@ -12,7 +12,7 @@ use tackc_file::File;
 use tackc_global::{Global, Internable, Interned};
 use tackc_lexer::{Token, TokenKind};
 
-use crate::ast::AstNode;
+use crate::{ast::AstNode, error::collect_error};
 
 /// The largest possible recursion depth. If a reasonable file exceeds this limit, please open an issue or a pull request.
 pub const MAX_RECURSION_DEPTH: u32 = 256;
@@ -52,12 +52,8 @@ where
         };
     }
 
-    pub fn collect_error(&mut self, errors: &mut Option<ParseErrors>, e: ParseErrors) {
-        if let Some(err) = errors {
-            err.merge(e);
-        } else {
-            *errors = Some(e);
-        }
+    pub fn add_error(&mut self, e: ParseErrors) {
+        collect_error(&mut self.errors, e);
     }
 
     /// Try to run `op` by passing `self`. On error, restore parser to before trying to run `op`.

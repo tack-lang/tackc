@@ -7,7 +7,7 @@ use tackc_span::Span;
 use crate::{
     Parser,
     ast::{AstNode, BindingPower, ParseMode, Visitor, VisitorMut, parse_expression},
-    error::{DiagResult, ParseError, ParseErrors, Result},
+    error::{DiagResult, ParseError, ParseErrors, Result, collect_error},
 };
 
 impl AstNode for Item {
@@ -205,7 +205,7 @@ impl AstNode for FuncItem {
             }) {
                 Ok(ty) => ty,
                 Err(e) => {
-                    p.collect_error(&mut errors, e);
+                    collect_error(&mut errors, e);
                     expr_list_sync(p);
                     continue;
                 }
@@ -229,7 +229,7 @@ impl AstNode for FuncItem {
             match res {
                 Ok(expr) => Some(expr),
                 Err(e) => {
-                    p.collect_error(&mut errors, e);
+                    collect_error(&mut errors, e);
                     ret_type_sync(p);
                     None
                 }
