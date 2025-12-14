@@ -50,18 +50,12 @@ where
         };
     }
 
-    pub fn sync<O: FnOnce(&mut Self)>(
-        &mut self,
-        errors: &mut Option<ParseErrors>,
-        e: ParseErrors,
-        routine: O,
-    ) {
+    pub fn collect_error(&mut self, errors: &mut Option<ParseErrors>, e: ParseErrors) {
         if let Some(err) = errors {
             err.merge(e);
         } else {
             *errors = Some(e);
         }
-        routine(self);
     }
 
     /// Try to run `op` by passing `self`. On error, restore parser to before trying to run `op`.
