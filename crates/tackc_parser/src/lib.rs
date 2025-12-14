@@ -19,7 +19,7 @@ pub const MAX_RECURSION_DEPTH: u32 = 256;
 
 /// This struct contains a snapshotted version of [`Parser`].
 /// This can be created by [`Parser::snapshot`], and restored by [`Parser::restore`].
-pub struct ParserSnapshot<I>(I, u64);
+pub struct ParserSnapshot<I>(I, u64, Option<ParseErrors>);
 
 /// The parser struct, containing a stream of tokens, a [`Global`] reference, and the first open `AstNode` ID.
 pub struct Parser<'a, I, F> {
@@ -27,6 +27,7 @@ pub struct Parser<'a, I, F> {
     file: &'a F,
     global: &'a Global,
     open_id: u64,
+    errors: Option<ParseErrors>,
 }
 
 impl<'a, I, F: File> Parser<'a, I, F>
@@ -36,7 +37,7 @@ where
     /// Create a snapshot of this parser
     #[inline]
     pub fn snapshot(&self) -> ParserSnapshot<I> {
-        ParserSnapshot(self.iter.clone(), self.open_id)
+        ParserSnapshot(self.iter.clone(), self.open_id, self.errors.clone())
     }
 
     /// Restore a snapshot of this parser
@@ -47,6 +48,7 @@ where
             file: self.file,
             global: self.global,
             open_id: snapshot.1,
+            errors: snapshot.2,
         };
     }
 
@@ -79,6 +81,7 @@ where
             file,
             global,
             open_id: 0,
+            errors: None,
         }
     }
 
