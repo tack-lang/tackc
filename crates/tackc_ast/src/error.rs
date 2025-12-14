@@ -6,6 +6,7 @@ use std::result::Result as StdResult;
 /// Result type using [`ParseErrors`] as the error type
 pub type Result<T, E = ParseErrors> = StdResult<T, E>;
 
+use ecow::EcoVec;
 use serde::{Deserialize, Serialize};
 
 use tackc_file::File;
@@ -16,17 +17,17 @@ use tackc_span::Span;
 
 /// A list of [`ParseError`]s. This is easily cloneable, since it uses a Clone-on-Write vector.
 /// This struct should always contain at least one error.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseErrors {
     // Length of errors will always be 1 or greater
-    errors: Vec<ParseError>,
+    errors: EcoVec<ParseError>,
 }
 
 impl ParseErrors {
     /// Create a new [`ParseErrors`]
     pub fn new(error: ParseError) -> Self {
         ParseErrors {
-            errors: Vec::from([error]),
+            errors: EcoVec::from([error]),
         }
     }
 
@@ -45,7 +46,7 @@ impl ParseErrors {
 
     /// Returns a mutable reference to the most recent [`ParseError`]
     fn most_recent_mut(&mut self) -> &mut ParseError {
-        self.errors.last_mut().unwrap()
+        self.errors.make_mut().last_mut().unwrap()
     }
 
     /// Clears the `expected` field of the most recent error.
