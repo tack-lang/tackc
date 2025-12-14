@@ -645,9 +645,9 @@ impl<F: File> Clone for Lexer<'_, F> {
 proptest! {
     #[test]
     fn lexer(s in ".{1,4096}") {
-        use tackc_file::BorrowedFile;
+        use tackc_file::BasicFile;
 
-        let file = BorrowedFile::new(&s, "proptest.tck");
+        let file = BasicFile::new(&s, Path::new("proptest.tck"));
         let global = Global::create_heap();
         let lexer = Lexer::new(&file, &global);
         for i in lexer {
@@ -666,9 +666,9 @@ use std::path::Path;
 
 #[cfg(test)]
 fn run_lexer_test(path: &Path) {
-    use tackc_file::OwnedFile;
+    use tackc_file::BasicFile;
 
-    let file = OwnedFile::try_from(path.to_path_buf())
+    let file = BasicFile::try_from(path)
         .unwrap_or_else(|_| panic!("Could not file {}!", path.display()));
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);

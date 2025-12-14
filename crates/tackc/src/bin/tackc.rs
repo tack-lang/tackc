@@ -4,7 +4,7 @@ use clap::{Parser, ValueEnum};
 
 use tackc_analyze::resolution::resolve;
 use tackc_error::prelude::*;
-use tackc_file::OwnedFile;
+use tackc_file::BasicFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::ast::{AstNode, Program, ProgramExt};
@@ -20,20 +20,14 @@ struct Args {
     #[cfg_attr(debug_assertions, clap(short, long))]
     #[cfg_attr(not(debug_assertions), clap(skip))]
     show: Vec<Stage>,
+    
+    #[clap(required = true)]
+    files: Vec<PathBuf>,
 }
 
-struct DebugModes<'a> {
-    debug: &'a [Stage],
-    show: &'a [Stage],
-}
-
-impl<'a> DebugModes<'a> {
-    fn new(args: &'a Args) -> Self {
-        DebugModes {
-            debug: &args.debug,
-            show: &args.show,
-        }
-    }
+struct DebugModes {
+    debug: Vec<Stage>,
+    show: Vec<Stage>,
 }
 
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
@@ -45,22 +39,32 @@ enum Stage {
 
 fn main() {
     let args = Args::parse();
-    let debug_modes = DebugModes::new(&args);
+    let debug_modes = DebugModes {
+        debug: args.debug,
+        show: args.show,
+    };
     let global = Global::new();
-    let file = OwnedFile::try_from(PathBuf::from("../test.tck")).unwrap();
-
-    let Some(tokens) = run_lexer(&file, global, &debug_modes) else {
+    let mut error = false;
+    let files = args.files.iter().map(PathBuf::as_ref).map(|path| {
+        BasicFile::try_from(path).map_err(|x| (x, path)).map(|file| (file, path))
+    }).consume_reporter(|(e, path)| {
+        error = true;
+        println!("failed to open file {}: {e:?}", path.display());
+    }).collect::<Vec<_>>();
+    if error {
         return;
-    };
+    }
 
-    let Some(mut prog) = run_parser(tokens, &file, global, &debug_modes) else {
-        return;
-    };
+    let asts = files.into_iter().map(|(file, path)| {
+        (run_lexer(&file, global, &debug_modes), file, path)
+    }).map(|(tokens, file, path)| {
+        (run_parser(tokens, &file, global, &debug_modes), path)
+    }).collect::<Vec<_>>();
 
-    if !run_resolver(&mut prog, &file, global, &debug_modes) {}
+    drop(asts);
 }
 
-fn run_lexer(file: &OwnedFile, global: &Global, debug_modes: &DebugModes) -> Option<Vec<Token>> {
+fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
     #[cfg(not(debug_assertions))]
     {
         _ = debug_modes;
@@ -86,26 +90,21 @@ fn run_lexer(file: &OwnedFile, global: &Global, debug_modes: &DebugModes) -> Opt
     let mut errors = Vec::new();
     let tokens = tokens
         .into_iter()
-        .consume_reporter(|e| {
+        .skip_reporter(|e| {
             errors.push(e);
         })
         .collect();
 
-    let out = errors.is_empty().then_some(tokens).ok_or(errors);
-    match out {
-        Ok(tokens) => Some(tokens),
-        Err(errors) => {
-            for e in errors {
-                eprintln!("{e}");
-            }
-            None
-        }
+    for e in errors {
+        eprintln!("{e}");
     }
+
+    tokens
 }
 
 fn run_parser(
     tokens: Vec<Token>,
-    file: &OwnedFile,
+    file: &BasicFile,
     global: &Global,
     debug_modes: &DebugModes,
 ) -> Option<Program> {
@@ -132,7 +131,7 @@ fn run_parser(
     }
 }
 
-fn run_resolver(program: &mut Program, file: &OwnedFile, global: &Global, _: &DebugModes) -> bool {
+fn _run_resolver(program: &mut Program, file: &BasicFile, global: &Global, _: &DebugModes) -> bool {
     let errors = resolve(program, global);
     if !errors.is_empty() {
         for e in errors {
