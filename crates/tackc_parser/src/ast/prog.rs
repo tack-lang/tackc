@@ -190,11 +190,11 @@ use std::path::Path as StdPath;
 #[cfg(test)]
 fn run_prog_test(path: &StdPath) {
     use tackc_error::iter::IteratorExt;
-    use tackc_file::OwnedFile;
+    use tackc_file::BasicFile;
     use tackc_lexer::Lexer;
 
     let global = Global::create_heap();
-    let src = OwnedFile::try_from(path.to_path_buf())
+    let src = BasicFile::try_from(path)
         .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
     let lexer = Lexer::new(&src, &global).consume_reporter(drop);
     let expr = Program::parse_file(lexer, &global, &src);
