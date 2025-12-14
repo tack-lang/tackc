@@ -768,6 +768,7 @@ name = "tackc_ast"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "tackc_file",
  "tackc_global",
  "tackc_lexer",
  "tackc_span",
@@ -777,6 +778,7 @@ dependencies = [
 name = "tackc_error"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "tackc_file",
  "tackc_global",
  "tackc_span",

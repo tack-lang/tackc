@@ -1,9 +1,11 @@
 use std::borrow::Cow;
 use std::fmt::Write;
 
+use serde::{Deserialize, Serialize};
 use tackc_file::File;
 use tackc_span::Span;
 
+#[derive(Serialize, Deserialize)]
 pub struct Diag {
     span: Option<(Span, Option<Cow<'static, str>>)>,
     msg: Cow<'static, str>,
