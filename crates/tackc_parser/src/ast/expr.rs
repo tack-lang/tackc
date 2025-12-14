@@ -184,14 +184,16 @@ where
             p.next_token();
 
             // Drop unary `+`, does nothing
-            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode).expected("expression")?;
+            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)
+                .expected("expression")?;
             rhs.span.start = tok.span.start;
             Ok(rhs)
         }
         TokenKind::Minus => {
             p.next_token();
 
-            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode).expected("expression")?;
+            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)
+                .expected("expression")?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, rhs.span.end),
                 kind: ExpressionKind::Neg(Box::new(rhs)),
@@ -202,7 +204,8 @@ where
             p.next_token();
 
             // Ignore parse mode
-            let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal).expected("expression")?;
+            let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
+                .expected("expression")?;
             let closing = p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, closing.span.end),
@@ -461,7 +464,9 @@ where
 
     // --- infix/postfix loop ---
     loop {
-        let Some(tok) = p.peek_token() else { break Ok(lhs) }; // lookahead, do NOT consume yet
+        let Some(tok) = p.peek_token() else {
+            break Ok(lhs);
+        }; // lookahead, do NOT consume yet
 
         match parse_postfix_or_infix(p, lhs, tok, min_bp, recursion + 1, mode)? {
             OperatorResult::Continue(new) => lhs = new,
