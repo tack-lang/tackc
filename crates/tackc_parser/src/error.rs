@@ -16,7 +16,7 @@ use tackc_span::Span;
 
 /// A list of [`ParseError`]s. This is easily cloneable, since it uses a Clone-on-Write vector.
 /// This struct should always contain at least one error.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ParseErrors {
     // Length of errors will always be 1 or greater
     errors: Vec<ParseError>,
