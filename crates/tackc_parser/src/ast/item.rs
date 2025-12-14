@@ -121,7 +121,7 @@ impl AstNode for ConstItem {
     }
 }
 
-fn param_list_sync<I, F: File>(p: &mut Parser<I, F>)
+pub(crate) fn expr_list_sync<I, F: File>(p: &mut Parser<I, F>)
 where
     I: Iterator<Item = Token> + Clone,
 {
@@ -205,7 +205,8 @@ impl AstNode for FuncItem {
             }) {
                 Ok(ty) => ty,
                 Err(e) => {
-                    p.sync(&mut errors, e, param_list_sync);
+                    p.collect_error(&mut errors, e);
+                    expr_list_sync(p);
                     continue;
                 }
             };
@@ -228,7 +229,8 @@ impl AstNode for FuncItem {
             match res {
                 Ok(expr) => Some(expr),
                 Err(e) => {
-                    p.sync(&mut errors, e, ret_type_sync);
+                    p.collect_error(&mut errors, e);
+                    ret_type_sync(p);
                     None
                 }
             }

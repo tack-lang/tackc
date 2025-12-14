@@ -3,8 +3,10 @@ use std::hash::Hash;
 
 use super::AstNode;
 use crate::Parser;
+use crate::ast::item::expr_list_sync;
 use crate::ast::{Primary, Visitor, VisitorMut};
 use crate::error::{DiagResult, Result};
+use tackc_ast::error::ParseErrors;
 use tackc_ast::{Block, Expression, ExpressionKind, NodeId};
 use tackc_file::File;
 use tackc_global::Global;
@@ -315,11 +317,20 @@ where
     I: Iterator<Item = Token> + Clone,
 {
     let mut args = Vec::new();
+    let mut errors: Option<ParseErrors> = None;
     while let Some(tok) = p.peek_token()
         && tok.kind != TokenKind::RParen
     {
-        let expr = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
-            .expected("expression")?;
+        let res = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)
+            .expected("expression");
+        let expr = match res {
+            Ok(expr) => expr,
+            Err(e) => {
+                p.collect_error(&mut errors, e);
+                expr_list_sync(p);
+                continue;
+            }
+        };
         args.push(expr);
         if p.consume(kind!(TokenKind::Comma)).is_none() {
             break;
