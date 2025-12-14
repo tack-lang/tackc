@@ -5,7 +5,7 @@ use super::AstNode;
 use crate::Parser;
 use crate::ast::item::expr_list_sync;
 use crate::ast::{Primary, Visitor, VisitorMut};
-use crate::error::{DiagResult, Result};
+use crate::error::{DiagResult, Result, collect_error};
 use tackc_ast::error::ParseErrors;
 use tackc_ast::{Block, Expression, ExpressionKind, NodeId};
 use tackc_file::File;
@@ -326,7 +326,7 @@ where
         let expr = match res {
             Ok(expr) => expr,
             Err(e) => {
-                p.collect_error(&mut errors, e);
+                collect_error(&mut errors, e);
                 expr_list_sync(p);
                 continue;
             }
