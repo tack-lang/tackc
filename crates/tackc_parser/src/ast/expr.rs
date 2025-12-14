@@ -184,14 +184,14 @@ where
             p.next_token();
 
             // Drop unary `+`, does nothing
-            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
+            let mut rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode).expected("expression")?;
             rhs.span.start = tok.span.start;
             Ok(rhs)
         }
         TokenKind::Minus => {
             p.next_token();
 
-            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode)?;
+            let rhs = parse_expression(p, BindingPower::Prefix, recursion + 1, mode).expected("expression")?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, rhs.span.end),
                 kind: ExpressionKind::Neg(Box::new(rhs)),
@@ -202,7 +202,7 @@ where
             p.next_token();
 
             // Ignore parse mode
-            let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal)?;
+            let inner = parse_expression(p, BindingPower::None, recursion + 1, ParseMode::Normal).expected("expression")?;
             let closing = p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, closing.span.end),
@@ -262,7 +262,7 @@ fn led_binary<I, F: File>(
 where
     I: Iterator<Item = Token> + Clone,
 {
-    let rhs = parse_expression(p, rbp, recursion + 1, mode)?;
+    let rhs = parse_expression(p, rbp, recursion + 1, mode).expected("expression")?;
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, rhs.span.end),
         kind: construct(Box::new(lhs), Box::new(rhs)),
@@ -461,8 +461,7 @@ where
 
     // --- infix/postfix loop ---
     loop {
-        let tok = p.peek_token(); // lookahead, do NOT consume yet
-        let Some(tok) = tok else { break Ok(lhs) };
+        let Some(tok) = p.peek_token() else { break Ok(lhs) }; // lookahead, do NOT consume yet
 
         match parse_postfix_or_infix(p, lhs, tok, min_bp, recursion + 1, mode)? {
             OperatorResult::Continue(new) => lhs = new,
