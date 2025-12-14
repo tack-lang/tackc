@@ -54,3 +54,110 @@ pub struct Binding {
     pub span: Span,
     pub ty_annotation: Option<NodeId>,
 }
+
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Maybe<T> {
+    Some(T),
+    None,
+    Err,
+}
+
+impl<T> Maybe<T> {
+    /// Unwraps the inner `Some` value, panicing on `None` or `Err`.
+    ///
+    /// # Panics
+    /// This function will panic if `self` is `None` or `Err`.
+    pub fn unwrap(self) -> T {
+        match self {
+            Self::Some(val) => val,
+            Self::None => panic!("Maybe::unwrap called on a `None` value!"),
+            Self::Err => panic!("Maybe::unwrap called on a `Err` value!"),
+        }
+    }
+
+    pub fn unwrap_or_default(self) -> T
+    where
+        T: Default,
+    {
+        match self {
+            Self::Some(val) => val,
+            _ => T::default(),
+        }
+    }
+
+    pub const fn is_some(&self) -> bool {
+        matches!(*self, Maybe::Some(_))
+    }
+
+    pub const fn is_none(&self) -> bool {
+        matches!(*self, Maybe::None)
+    }
+
+    pub const fn is_err(&self) -> bool {
+        matches!(*self, Maybe::Err)
+    }
+
+    pub fn to_option(self) -> Option<T> {
+        match self {
+            Self::Some(val) => Some(val),
+            _ => None,
+        }
+    }
+
+    pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> Maybe<U> {
+        match self {
+            Maybe::Some(val) => Maybe::Some(op(val)),
+            Maybe::None => Maybe::None,
+            Maybe::Err => Maybe::Err,
+        }
+    }
+
+    pub const fn as_ref(&self) -> Maybe<&T> {
+        match self {
+            Maybe::Some(val) => Maybe::Some(val),
+            Maybe::None => Maybe::None,
+            Maybe::Err => Maybe::Err,
+        }
+    }
+
+    pub fn iter(&self) -> std::option::IntoIter<&T> {
+        match self {
+            Maybe::Some(val) => Some(val).into_iter(),
+            _ => None.into_iter(),
+        }
+    }
+
+    pub fn iter_mut(&mut self) -> std::option::IntoIter<&mut T> {
+        match self {
+            Maybe::Some(val) => Some(val).into_iter(),
+            _ => None.into_iter(),
+        }
+    }
+}
+
+impl<T> IntoIterator for Maybe<T> {
+    type IntoIter = std::option::IntoIter<T>;
+    type Item = T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.to_option().into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Maybe<T> {
+    type IntoIter = std::option::IntoIter<&'a T>;
+    type Item = &'a T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Maybe<T> {
+    type IntoIter = std::option::IntoIter<&'a mut T>;
+    type Item = &'a mut T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}

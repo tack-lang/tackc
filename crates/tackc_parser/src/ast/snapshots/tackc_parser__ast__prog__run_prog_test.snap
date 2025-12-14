@@ -45,7 +45,7 @@ Ok(Program(
         inner: Interned(812864953376315205, PhantomData),
       ),
       params: [],
-      ret_ty: Some(Expression(
+      ret_ty: r#Some(Expression(
         span: Span(
           start: 23,
           end: 26,
@@ -92,7 +92,7 @@ Ok(Program(
             )),
             id: NodeId(5),
           ), [
-            Expression(
+            Some(Expression(
               span: Span(
                 start: 37,
                 end: 38,
@@ -112,8 +112,8 @@ Ok(Program(
                 id: NodeId(6),
               )),
               id: NodeId(7),
-            ),
-            Expression(
+            )),
+            Some(Expression(
               span: Span(
                 start: 40,
                 end: 41,
@@ -133,7 +133,7 @@ Ok(Program(
                 id: NodeId(8),
               )),
               id: NodeId(9),
-            ),
+            )),
           ]),
           id: NodeId(10),
         )),
@@ -161,7 +161,7 @@ Ok(Program(
             end: 56,
           ),
           inner: Interned(14504427626919653262, PhantomData),
-        ), Expression(
+        ), Some(Expression(
           span: Span(
             start: 58,
             end: 61,
@@ -175,14 +175,14 @@ Ok(Program(
             id: NodeId(13),
           )),
           id: NodeId(14),
-        ), None),
+        )), None),
         (Symbol(
           span: Span(
             start: 63,
             end: 64,
           ),
           inner: Interned(579860146683532731, PhantomData),
-        ), Expression(
+        ), Some(Expression(
           span: Span(
             start: 66,
             end: 69,
@@ -196,9 +196,9 @@ Ok(Program(
             id: NodeId(15),
           )),
           id: NodeId(16),
-        ), None),
+        )), None),
       ],
-      ret_ty: Some(Expression(
+      ret_ty: r#Some(Expression(
         span: Span(
           start: 71,
           end: 74,

@@ -77,10 +77,10 @@ pub trait Visitor {
     }
 
     fn visit_func_item(&mut self, item: &FuncItem) {
-        for (_, ty, _) in &item.params {
+        for ty in item.params.iter().filter_map(|(_, ty, _)| ty.as_ref()) {
             ty.accept(self);
         }
-        if let Some(ty) = &item.ret_ty {
+        if let Maybe::Some(ty) = &item.ret_ty {
             ty.accept(self);
         }
         item.block.accept(self);
@@ -105,7 +105,7 @@ pub trait Visitor {
             ExpressionKind::Grouping(lhs) | ExpressionKind::Neg(lhs) => lhs.accept(self),
             ExpressionKind::Call(lhs, args) => {
                 lhs.accept(self);
-                for arg in args {
+                for arg in args.iter().flatten() {
                     arg.accept(self);
                 }
             }
@@ -184,10 +184,10 @@ pub trait VisitorMut {
     }
 
     fn visit_func_item_mut(&mut self, item: &mut FuncItem) {
-        for (_, ty, _) in &mut item.params {
+        for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
             ty.accept_mut(self);
         }
-        if let Some(ty) = &mut item.ret_ty {
+        if let Maybe::Some(ty) = &mut item.ret_ty {
             ty.accept_mut(self);
         }
         item.block.accept_mut(self);
@@ -212,7 +212,7 @@ pub trait VisitorMut {
             ExpressionKind::Grouping(lhs) | ExpressionKind::Neg(lhs) => lhs.accept_mut(self),
             ExpressionKind::Call(lhs, args) => {
                 lhs.accept_mut(self);
-                for arg in args {
+                for arg in args.iter_mut().flatten() {
                     arg.accept_mut(self);
                 }
             }
