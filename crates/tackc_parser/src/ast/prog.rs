@@ -7,7 +7,7 @@ use tackc_span::Span;
 use crate::{
     Parser,
     ast::{AstNode, Visitor, VisitorMut},
-    error::{DiagResult, ParseErrors, Result},
+    error::{DiagResult, ParseErrors, Result, collect_error},
 };
 
 fn sync_item<I, F: File>(p: &mut Parser<I, F>)
@@ -72,12 +72,7 @@ impl AstNode for Program {
             .try_parse::<ModStatement>(recursion)
             .expected("`mod`")
             .map_err(|e| {
-                match &mut errors {
-                    Some(errs) => {
-                        errs.merge(e);
-                    }
-                    None => errors = Some(e),
-                }
+                collect_error(&mut errors, e);
                 sync_item(p);
             })
             .ok();
@@ -88,12 +83,7 @@ impl AstNode for Program {
             match p.try_parse::<Item>(recursion).expected("item") {
                 Ok(item) => items.push(item),
                 Err(e) => {
-                    match &mut errors {
-                        Some(err) => {
-                            err.merge(e);
-                        }
-                        None => errors = Some(e),
-                    }
+                    collect_error(&mut errors, e);
                     sync_item(p);
                 }
             }
@@ -104,7 +94,7 @@ impl AstNode for Program {
         } else {
             Ok(Program {
                 span: Span::full(p.file),
-                mod_stmt: mod_stmt.expect("This is a bug. Please submit a bug report."),
+                mod_stmt: mod_stmt.expect("This is a bug. Please bug file a bug report."),
                 items,
                 id: p.node_id(),
             })

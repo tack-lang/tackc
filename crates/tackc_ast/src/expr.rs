@@ -27,7 +27,7 @@ pub enum ExpressionKind {
     Div(Box<Expression>, Box<Expression>),
     Neg(Box<Expression>),
 
-    Call(Box<Expression>, Vec<Expression>),
+    Call(Box<Expression>, Vec<Option<Expression>>),
     Index(Box<Expression>, Box<Expression>),
     Member(Box<Expression>, Symbol),
 

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, mem};
 
-use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item};
+use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item, Maybe};
 use tackc_error::Diag;
 use tackc_global::{Global, Interned};
 use tackc_parser::ast::{AstNode, LetStatement, Primary, PrimaryKind, Program, Symbol, VisitorMut};
@@ -151,10 +151,10 @@ impl VisitorMut for SymbolResolver<'_> {
         let env = mem::take(&mut self.scopes);
         self.disable(item.ident.inner);
 
-        for (_, ty, _) in &mut item.params {
+        for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
             ty.accept_mut(self);
         }
-        if let Some(ty) = &mut item.ret_ty {
+        if let Maybe::Some(ty) = &mut item.ret_ty {
             ty.accept_mut(self);
         }
         for (ident, ty, binding) in &mut item.params {
@@ -162,7 +162,7 @@ impl VisitorMut for SymbolResolver<'_> {
                 ident.inner,
                 Binding {
                     span: ident.span,
-                    ty_annotation: Some(ty.id),
+                    ty_annotation: ty.as_ref().map(|ty| ty.id),
                 },
             ));
         }

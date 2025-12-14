@@ -65,8 +65,12 @@ impl AstNode for Expression {
 
             ExpressionKind::Call(lhs, args) => {
                 let mut parts = Vec::with_capacity(args.len());
-                for a in args {
-                    parts.push(a.display(global));
+                for arg in args {
+                    if let Some(expr) = arg {
+                        parts.push(expr.display(global));
+                    } else {
+                        parts.push(String::from("<ERROR>"));
+                    }
                 }
                 if parts.is_empty() {
                     format!("(call {})", lhs.display(global))
@@ -327,11 +331,12 @@ where
             Ok(expr) => expr,
             Err(e) => {
                 collect_error(&mut errors, e);
+                args.push(None);
                 expr_list_sync(p);
                 continue;
             }
         };
-        args.push(expr);
+        args.push(Some(expr));
         if p.consume(kind!(TokenKind::Comma)).is_none() {
             break;
         }

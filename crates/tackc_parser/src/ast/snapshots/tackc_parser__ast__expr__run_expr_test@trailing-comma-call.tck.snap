@@ -29,7 +29,7 @@ Ok(Expression(
     )),
     id: NodeId(1),
   ), [
-    Expression(
+    Some(Expression(
       span: Span(
         start: 2,
         end: 3,
@@ -49,8 +49,8 @@ Ok(Expression(
         id: NodeId(2),
       )),
       id: NodeId(3),
-    ),
-    Expression(
+    )),
+    Some(Expression(
       span: Span(
         start: 4,
         end: 5,
@@ -70,7 +70,7 @@ Ok(Expression(
         id: NodeId(4),
       )),
       id: NodeId(5),
-    ),
+    )),
   ]),
   id: NodeId(6),
 ))
