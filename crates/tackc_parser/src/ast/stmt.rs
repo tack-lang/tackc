@@ -19,7 +19,6 @@ impl AstNode for StatementOrExpression {
         I: Iterator<Item = Token> + Clone,
     {
         let tok = p.expect_peek_token(None)?;
-        #[allow(clippy::single_match_else)]
         match tok.kind {
             TokenKind::Const => p
                 .parse::<Item>(recursion + 1)
