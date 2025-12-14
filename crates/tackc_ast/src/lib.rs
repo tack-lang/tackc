@@ -22,6 +22,8 @@ use tackc_global::{Global, Interned};
 use tackc_span::Span;
 pub use util::*;
 
+pub mod error;
+
 /// An index types for Node IDs.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct NodeId(pub u64);
