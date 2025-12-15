@@ -3,7 +3,7 @@ use tackc_span::Span;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Binding, Block, Expression, Maybe, NodeId, Symbol};
+use crate::{Binding, Block, Expression, MaybeError, NodeId, Symbol};
 
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -40,7 +40,7 @@ pub struct FuncItem {
     /// The parameters of this function
     pub params: Vec<(Symbol, Option<Expression>, Option<Interned<Binding>>)>,
     /// The return type of this function
-    pub ret_ty: Maybe<Expression>,
+    pub ret_ty: MaybeError<Expression>,
     /// The code of this function
     pub block: Block,
     /// The binding of this function declaration

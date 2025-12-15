@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::{Expression, Item, NodeId, Symbol};
 
 #[allow(missing_docs)]
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatementOrExpression {
     Expression(Expression),

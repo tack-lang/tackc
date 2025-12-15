@@ -38,7 +38,9 @@ pub trait AstNode:
     /// Get the ID of the AST node
     fn id(&self) -> NodeId;
 
+    /// Visit this node with the given visitor
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V);
+    /// Visit this node mutably with the given visitor
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V);
 }
 
@@ -53,6 +55,7 @@ mod prim;
 mod util;
 pub use tackc_ast::*;
 
+#[allow(missing_docs)]
 pub trait Visitor {
     fn visit_program(&mut self, program: &Program) {
         program.mod_stmt.accept(self);
@@ -80,7 +83,7 @@ pub trait Visitor {
         for ty in item.params.iter().filter_map(|(_, ty, _)| ty.as_ref()) {
             ty.accept(self);
         }
-        if let Maybe::Some(ty) = &item.ret_ty {
+        if let MaybeError::Some(ty) = &item.ret_ty {
             ty.accept(self);
         }
         item.block.accept(self);
@@ -160,6 +163,7 @@ pub trait Visitor {
     }
 }
 
+#[allow(missing_docs)]
 pub trait VisitorMut {
     fn visit_program_mut(&mut self, program: &mut Program) {
         program.mod_stmt.accept_mut(self);
@@ -187,7 +191,7 @@ pub trait VisitorMut {
         for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
             ty.accept_mut(self);
         }
-        if let Maybe::Some(ty) = &mut item.ret_ty {
+        if let MaybeError::Some(ty) = &mut item.ret_ty {
             ty.accept_mut(self);
         }
         item.block.accept_mut(self);

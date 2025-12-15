@@ -25,6 +25,7 @@ sha2 = "0.10.9"
 honggfuzz = "0.5.58"
 insta = "1.44"
 proptest = "1.9"
+ecow = "0.2.6"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

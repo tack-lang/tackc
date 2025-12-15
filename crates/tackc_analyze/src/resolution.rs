@@ -1,6 +1,6 @@
 use std::{collections::HashMap, mem};
 
-use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item, Maybe};
+use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item, MaybeError};
 use tackc_error::Diag;
 use tackc_global::{Global, Interned};
 use tackc_parser::ast::{AstNode, LetStatement, Primary, PrimaryKind, Program, Symbol, VisitorMut};
@@ -12,7 +12,7 @@ enum ErrorType {
     Duplicated,
 }
 
-pub type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBuilder>;
+type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBuilder>;
 
 struct SymbolResolver<'a> {
     global_scope: Scope,
@@ -124,7 +124,7 @@ impl SymbolResolver<'_> {
         item.binding = Some(self.define(
             item.ident.inner,
             Binding {
-                span: item.ident.span,
+                symbol: item.ident,
                 ty_annotation: item.ty.as_ref().map(|expr| expr.id),
             },
         ));
@@ -139,7 +139,7 @@ impl SymbolResolver<'_> {
         item.binding = Some(self.define(
             item.ident.inner,
             Binding {
-                span: item.ident.span,
+                symbol: item.ident,
                 ty_annotation: None,
             },
         ));
@@ -154,14 +154,14 @@ impl VisitorMut for SymbolResolver<'_> {
         for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
             ty.accept_mut(self);
         }
-        if let Maybe::Some(ty) = &mut item.ret_ty {
+        if let MaybeError::Some(ty) = &mut item.ret_ty {
             ty.accept_mut(self);
         }
         for (ident, ty, binding) in &mut item.params {
             *binding = Some(self.define(
                 ident.inner,
                 Binding {
-                    span: ident.span,
+                    symbol: *ident,
                     ty_annotation: ty.as_ref().map(|ty| ty.id),
                 },
             ));
@@ -218,13 +218,14 @@ impl VisitorMut for SymbolResolver<'_> {
         self.define(
             stmt.ident.inner,
             Binding {
-                span: stmt.span,
+                symbol: stmt.ident,
                 ty_annotation: stmt.ty.as_ref().map(|expr| expr.id),
             },
         );
     }
 }
 
+/// Resolve a program's bindings
 pub fn resolve(prog: &mut Program, global: &Global) -> Vec<Diag> {
     let mut v = SymbolResolver::new(global);
     prog.accept_mut(&mut v);
