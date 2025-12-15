@@ -1,7 +1,12 @@
 //! A crate containing structs for files.
 
 use std::{
-    borrow::Cow, fs, hash::BuildHasher, io, ops::Deref, path::{Path, PathBuf}
+    borrow::Cow,
+    fs,
+    hash::BuildHasher,
+    io,
+    ops::Deref,
+    path::{Path, PathBuf},
 };
 
 use rustc_hash::FxBuildHasher;
