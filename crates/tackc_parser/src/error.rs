@@ -1,5 +1,6 @@
 pub use tackc_ast::error::*;
 
+/// Collects errors into a single source
 pub fn collect_error(errors: &mut Option<ParseErrors>, e: ParseErrors) {
     if let Some(err) = errors {
         err.merge(e);

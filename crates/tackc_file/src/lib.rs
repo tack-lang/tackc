@@ -1,12 +1,10 @@
 //! A crate containing structs for files.
 
 use std::{
-    borrow::Cow,
-    fs, io,
-    ops::Deref,
-    path::{Path, PathBuf},
+    borrow::Cow, fs, hash::BuildHasher, io, ops::Deref, path::{Path, PathBuf}
 };
 
+use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tackc_span::SpanValue;
 
@@ -19,6 +17,8 @@ pub trait File: Deref<Target = str> {
     fn path(&self) -> &Path;
     /// Get the file's line starts.
     fn line_starts(&self) -> &[SpanValue];
+    /// Get the file's ID. Should be unique to any other files.
+    fn id(&self) -> u64;
 
     /// Find the line and column numbers of an index using the given line starts.
     fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
@@ -69,22 +69,27 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
+/// A simple implementation of file that uses a [`Cow`] to store either a borrowed or owned path/source, and the hash of the source and path as the ID.
 #[derive(Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct BasicFile<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
     line_starts: Vec<SpanValue>,
+    id: u64,
 }
 
 impl<'a> BasicFile<'a> {
+    /// Create a new [`BasicFile`] from a source and a path. To open a file at a path, use [`BasicFile::try_from`].
     pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
+        let id = FxBuildHasher.hash_one((&src, &path));
         BasicFile {
             src,
             path,
             line_starts,
+            id,
         }
     }
 }
@@ -101,6 +106,10 @@ impl File for BasicFile<'_> {
     fn line_starts(&self) -> &[SpanValue] {
         &self.line_starts
     }
+
+    fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 impl Deref for BasicFile<'_> {
@@ -114,29 +123,17 @@ impl Deref for BasicFile<'_> {
 impl TryFrom<PathBuf> for BasicFile<'_> {
     type Error = io::Error;
 
-    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
-        let src = fs::read_to_string(&value)?;
-        let path = value.into();
-        let line_starts = line_starts(&src);
-        Ok(BasicFile {
-            src: src.into(),
-            path,
-            line_starts,
-        })
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        let src = fs::read_to_string(&path)?;
+        Ok(Self::new(src, path))
     }
 }
 
 impl<'a> TryFrom<&'a Path> for BasicFile<'a> {
     type Error = io::Error;
 
-    fn try_from(value: &'a Path) -> Result<Self, Self::Error> {
-        let src = fs::read_to_string(value)?;
-        let path = value.into();
-        let line_starts = line_starts(&src);
-        Ok(BasicFile {
-            src: src.into(),
-            path,
-            line_starts,
-        })
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        let src = fs::read_to_string(path)?;
+        Ok(Self::new(src, path))
     }
 }

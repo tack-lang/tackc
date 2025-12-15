@@ -798,6 +798,7 @@ dependencies = [
 name = "tackc_file"
 version = "0.1.0"
 dependencies = [
+ "rustc-hash",
  "serde",
  "tackc_span",
 ]

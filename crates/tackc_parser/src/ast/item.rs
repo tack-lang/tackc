@@ -1,4 +1,4 @@
-use tackc_ast::{Block, ConstItem, Expression, FuncItem, Item, Maybe, NodeId};
+use tackc_ast::{Block, ConstItem, Expression, FuncItem, Item, MaybeError, NodeId};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -221,18 +221,18 @@ impl AstNode for FuncItem {
         p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
 
         let ret_ty = if p.peek_is(kind!(TokenKind::LBrace)) {
-            Maybe::None
+            MaybeError::None
         } else {
             let res = p.try_run(|p| {
                 parse_expression(p, BindingPower::None, recursion + 1, ParseMode::NoBlocks)
                     .expected("type")
             });
             match res {
-                Ok(expr) => Maybe::Some(expr),
+                Ok(expr) => MaybeError::Some(expr),
                 Err(e) => {
                     collect_error(&mut errors, e);
                     ret_type_sync(p);
-                    Maybe::Err
+                    MaybeError::Err
                 }
             }
         };

@@ -1,3 +1,5 @@
+//! Tack's AST representation
+
 mod expr;
 pub use expr::*;
 
@@ -22,11 +24,17 @@ use tackc_global::{Global, Interned};
 use tackc_span::Span;
 pub use util::*;
 
+/// Errors in parsing
 pub mod error;
 
 /// An index types for Node IDs.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq)]
-pub struct NodeId(pub u64);
+pub struct NodeId {
+    /// An ID for the node itself
+    pub node: u64,
+    /// An ID for the file the node was found in
+    pub file: u64,
+}
 
 /// Representation of a symbol in the file. This contains a [`Span`], and an [`Interned<str>`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -49,20 +57,27 @@ impl Symbol {
     }
 }
 
+/// Tack's representation of a binding, e.g. variables, modules, functions
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Binding {
-    pub span: Span,
+    /// The symbol of the identifier defining this binding
+    pub symbol: Symbol,
+    /// The AST node of the expression representing the type of this binding
     pub ty_annotation: Option<NodeId>,
 }
 
+/// Equivilent to [`Option<T>`], but adds an [`Err`] variant. Used to represent something that may or may not be there, but also could be an error.
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Maybe<T> {
+pub enum MaybeError<T> {
+    /// A value of type T
     Some(T),
+    /// No value
     None,
+    /// An error
     Err,
 }
 
-impl<T> Maybe<T> {
+impl<T> MaybeError<T> {
     /// Unwraps the inner `Some` value, panicing on `None` or `Err`.
     ///
     /// # Panics
@@ -75,6 +90,7 @@ impl<T> Maybe<T> {
         }
     }
 
+    /// Unwraps the inner `Some` value, returning [`T::default`](Default::default) on `None` or `Err`.
     pub fn unwrap_or_default(self) -> T
     where
         T: Default,
@@ -85,18 +101,22 @@ impl<T> Maybe<T> {
         }
     }
 
+    /// Returns true if `self` is [`Some`](MaybeError::Some)
     pub const fn is_some(&self) -> bool {
-        matches!(*self, Maybe::Some(_))
+        matches!(*self, MaybeError::Some(_))
     }
 
+    /// Returns true if `self` is [`None`](MaybeError::None)
     pub const fn is_none(&self) -> bool {
-        matches!(*self, Maybe::None)
+        matches!(*self, MaybeError::None)
     }
 
+    /// Returns true if `self` is [`Err`](MaybeError::Err)
     pub const fn is_err(&self) -> bool {
-        matches!(*self, Maybe::Err)
+        matches!(*self, MaybeError::Err)
     }
 
+    /// Converts `self` to an [`Option<T>`] by turning [`MaybeError::Some`] into [`Option::Some`], and turning [`MaybeError::None`] and [`MaybeError::Err`] into [`Option::None`].
     pub fn to_option(self) -> Option<T> {
         match self {
             Self::Some(val) => Some(val),
@@ -104,38 +124,42 @@ impl<T> Maybe<T> {
         }
     }
 
-    pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> Maybe<U> {
+    /// Maps `MaybeError<T>` to `MaybeError<U>` using `op` on the value of [`MaybeError::Some`].
+    pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> MaybeError<U> {
         match self {
-            Maybe::Some(val) => Maybe::Some(op(val)),
-            Maybe::None => Maybe::None,
-            Maybe::Err => Maybe::Err,
+            MaybeError::Some(val) => MaybeError::Some(op(val)),
+            MaybeError::None => MaybeError::None,
+            MaybeError::Err => MaybeError::Err,
         }
     }
 
-    pub const fn as_ref(&self) -> Maybe<&T> {
+    /// Converts [`&MaybeError<T>`](MaybeError<T>) to [`MaybeError<&T>`].
+    pub const fn as_ref(&self) -> MaybeError<&T> {
         match self {
-            Maybe::Some(val) => Maybe::Some(val),
-            Maybe::None => Maybe::None,
-            Maybe::Err => Maybe::Err,
+            MaybeError::Some(val) => MaybeError::Some(val),
+            MaybeError::None => MaybeError::None,
+            MaybeError::Err => MaybeError::Err,
         }
     }
 
+    /// Returns an iterator over the contained value, or an empty iterator if there is no contained value.
     pub fn iter(&self) -> std::option::IntoIter<&T> {
         match self {
-            Maybe::Some(val) => Some(val).into_iter(),
+            MaybeError::Some(val) => Some(val).into_iter(),
             _ => None.into_iter(),
         }
     }
 
+    /// Returns an iterator over the contained value, or an empty iterator if there is no contained value.
     pub fn iter_mut(&mut self) -> std::option::IntoIter<&mut T> {
         match self {
-            Maybe::Some(val) => Some(val).into_iter(),
+            MaybeError::Some(val) => Some(val).into_iter(),
             _ => None.into_iter(),
         }
     }
 }
 
-impl<T> IntoIterator for Maybe<T> {
+impl<T> IntoIterator for MaybeError<T> {
     type IntoIter = std::option::IntoIter<T>;
     type Item = T;
 
@@ -144,7 +168,7 @@ impl<T> IntoIterator for Maybe<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Maybe<T> {
+impl<'a, T> IntoIterator for &'a MaybeError<T> {
     type IntoIter = std::option::IntoIter<&'a T>;
     type Item = &'a T;
 
@@ -153,7 +177,7 @@ impl<'a, T> IntoIterator for &'a Maybe<T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut Maybe<T> {
+impl<'a, T> IntoIterator for &'a mut MaybeError<T> {
     type IntoIter = std::option::IntoIter<&'a mut T>;
     type Item = &'a mut T;
 

@@ -40,6 +40,7 @@ where
     }
 }
 
+#[allow(missing_docs)]
 pub trait ProgramExt: Sized {
     /// This function will take an input of tokens, and parse a program from it.
     /// The inputted iterator should be easily clonable.

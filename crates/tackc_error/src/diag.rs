@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use tackc_file::File;
 use tackc_span::Span;
 
+/// Diagnostic error struct
 #[derive(Serialize, Deserialize)]
 pub struct Diag {
     span: Option<(Span, Option<Cow<'static, str>>)>,
@@ -12,6 +13,7 @@ pub struct Diag {
 }
 
 impl Diag {
+    /// Create a [`Diag`] without a span
     pub fn without_span<S>(msg: S) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -22,6 +24,7 @@ impl Diag {
         }
     }
 
+    /// Create a [`Diag`] with a span, but without a local message
     pub fn with_span<S>(msg: S, span: Span) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -32,6 +35,7 @@ impl Diag {
         }
     }
 
+    /// Create a [`Diag`] with a span, and a local message
     pub fn with_local_msg<S1, S2>(msg: S1, span: Span, local_msg: S2) -> Self
     where
         S1: Into<Cow<'static, str>>,
