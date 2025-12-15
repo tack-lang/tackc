@@ -18,8 +18,14 @@ impl AstNode for Item {
         p.check_recursion(recursion + 1)?;
         let tok = p.expect_peek_token(None)?;
         match tok.kind {
-            TokenKind::Const => p.parse::<ConstItem>(recursion + 1).map(Box::new).map(Item::ConstItem),
-            TokenKind::Func => p.parse::<FuncItem>(recursion + 1).map(Box::new).map(Item::FuncItem),
+            TokenKind::Const => p
+                .parse::<ConstItem>(recursion + 1)
+                .map(Box::new)
+                .map(Item::ConstItem),
+            TokenKind::Func => p
+                .parse::<FuncItem>(recursion + 1)
+                .map(Box::new)
+                .map(Item::FuncItem),
             _ => Err(ParseErrors::new(ParseError::new(None, tok))),
         }
     }
