@@ -47,7 +47,7 @@ impl AstNode for Expression {
     }
 
     fn display(&self, global: &Global) -> String {
-        match &self.kind {
+        match &*self.kind {
             ExpressionKind::Grouping(inner) => inner.display(global),
             ExpressionKind::Add(lhs, rhs) => {
                 format!("(+ {} {})", lhs.display(global), rhs.display(global))
@@ -202,7 +202,7 @@ where
                 .expected("expression")?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, rhs.span.end),
-                kind: ExpressionKind::Neg(Box::new(rhs)),
+                kind: Box::new(ExpressionKind::Neg(Box::new(rhs))),
                 id: p.node_id(),
             })
         }
@@ -215,7 +215,7 @@ where
             let closing = p.expect_token_kind(Some("')'"), kind!(TokenKind::RParen))?;
             Ok(Expression {
                 span: Span::new_from(tok.span.start, closing.span.end),
-                kind: ExpressionKind::Grouping(Box::new(inner)),
+                kind: Box::new(ExpressionKind::Grouping(Box::new(inner))),
                 id: p.node_id(),
             })
         }
@@ -223,7 +223,7 @@ where
             if mode == ParseMode::NoBlocks {
                 return p.parse::<Primary>(recursion + 1).map(|prim| Expression {
                     span: prim.span(),
-                    kind: ExpressionKind::Primary(prim),
+                    kind: Box::new(ExpressionKind::Primary(prim)),
                     id: p.node_id(),
                 });
             }
@@ -232,13 +232,13 @@ where
 
             Ok(Expression {
                 span: block.span,
-                kind: ExpressionKind::Block(Box::new(block)),
+                kind: Box::new(ExpressionKind::Block(Box::new(block))),
                 id: p.node_id(),
             })
         }
         _ => p.parse::<Primary>(recursion + 1).map(|prim| Expression {
             span: prim.span(),
-            kind: ExpressionKind::Primary(prim),
+            kind: Box::new(ExpressionKind::Primary(prim)),
             id: p.node_id(),
         }),
     }
@@ -274,7 +274,7 @@ where
     let rhs = parse_expression(p, rbp, recursion + 1, mode).expected("expression")?;
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, rhs.span.end),
-        kind: construct(Box::new(lhs), Box::new(rhs)),
+        kind: Box::new(construct(Box::new(lhs), Box::new(rhs))),
         id: p.node_id(),
     }))
 }
@@ -292,7 +292,7 @@ where
 
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, ident.span.end),
-        kind: ExpressionKind::Member(Box::new(lhs), ident),
+        kind: Box::new(ExpressionKind::Member(Box::new(lhs), ident)),
         id: p.node_id(),
     }))
 }
@@ -311,7 +311,7 @@ where
     let closing = p.expect_token_kind(Some("']'"), kind!(TokenKind::RBracket))?;
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, closing.span.end),
-        kind: ExpressionKind::Index(Box::new(lhs), Box::new(rhs)),
+        kind: Box::new(ExpressionKind::Index(Box::new(lhs), Box::new(rhs))),
         id: p.node_id(),
     }))
 }
@@ -346,7 +346,7 @@ where
 
     Ok(OperatorResult::Continue(Expression {
         span: Span::new_from(lhs.span.start, tok.span.end),
-        kind: ExpressionKind::Call(Box::new(lhs), args),
+        kind: Box::new(ExpressionKind::Call(Box::new(lhs), args)),
         id: p.node_id(),
     }))
 }

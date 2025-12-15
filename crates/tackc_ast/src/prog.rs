@@ -23,7 +23,7 @@ pub struct ModStatement {
     #[allow(missing_docs)]
     pub span: Span,
     /// The path of this mod statement
-    pub path: Path,
+    pub path: Box<Path>,
     #[allow(missing_docs)]
     pub id: NodeId,
 }

@@ -138,7 +138,7 @@ impl AstNode for ModStatement {
         I: Iterator<Item = Token> + Clone,
     {
         let mod_tok = p.expect_token_kind(None, kind!(TokenKind::Mod))?;
-        let path = p.parse::<Path>(recursion + 1)?;
+        let path = Box::new(p.parse::<Path>(recursion + 1)?);
         let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
         Ok(ModStatement {
             span: Span::new_from(mod_tok.span.start, semi.span.end),
