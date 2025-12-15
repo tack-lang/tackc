@@ -1,24 +1,23 @@
-use std::{hint::black_box, path::Path};
+use std::path::Path;
 
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use tackc_ast::Program;
 use tackc_file::BasicFile;
 use tackc_global::Global;
-use tackc_lexer::{Lexer, Token};
+use tackc_lexer::Lexer;
 use tackc_parser::ast::ProgramExt;
 
 fn bench(c: &mut Criterion) {
     c.bench_function("bench", |b| {
-        let global = Global::create_heap();
         let file = BasicFile::new(include_str!("main_bench.tck"), Path::new("main_bench.tck"));
-        let tokens: Vec<Token> = Lexer::new(&file, &global).map(Result::unwrap).collect();
-        let iter = tokens.iter().copied();
-        b.iter(|| {
-            let file = black_box(&file);
+        
+        b.iter_batched(|| {
             let global = Global::create_heap();
-            let program = Program::parse_file(iter.clone(), &global, file);
-            _ = black_box(program);
-        });
+            let tokens = Lexer::new(&file, &global).map(Result::unwrap).collect::<Vec<_>>().into_iter();
+            (global, tokens)
+        }, |(global, iter)| {
+            Program::parse_file(iter, &global, &file)
+        }, BatchSize::SmallInput);
     });
 }
 
