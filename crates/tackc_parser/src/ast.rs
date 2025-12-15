@@ -90,7 +90,7 @@ pub trait Visitor {
     }
 
     fn visit_expression(&mut self, expr: &Expression) {
-        match &expr.kind {
+        match &*expr.kind {
             ExpressionKind::Add(lhs, rhs)
             | ExpressionKind::Sub(lhs, rhs)
             | ExpressionKind::Mul(lhs, rhs)
@@ -198,7 +198,7 @@ pub trait VisitorMut {
     }
 
     fn visit_expression_mut(&mut self, expr: &mut Expression) {
-        match &mut expr.kind {
+        match &mut *expr.kind {
             ExpressionKind::Add(lhs, rhs)
             | ExpressionKind::Sub(lhs, rhs)
             | ExpressionKind::Mul(lhs, rhs)

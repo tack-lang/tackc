@@ -11,7 +11,7 @@ pub struct Expression {
     #[allow(missing_docs)]
     pub span: Span,
     #[allow(missing_docs)]
-    pub kind: ExpressionKind,
+    pub kind: Box<ExpressionKind>,
     #[allow(missing_docs)]
     pub id: NodeId,
 }

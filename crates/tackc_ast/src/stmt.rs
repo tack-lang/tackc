@@ -5,20 +5,19 @@ use serde::{Deserialize, Serialize};
 use crate::{Expression, Item, NodeId, Symbol};
 
 #[allow(missing_docs)]
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatementOrExpression {
-    Expression(Expression),
-    Statement(Statement),
+    Expression(Box<Expression>),
+    Statement(Box<Statement>),
 }
 
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Statement {
-    ExpressionStatement(ExpressionStatement),
-    LetStatement(LetStatement),
-    AssignmentStatement(AssignmentStatement),
-    Item(Item),
+    ExpressionStatement(Box<ExpressionStatement>),
+    LetStatement(Box<LetStatement>),
+    AssignmentStatement(Box<AssignmentStatement>),
+    Item(Box<Item>),
 }
 
 /// An expression ending with a semicolon.

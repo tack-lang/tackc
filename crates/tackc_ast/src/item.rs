@@ -8,8 +8,8 @@ use crate::{Binding, Block, Expression, MaybeError, NodeId, Symbol};
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Item {
-    ConstItem(ConstItem),
-    FuncItem(FuncItem),
+    ConstItem(Box<ConstItem>),
+    FuncItem(Box<FuncItem>),
     // When adding to `Item`, update `prog::sync_item`.
 }
 
