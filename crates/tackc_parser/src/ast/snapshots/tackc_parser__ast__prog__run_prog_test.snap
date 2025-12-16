@@ -27,9 +27,15 @@ Ok(Program(
           inner: Interned(7250452609033638561, PhantomData),
         ),
       ],
-      id: NodeId(0),
+      id: NodeId(
+        node: 0,
+        file: 17451824837450987218,
+      ),
     ),
-    id: NodeId(1),
+    id: NodeId(
+      node: 1,
+      file: 17451824837450987218,
+    ),
   ),
   items: [
     FuncItem(FuncItem(
@@ -56,9 +62,15 @@ Ok(Program(
             end: 26,
           ),
           kind: I32,
-          id: NodeId(2),
+          id: NodeId(
+            node: 2,
+            file: 17451824837450987218,
+          ),
         )),
-        id: NodeId(3),
+        id: NodeId(
+          node: 3,
+          file: 17451824837450987218,
+        ),
       )),
       block: Block(
         span: Span(
@@ -88,9 +100,15 @@ Ok(Program(
                 ),
                 inner: Interned(1515349274698079117, PhantomData),
               ), None),
-              id: NodeId(4),
+              id: NodeId(
+                node: 4,
+                file: 17451824837450987218,
+              ),
             )),
-            id: NodeId(5),
+            id: NodeId(
+              node: 5,
+              file: 17451824837450987218,
+            ),
           ), [
             Some(Expression(
               span: Span(
@@ -109,9 +127,15 @@ Ok(Program(
                   ),
                   inner: Interned(12543183117416492085, PhantomData),
                 ), Decimal),
-                id: NodeId(6),
+                id: NodeId(
+                  node: 6,
+                  file: 17451824837450987218,
+                ),
               )),
-              id: NodeId(7),
+              id: NodeId(
+                node: 7,
+                file: 17451824837450987218,
+              ),
             )),
             Some(Expression(
               span: Span(
@@ -130,17 +154,32 @@ Ok(Program(
                   ),
                   inner: Interned(14671982871472631300, PhantomData),
                 ), Decimal),
-                id: NodeId(8),
+                id: NodeId(
+                  node: 8,
+                  file: 17451824837450987218,
+                ),
               )),
-              id: NodeId(9),
+              id: NodeId(
+                node: 9,
+                file: 17451824837450987218,
+              ),
             )),
           ]),
-          id: NodeId(10),
+          id: NodeId(
+            node: 10,
+            file: 17451824837450987218,
+          ),
         )),
-        id: NodeId(11),
+        id: NodeId(
+          node: 11,
+          file: 17451824837450987218,
+        ),
       ),
       binding: None,
-      id: NodeId(12),
+      id: NodeId(
+        node: 12,
+        file: 17451824837450987218,
+      ),
     )),
     FuncItem(FuncItem(
       span: Span(
@@ -172,9 +211,15 @@ Ok(Program(
               end: 61,
             ),
             kind: I32,
-            id: NodeId(13),
+            id: NodeId(
+              node: 13,
+              file: 17451824837450987218,
+            ),
           )),
-          id: NodeId(14),
+          id: NodeId(
+            node: 14,
+            file: 17451824837450987218,
+          ),
         )), None),
         (Symbol(
           span: Span(
@@ -193,9 +238,15 @@ Ok(Program(
               end: 69,
             ),
             kind: I32,
-            id: NodeId(15),
+            id: NodeId(
+              node: 15,
+              file: 17451824837450987218,
+            ),
           )),
-          id: NodeId(16),
+          id: NodeId(
+            node: 16,
+            file: 17451824837450987218,
+          ),
         )), None),
       ],
       ret_ty: r#Some(Expression(
@@ -209,9 +260,15 @@ Ok(Program(
             end: 74,
           ),
           kind: I32,
-          id: NodeId(17),
+          id: NodeId(
+            node: 17,
+            file: 17451824837450987218,
+          ),
         )),
-        id: NodeId(18),
+        id: NodeId(
+          node: 18,
+          file: 17451824837450987218,
+        ),
       )),
       block: Block(
         span: Span(
@@ -241,9 +298,15 @@ Ok(Program(
                 ),
                 inner: Interned(14504427626919653262, PhantomData),
               ), None),
-              id: NodeId(19),
+              id: NodeId(
+                node: 19,
+                file: 17451824837450987218,
+              ),
             )),
-            id: NodeId(20),
+            id: NodeId(
+              node: 20,
+              file: 17451824837450987218,
+            ),
           ), Expression(
             span: Span(
               start: 85,
@@ -261,17 +324,35 @@ Ok(Program(
                 ),
                 inner: Interned(579860146683532731, PhantomData),
               ), None),
-              id: NodeId(21),
+              id: NodeId(
+                node: 21,
+                file: 17451824837450987218,
+              ),
             )),
-            id: NodeId(22),
+            id: NodeId(
+              node: 22,
+              file: 17451824837450987218,
+            ),
           )),
-          id: NodeId(23),
+          id: NodeId(
+            node: 23,
+            file: 17451824837450987218,
+          ),
         )),
-        id: NodeId(24),
+        id: NodeId(
+          node: 24,
+          file: 17451824837450987218,
+        ),
       ),
       binding: None,
-      id: NodeId(25),
+      id: NodeId(
+        node: 25,
+        file: 17451824837450987218,
+      ),
     )),
   ],
-  id: NodeId(26),
+  id: NodeId(
+    node: 26,
+    file: 17451824837450987218,
+  ),
 ))

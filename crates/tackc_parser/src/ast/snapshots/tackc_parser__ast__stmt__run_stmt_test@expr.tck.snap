@@ -30,9 +30,15 @@ Ok(ExpressionStatement(ExpressionStatement(
           ),
           inner: Interned(12543183117416492085, PhantomData),
         ), Decimal),
-        id: NodeId(0),
+        id: NodeId(
+          node: 0,
+          file: 17481693861801017655,
+        ),
       )),
-      id: NodeId(1),
+      id: NodeId(
+        node: 1,
+        file: 17481693861801017655,
+      ),
     ), Expression(
       span: Span(
         start: 4,
@@ -55,9 +61,15 @@ Ok(ExpressionStatement(ExpressionStatement(
             ),
             inner: Interned(14671982871472631300, PhantomData),
           ), Decimal),
-          id: NodeId(2),
+          id: NodeId(
+            node: 2,
+            file: 17481693861801017655,
+          ),
         )),
-        id: NodeId(3),
+        id: NodeId(
+          node: 3,
+          file: 17481693861801017655,
+        ),
       ), Expression(
         span: Span(
           start: 8,
@@ -75,13 +87,28 @@ Ok(ExpressionStatement(ExpressionStatement(
             ),
             inner: Interned(14894071113539278494, PhantomData),
           ), Decimal),
-          id: NodeId(4),
+          id: NodeId(
+            node: 4,
+            file: 17481693861801017655,
+          ),
         )),
-        id: NodeId(5),
+        id: NodeId(
+          node: 5,
+          file: 17481693861801017655,
+        ),
       )),
-      id: NodeId(6),
+      id: NodeId(
+        node: 6,
+        file: 17481693861801017655,
+      ),
     )),
-    id: NodeId(7),
+    id: NodeId(
+      node: 7,
+      file: 17481693861801017655,
+    ),
   ),
-  id: NodeId(8),
+  id: NodeId(
+    node: 8,
+    file: 17481693861801017655,
+  ),
 )))
