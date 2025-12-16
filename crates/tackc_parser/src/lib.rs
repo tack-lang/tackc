@@ -122,6 +122,11 @@ where
         self.iter.clone().next()
     }
 
+    /// Gets the token after the next token from the lexer, without consuming it.
+    pub fn peek_token2(&self) -> Option<Token> {
+        self.iter.clone().nth(1)
+    }
+
     /// This function can be used to ensure `recursion` is below the maximum recursion depth.
     ///
     /// # Errors
@@ -151,14 +156,15 @@ where
     where
         K: FnOnce(TokenKind) -> bool,
     {
-        let tok = self.peek_token();
-        if let Some(tok) = tok
-            && callback(tok.kind)
-        {
-            return true;
-        }
+        self.peek_token().is_some_and(|tok| callback(tok.kind))
+    }
 
-        false
+    /// Peeks a token, and if `callback(token.kind) == true`, returns true. Otherwise, returns false.
+    pub fn peek2_is<K>(&self, callback: K) -> bool
+    where
+        K: FnOnce(TokenKind) -> bool,
+    {
+        self.peek_token2().is_some_and(|tok| callback(tok.kind))
     }
 
     /// Consumes the next token, returning an 'unexpected EOF' error on failure. If `callback(token.kind) == false`, return an error where expected = `expected`.
@@ -202,8 +208,7 @@ where
     /// # Errors
     /// This function returns an error if the lexer is at the EOF.
     pub fn expect_token(&mut self, expected: Option<&'static str>) -> Result<Token> {
-        self.iter
-            .next()
+        self.next_token()
             .ok_or_else(|| ParseErrors::new(ParseError::eof(expected)))
     }
 
@@ -212,9 +217,16 @@ where
     /// # Errors
     /// This function returns an error if the lexer is at the EOF.
     pub fn expect_peek_token(&self, expected: Option<&'static str>) -> Result<Token> {
-        self.iter
-            .clone()
-            .next()
+        self.peek_token()
+            .ok_or_else(|| ParseErrors::new(ParseError::eof(expected)))
+    }
+
+    /// Gets the token after the next token, without consuming it, returning an 'unexpected EOF' error on failure.
+    ///
+    /// # Errors
+    /// This function returns an error if the lexer is at the EOF.
+    pub fn expect_peek_token2(&self, expected: Option<&'static str>) -> Result<Token> {
+        self.peek_token2()
             .ok_or_else(|| ParseErrors::new(ParseError::eof(expected)))
     }
 }
