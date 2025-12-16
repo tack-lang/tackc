@@ -25,9 +25,15 @@ Ok(Expression(
         ),
         inner: Interned(6563574591185256773, PhantomData),
       ), None),
-      id: NodeId(0),
+      id: NodeId(
+        node: 0,
+        file: 3397965060932944700,
+      ),
     )),
-    id: NodeId(1),
+    id: NodeId(
+      node: 1,
+      file: 3397965060932944700,
+    ),
   ), [
     Some(Expression(
       span: Span(
@@ -46,9 +52,15 @@ Ok(Expression(
           ),
           inner: Interned(14504427626919653262, PhantomData),
         ), None),
-        id: NodeId(2),
+        id: NodeId(
+          node: 2,
+          file: 3397965060932944700,
+        ),
       )),
-      id: NodeId(3),
+      id: NodeId(
+        node: 3,
+        file: 3397965060932944700,
+      ),
     )),
     Some(Expression(
       span: Span(
@@ -67,10 +79,19 @@ Ok(Expression(
           ),
           inner: Interned(579860146683532731, PhantomData),
         ), None),
-        id: NodeId(4),
+        id: NodeId(
+          node: 4,
+          file: 3397965060932944700,
+        ),
       )),
-      id: NodeId(5),
+      id: NodeId(
+        node: 5,
+        file: 3397965060932944700,
+      ),
     )),
   ]),
-  id: NodeId(6),
+  id: NodeId(
+    node: 6,
+    file: 3397965060932944700,
+  ),
 ))
