@@ -88,4 +88,18 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
     ),
     kind: I64,
   )),
+  Ok(Token(
+    span: Span(
+      start: 67,
+      end: 70,
+    ),
+    kind: Exp,
+  )),
+  Ok(Token(
+    span: Span(
+      start: 71,
+      end: 74,
+    ),
+    kind: Imp,
+  )),
 ]
