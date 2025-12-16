@@ -79,6 +79,10 @@ pub enum TokenKind {
     I32,
     /// `i64`
     I64,
+    /// `exp`
+    Exp,
+    /// `imp`
+    Imp,
 
     // Delimeters
     /// `(`
@@ -186,6 +190,8 @@ impl Display for TokenKind {
             TokenKind::I16 => write!(f, "i16"),
             TokenKind::I32 => write!(f, "i32"),
             TokenKind::I64 => write!(f, "i64"),
+            TokenKind::Exp => write!(f, "exp"),
+            TokenKind::Imp => write!(f, "imp"),
 
             TokenKind::LParen => write!(f, "("),
             TokenKind::RParen => write!(f, ")"),
@@ -585,6 +591,9 @@ impl<'src, F: File> Lexer<'src, F> {
             "i16" => TokenKind::I16,
             "i32" => TokenKind::I32,
             "i64" => TokenKind::I64,
+
+            "exp" => TokenKind::Exp,
+            "imp" => TokenKind::Imp,
 
             ident => TokenKind::Ident(self.global.intern_str(ident)),
         };
