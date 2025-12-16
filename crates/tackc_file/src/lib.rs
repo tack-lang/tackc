@@ -3,16 +3,13 @@
 use std::{
     borrow::Cow,
     fs,
-    hash::{BuildHasher, BuildHasherDefault},
+    hash::BuildHasher,
     io,
     ops::Deref,
     path::{Path, PathBuf},
 };
 
-use rustc_stable_hash::hashers::StableSipHasher128;
-
-type StableSipHasher128Builder = BuildHasherDefault<StableSipHasher128>;
-
+use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tackc_span::SpanValue;
 
@@ -92,7 +89,7 @@ impl<'a> BasicFile<'a> {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
-        let id = StableSipHasher128Builder::default().hash_one((&src, &path));
+        let id = FxBuildHasher.hash_one((&src, &path));
         BasicFile {
             src,
             path,

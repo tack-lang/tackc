@@ -17,9 +17,9 @@ thiserror = { workspace = true }
 workspace = true
 
 [dev-dependencies]
-criterion = { workspace = true }
+criterion = "0.8.1"
 insta = { workspace = true, features = ["ron", "glob"] }
-ron = { workspace = true }
+ron = "0.12.0"
 tackc_error = { workspace = true }
 
 [[bench]]
