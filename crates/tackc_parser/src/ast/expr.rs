@@ -234,7 +234,7 @@ where
 
             Ok(Expression {
                 span: block.span,
-                kind: Box::new(ExpressionKind::Block(Box::new(block))),
+                kind: Box::new(ExpressionKind::Block(block)),
                 id: p.node_id(),
             })
         }
