@@ -7,8 +7,8 @@ use crate::{Expression, Item, NodeId, Symbol};
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatementOrExpression {
-    Expression(Box<Expression>),
-    Statement(Box<Statement>),
+    Expression(Expression),
+    Statement(Statement),
 }
 
 #[allow(missing_docs)]
