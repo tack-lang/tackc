@@ -40,5 +40,5 @@ pub enum ExpressionKind {
 
     Primary(Primary),
 
-    Block(Box<Block>),
+    Block(Block),
 }
