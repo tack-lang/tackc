@@ -30,6 +30,7 @@ ecow = "0.2.6"
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }
 style = { level = "warn", priority = 0 }
+nursery = { level = "warn", priority = 0 }
 
 must-use-candidate = { level = "allow", priority = 1 }
 # Passed by .cargo/config.toml

@@ -68,8 +68,8 @@ where
     M: ReportMode,
 {
     /// Create a new reporter iterator.
-    pub fn new(iter: I, callback: F, mode: M) -> Self {
-        Reporter {
+    pub const fn new(iter: I, callback: F, mode: M) -> Self {
+        Self {
             iter,
             callback,
             mode,
@@ -109,7 +109,7 @@ where
     M: ReportMode,
 {
     fn clone(&self) -> Self {
-        Reporter {
+        Self {
             iter: self.iter.clone(),
             callback: self.callback.clone(),
             mode: self.mode,

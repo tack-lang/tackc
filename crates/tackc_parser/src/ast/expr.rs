@@ -24,12 +24,12 @@ pub enum ParseMode {
 
 impl ParseMode {
     #[allow(missing_docs)]
-    pub fn is_normal(self) -> bool {
+    pub const fn is_normal(self) -> bool {
         matches!(self, Self::Normal)
     }
 
     #[allow(missing_docs)]
-    pub fn is_no_blocks(self) -> bool {
+    pub const fn is_no_blocks(self) -> bool {
         matches!(self, Self::NoBlocks)
     }
 }
@@ -244,7 +244,7 @@ where
     }
 }
 
-fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
+const fn infix_and_postfix_binding_power(kind: TokenKind) -> Option<BindingPower> {
     use BindingPower as P;
     match kind {
         TokenKind::EqEq

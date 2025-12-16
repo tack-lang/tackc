@@ -21,8 +21,8 @@ pub struct Token {
 
 impl Token {
     /// Create a new token.
-    pub fn new(span: Span, kind: TokenKind) -> Self {
-        Token { span, kind }
+    pub const fn new(span: Span, kind: TokenKind) -> Self {
+        Self { span, kind }
     }
 
     /// Display this token, using `global`.
@@ -156,11 +156,11 @@ impl TokenKind {
     /// Gets the string representation of this token kind, using the given global.
     pub fn display(&self, global: &Global) -> String {
         match self {
-            TokenKind::Ident(ident) => ident.display(global).to_string(),
+            Self::Ident(ident) => ident.display(global).to_string(),
 
-            TokenKind::StringLit(string) => string.display(global).to_string(),
-            TokenKind::IntLit(int, base) => format!("{base}{}", int.display(global)),
-            TokenKind::FloatLit(float) => float.display(global).to_string(),
+            Self::StringLit(string) => string.display(global).to_string(),
+            Self::IntLit(int, base) => format!("{base}{}", int.display(global)),
+            Self::FloatLit(float) => float.display(global).to_string(),
 
             ty => format!("{ty}"),
         }
@@ -170,62 +170,62 @@ impl TokenKind {
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenKind::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
+            Self::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
 
-            TokenKind::StringLit(string) => write!(f, "<StringLit: {string:?}>"),
-            TokenKind::IntLit(int, base) => write!(f, "<IntLit: {int:?}, base: {}>", *base as u32),
-            TokenKind::FloatLit(float) => write!(f, "<FloatLit: {float:?}>"),
+            Self::StringLit(string) => write!(f, "<StringLit: {string:?}>"),
+            Self::IntLit(int, base) => write!(f, "<IntLit: {int:?}, base: {}>", *base as u32),
+            Self::FloatLit(float) => write!(f, "<FloatLit: {float:?}>"),
 
-            TokenKind::Eof => write!(f, "<EOF>"),
+            Self::Eof => write!(f, "<EOF>"),
 
-            TokenKind::Func => write!(f, "func"),
-            TokenKind::Let => write!(f, "let"),
-            TokenKind::Const => write!(f, "const"),
-            TokenKind::Mod => write!(f, "mod"),
-            TokenKind::U8 => write!(f, "u8"),
-            TokenKind::U16 => write!(f, "u16"),
-            TokenKind::U32 => write!(f, "u32"),
-            TokenKind::U64 => write!(f, "u64"),
-            TokenKind::I8 => write!(f, "i8"),
-            TokenKind::I16 => write!(f, "i16"),
-            TokenKind::I32 => write!(f, "i32"),
-            TokenKind::I64 => write!(f, "i64"),
-            TokenKind::Exp => write!(f, "exp"),
-            TokenKind::Imp => write!(f, "imp"),
+            Self::Func => write!(f, "func"),
+            Self::Let => write!(f, "let"),
+            Self::Const => write!(f, "const"),
+            Self::Mod => write!(f, "mod"),
+            Self::U8 => write!(f, "u8"),
+            Self::U16 => write!(f, "u16"),
+            Self::U32 => write!(f, "u32"),
+            Self::U64 => write!(f, "u64"),
+            Self::I8 => write!(f, "i8"),
+            Self::I16 => write!(f, "i16"),
+            Self::I32 => write!(f, "i32"),
+            Self::I64 => write!(f, "i64"),
+            Self::Exp => write!(f, "exp"),
+            Self::Imp => write!(f, "imp"),
 
-            TokenKind::LParen => write!(f, "("),
-            TokenKind::RParen => write!(f, ")"),
-            TokenKind::LBrace => write!(f, "{{"),
-            TokenKind::RBrace => write!(f, "}}"),
-            TokenKind::LBracket => write!(f, "["),
-            TokenKind::RBracket => write!(f, "]"),
+            Self::LParen => write!(f, "("),
+            Self::RParen => write!(f, ")"),
+            Self::LBrace => write!(f, "{{"),
+            Self::RBrace => write!(f, "}}"),
+            Self::LBracket => write!(f, "["),
+            Self::RBracket => write!(f, "]"),
 
-            TokenKind::Eq => write!(f, "="),
-            TokenKind::PlusEq => write!(f, "+="),
-            TokenKind::MinusEq => write!(f, "-="),
-            TokenKind::StarEq => write!(f, "*="),
-            TokenKind::SlashEq => write!(f, "/="),
+            Self::Eq => write!(f, "="),
+            Self::PlusEq => write!(f, "+="),
+            Self::MinusEq => write!(f, "-="),
+            Self::StarEq => write!(f, "*="),
+            Self::SlashEq => write!(f, "/="),
 
-            TokenKind::Comma => write!(f, ","),
-            TokenKind::Semicolon => write!(f, ";"),
-            TokenKind::Dot => write!(f, "."),
-            TokenKind::Colon => write!(f, ":"),
-            TokenKind::Pipe => write!(f, "|"),
+            Self::Comma => write!(f, ","),
+            Self::Semicolon => write!(f, ";"),
+            Self::Dot => write!(f, "."),
+            Self::Colon => write!(f, ":"),
+            Self::Pipe => write!(f, "|"),
 
-            TokenKind::Plus => write!(f, "+"),
-            TokenKind::Minus => write!(f, "-"),
-            TokenKind::Star => write!(f, "*"),
-            TokenKind::Slash => write!(f, "/"),
+            Self::Plus => write!(f, "+"),
+            Self::Minus => write!(f, "-"),
+            Self::Star => write!(f, "*"),
+            Self::Slash => write!(f, "/"),
 
-            TokenKind::EqEq => write!(f, "=="),
-            TokenKind::BangEq => write!(f, "!="),
+            Self::EqEq => write!(f, "=="),
+            Self::BangEq => write!(f, "!="),
 
-            TokenKind::Gt => write!(f, ">"),
-            TokenKind::Lt => write!(f, "<"),
-            TokenKind::GtEq => write!(f, ">="),
-            TokenKind::LtEq => write!(f, "<="),
+            Self::Gt => write!(f, ">"),
+            Self::Lt => write!(f, "<"),
+            Self::GtEq => write!(f, ">="),
+            Self::LtEq => write!(f, "<="),
 
-            TokenKind::PipePipe => write!(f, "||"),
+            Self::PipePipe => write!(f, "||"),
         }
     }
 }
@@ -285,6 +285,7 @@ impl Display for IntegerBase {
 }
 
 /// Tack's lexer. `Lexer` implements iterator, but [`next_token`](Lexer::next_token) can also be called.
+///
 /// `Lexer`'s `Iterator` implementation returns `None` when `next_token` returns `Ok` with a token kind of [`TokenKind::Eof`].
 /// `Lexer` should be easily cloneable.
 pub struct Lexer<'src, F: File> {
@@ -335,7 +336,7 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.reset();
     }
 
-    fn make_token(&mut self, ty: TokenKind) -> Token {
+    const fn make_token(&mut self, ty: TokenKind) -> Token {
         let span = self.span;
         self.span.reset();
         Token { span, kind: ty }
@@ -345,7 +346,7 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.apply_bytes(self.src)
     }
 
-    fn make_error(&mut self, ty: ErrorKind) -> LexError {
+    const fn make_error(&mut self, ty: ErrorKind) -> LexError {
         let span = self.span;
         self.span.reset();
 
@@ -455,11 +456,11 @@ impl<'src, F: File> Lexer<'src, F> {
 
     fn handle_digits(&mut self, radix: u32) -> bool {
         #[inline]
-        fn current_is_digit<F: File>(lexer: &mut Lexer<'_, F>, radix: u32) -> bool {
+        fn current_is_digit<F: File>(lexer: &Lexer<'_, F>, radix: u32) -> bool {
             matches!(lexer.current_byte(), Some(c) if (c as char).is_digit(radix))
         }
         #[inline]
-        fn current_is_underscore<F: File>(lexer: &mut Lexer<'_, F>) -> bool {
+        fn current_is_underscore<F: File>(lexer: &Lexer<'_, F>) -> bool {
             lexer.current_byte() == Some(b'_')
         }
 

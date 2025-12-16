@@ -36,36 +36,36 @@ impl AstNode for Item {
 
     fn span(&self) -> Span {
         match self {
-            Item::ConstItem(item) => item.span,
-            Item::FuncItem(item) => item.span,
+            Self::ConstItem(item) => item.span,
+            Self::FuncItem(item) => item.span,
         }
     }
 
     fn display(&self, global: &Global) -> String {
         match self {
-            Item::ConstItem(item) => item.display(global),
-            Item::FuncItem(item) => item.display(global),
+            Self::ConstItem(item) => item.display(global),
+            Self::FuncItem(item) => item.display(global),
         }
     }
 
     fn id(&self) -> NodeId {
         match self {
-            Item::ConstItem(item) => item.id,
-            Item::FuncItem(item) => item.id,
+            Self::ConstItem(item) => item.id,
+            Self::FuncItem(item) => item.id,
         }
     }
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         match self {
-            Item::ConstItem(item) => item.accept(v),
-            Item::FuncItem(item) => item.accept(v),
+            Self::ConstItem(item) => item.accept(v),
+            Self::FuncItem(item) => item.accept(v),
         }
     }
 
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         match self {
-            Item::ConstItem(item) => item.accept_mut(v),
-            Item::FuncItem(item) => item.accept_mut(v),
+            Self::ConstItem(item) => item.accept_mut(v),
+            Self::FuncItem(item) => item.accept_mut(v),
         }
     }
 }
@@ -93,7 +93,7 @@ impl AstNode for ConstItem {
 
         let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
 
-        Ok(ConstItem {
+        Ok(Self {
             span: Span::new_from(const_tok.span.start, semi.span.end),
             exported,
             ident,
@@ -134,6 +134,8 @@ impl AstNode for ConstItem {
     }
 }
 
+// See https://github.com/rust-lang/rust-clippy/issues/13676.
+#[allow(clippy::redundant_pub_crate)]
 pub(crate) fn expr_list_sync<I, F: File>(p: &mut Parser<I, F>)
 where
     I: Iterator<Item = Token> + Clone,
@@ -266,7 +268,7 @@ impl AstNode for FuncItem {
             return Err(err);
         }
 
-        Ok(FuncItem {
+        Ok(Self {
             span: Span::new_from(func.span.start, block.span.end),
             exported,
             ident,
@@ -288,10 +290,7 @@ impl AstNode for FuncItem {
             parts.push(format!(
                 "{}: {}",
                 ident.display(global),
-                match ty {
-                    Some(ty) => ty.display(global),
-                    None => String::from("<ERROR>"),
-                }
+                ty.as_ref().map_or_else(|| String::from("<ERROR>"), |ty| ty.display(global))
             ));
         }
         let ret = self
