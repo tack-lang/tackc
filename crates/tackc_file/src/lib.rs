@@ -89,7 +89,6 @@ impl<'a> BasicFile<'a> {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
-        println!("{}", path.display());
         let id = FxBuildHasher.hash_one((&src, &path));
         BasicFile {
             src,

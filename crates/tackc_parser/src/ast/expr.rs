@@ -140,10 +140,12 @@ fn run_expr_test(path: &Path) {
     use tackc_lexer::Lexer;
 
     let global = Global::create_heap();
-    let src = BasicFile::try_from(path)
-        .unwrap_or_else(|_| panic!("Failed to open file {}", path.display()));
-    let lexer = Lexer::new(&src, &global).consume_reporter(drop);
-    let mut p = Parser::new(lexer, &global, &src);
+    let src = std::fs::read_to_string(path).unwrap();
+    let path = Path::new(path.file_name().unwrap());
+    let file = BasicFile::new(src, path);
+
+    let lexer = Lexer::new(&file, &global).consume_reporter(drop);
+    let mut p = Parser::new(lexer, &global, &file);
     let expr = Expression::parse(&mut p, 0).expected("expression");
     insta::assert_ron_snapshot!(expr);
 }

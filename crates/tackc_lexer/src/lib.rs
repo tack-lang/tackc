@@ -678,8 +678,10 @@ use std::path::Path;
 fn run_lexer_test(path: &Path) {
     use tackc_file::BasicFile;
 
-    let file =
-        BasicFile::try_from(path).unwrap_or_else(|_| panic!("Could not file {}!", path.display()));
+    let src = std::fs::read_to_string(path).unwrap();
+    let path = Path::new(path.file_name().unwrap());
+    let file = BasicFile::new(src, path);
+
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);
     let tokens = lexer.collect::<Vec<_>>();
