@@ -9,9 +9,9 @@ pub struct Block {
     #[allow(missing_docs)]
     pub span: Span,
     /// A list of statements in this block
-    pub stmts: Vec<Box<Statement>>,
+    pub stmts: Vec<Statement>,
     /// The last expression of this block
-    pub expr: Option<Box<Expression>>,
+    pub expr: Option<Expression>,
     #[allow(missing_docs)]
     pub id: NodeId,
 }

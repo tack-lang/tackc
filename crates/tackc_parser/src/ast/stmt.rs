@@ -24,13 +24,13 @@ impl AstNode for StatementOrExpression {
                 .parse::<Item>(recursion + 1)
                 .map(Box::new)
                 .map(Statement::Item)
-                .map(Box::new)
+                //.map(Box::new)
                 .map(StatementOrExpression::Statement),
             TokenKind::Let => p
                 .parse::<LetStatement>(recursion + 1)
                 .map(Box::new)
                 .map(Statement::LetStatement)
-                .map(Box::new)
+                //.map(Box::new)
                 .map(StatementOrExpression::Statement),
             _ => {
                 let expr = p.parse::<Expression>(recursion + 1)?;
@@ -40,22 +40,22 @@ impl AstNode for StatementOrExpression {
                         inner: expr,
                         id: p.node_id(),
                     };
-                    Ok(Self::Statement(Box::new(Statement::ExpressionStatement(
+                    Ok(Self::Statement(Statement::ExpressionStatement(
                         Box::new(stmt),
-                    ))))
+                    )))
                 } else if let Some(_tok) = p.consume(kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
                     let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
-                    Ok(Self::Statement(Box::new(Statement::AssignmentStatement(
+                    Ok(Self::Statement(Statement::AssignmentStatement(
                         Box::new(AssignmentStatement {
                             span: Span::new_from(expr.span.start, semi.span.end),
                             lvalue: expr,
                             rvalue,
                             id: p.node_id(),
                         }),
-                    ))))
+                    )))
                 } else {
-                    Ok(Self::Expression(Box::new(expr)))
+                    Ok(Self::Expression(expr))
                 }
             }
         }
