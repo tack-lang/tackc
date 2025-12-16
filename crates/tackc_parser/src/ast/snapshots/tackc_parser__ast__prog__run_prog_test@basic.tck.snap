@@ -43,6 +43,7 @@ Ok(Program(
         start: 11,
         end: 44,
       ),
+      exported: false,
       ident: Symbol(
         span: Span(
           start: 16,
@@ -186,6 +187,7 @@ Ok(Program(
         start: 46,
         end: 88,
       ),
+      exported: false,
       ident: Symbol(
         span: Span(
           start: 51,

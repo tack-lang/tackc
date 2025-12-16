@@ -14,7 +14,9 @@ fn sync_item<I, F: File>(p: &mut Parser<I, F>)
 where
     I: Iterator<Item = Token> + Clone,
 {
-    p.consume(kind!(TokenKind::Func | TokenKind::Const)); // Don't stop on first item
+    // Don't stop on first item
+    p.consume(kind!(TokenKind::Exp));
+    p.consume(kind!(TokenKind::Func | TokenKind::Const));
 
     let mut depth: u32 = 0;
 
@@ -30,7 +32,7 @@ where
                 p.next_token();
                 depth = depth.saturating_sub(1);
             }
-            TokenKind::Func | TokenKind::Const if depth == 0 => {
+            TokenKind::Func | TokenKind::Const | TokenKind::Exp if depth == 0 => {
                 return;
             }
             _ => {

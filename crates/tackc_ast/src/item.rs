@@ -18,6 +18,8 @@ pub enum Item {
 pub struct ConstItem {
     #[allow(missing_docs)]
     pub span: Span,
+    /// If the constant is exported
+    pub exported: bool,
     /// The identifier being bound to
     pub ident: Symbol,
     /// The type annotation given
@@ -35,6 +37,8 @@ pub struct ConstItem {
 pub struct FuncItem {
     #[allow(missing_docs)]
     pub span: Span,
+    /// If the function is exported
+    pub exported: bool,
     /// The name of this function
     pub ident: Symbol,
     /// The parameters of this function

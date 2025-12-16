@@ -16,7 +16,11 @@ impl AstNode for Item {
         I: Iterator<Item = Token> + Clone,
     {
         p.check_recursion(recursion + 1)?;
-        let tok = p.expect_peek_token(None)?;
+        let tok = if p.peek_is(kind!(TokenKind::Exp)) {
+            p.expect_peek_token2(None)?
+        } else {
+            p.expect_peek_token(None)?
+        };
         match tok.kind {
             TokenKind::Const => p
                 .parse::<ConstItem>(recursion + 1)
@@ -71,6 +75,7 @@ impl AstNode for ConstItem {
     where
         I: Iterator<Item = Token> + Clone,
     {
+        let exported = p.consume(kind!(TokenKind::Exp)).is_some();
         let const_tok = p.expect_token_kind(None, kind!(TokenKind::Const))?;
         let ident = p.identifier()?;
         let ty = if p.consume(kind!(TokenKind::Colon)).is_some() {
@@ -90,6 +95,7 @@ impl AstNode for ConstItem {
 
         Ok(ConstItem {
             span: Span::new_from(const_tok.span.start, semi.span.end),
+            exported,
             ident,
             ty,
             expr,
@@ -104,7 +110,8 @@ impl AstNode for ConstItem {
 
     fn display(&self, global: &Global) -> String {
         format!(
-            "const {}{} = {};",
+            "{}const {}{} = {};",
+            if self.exported { "exp " } else { "" },
             self.ident.display(global),
             self.ty
                 .as_ref()
@@ -192,6 +199,7 @@ impl AstNode for FuncItem {
     where
         I: Iterator<Item = Token> + Clone,
     {
+        let exported = p.consume(kind!(TokenKind::Exp)).is_some();
         let func = p.expect_token_kind(None, kind!(TokenKind::Func))?;
         let ident = p.identifier()?;
         p.expect_token_kind(Some("'('"), kind!(TokenKind::LParen))?;
@@ -260,6 +268,7 @@ impl AstNode for FuncItem {
 
         Ok(FuncItem {
             span: Span::new_from(func.span.start, block.span.end),
+            exported,
             ident,
             params,
             ret_ty,
@@ -292,13 +301,15 @@ impl AstNode for FuncItem {
             .unwrap_or_default();
         if parts.is_empty() {
             format!(
-                "func {}() {ret}{}",
+                "{}func {}() {ret}{}",
+                if self.exported { "exp " } else { "" },
                 self.ident.display(global),
                 self.block.display(global)
             )
         } else {
             format!(
-                "func {}({}) {ret}{}",
+                "{}func {}({}) {ret}{}",
+                if self.exported { "exp " } else { "" },
                 self.ident.display(global),
                 parts.join(", "),
                 self.block.display(global)

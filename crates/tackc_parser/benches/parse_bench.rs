@@ -10,14 +10,19 @@ use tackc_parser::ast::ProgramExt;
 fn bench(c: &mut Criterion) {
     c.bench_function("bench", |b| {
         let file = BasicFile::new(include_str!("main_bench.tck"), Path::new("main_bench.tck"));
-        
-        b.iter_batched(|| {
-            let global = Global::create_heap();
-            let tokens = Lexer::new(&file, &global).map(Result::unwrap).collect::<Vec<_>>().into_iter();
-            (global, tokens)
-        }, |(global, iter)| {
-            Program::parse_file(iter, &global, &file)
-        }, BatchSize::SmallInput);
+
+        b.iter_batched(
+            || {
+                let global = Global::create_heap();
+                let tokens = Lexer::new(&file, &global)
+                    .map(Result::unwrap)
+                    .collect::<Vec<_>>()
+                    .into_iter();
+                (global, tokens)
+            },
+            |(global, iter)| Program::parse_file(iter, &global, &file),
+            BatchSize::SmallInput,
+        );
     });
 }
 

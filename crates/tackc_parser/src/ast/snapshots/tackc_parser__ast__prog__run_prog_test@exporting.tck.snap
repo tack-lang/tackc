@@ -1,0 +1,263 @@
+---
+source: crates/tackc_parser/src/ast/prog.rs
+expression: expr
+input_file: crates/tackc_parser/src/ast/prog-parse/exporting.tck
+---
+Ok(Program(
+  span: Span(
+    start: 0,
+    end: 84,
+  ),
+  mod_stmt: ModStatement(
+    span: Span(
+      start: 0,
+      end: 9,
+    ),
+    path: Path(
+      span: Span(
+        start: 4,
+        end: 8,
+      ),
+      components: [
+        Symbol(
+          span: Span(
+            start: 4,
+            end: 8,
+          ),
+          inner: Interned(7250452609033638561, PhantomData),
+        ),
+      ],
+      id: NodeId(
+        node: 0,
+        file: 10839056640497253060,
+      ),
+    ),
+    id: NodeId(
+      node: 1,
+      file: 10839056640497253060,
+    ),
+  ),
+  items: [
+    ConstItem(ConstItem(
+      span: Span(
+        start: 15,
+        end: 27,
+      ),
+      exported: true,
+      ident: Symbol(
+        span: Span(
+          start: 21,
+          end: 22,
+        ),
+        inner: Interned(8582347940052995950, PhantomData),
+      ),
+      ty: None,
+      expr: Expression(
+        span: Span(
+          start: 25,
+          end: 26,
+        ),
+        kind: Primary(Primary(
+          span: Span(
+            start: 25,
+            end: 26,
+          ),
+          kind: IntLit(Symbol(
+            span: Span(
+              start: 25,
+              end: 26,
+            ),
+            inner: Interned(12543183117416492085, PhantomData),
+          ), Decimal),
+          id: NodeId(
+            node: 2,
+            file: 10839056640497253060,
+          ),
+        )),
+        id: NodeId(
+          node: 3,
+          file: 10839056640497253060,
+        ),
+      ),
+      binding: None,
+      id: NodeId(
+        node: 4,
+        file: 10839056640497253060,
+      ),
+    )),
+    FuncItem(FuncItem(
+      span: Span(
+        start: 33,
+        end: 83,
+      ),
+      exported: true,
+      ident: Symbol(
+        span: Span(
+          start: 38,
+          end: 41,
+        ),
+        inner: Interned(1515349274698079117, PhantomData),
+      ),
+      params: [
+        (Symbol(
+          span: Span(
+            start: 42,
+            end: 45,
+          ),
+          inner: Interned(15556124562026758074, PhantomData),
+        ), Some(Expression(
+          span: Span(
+            start: 47,
+            end: 50,
+          ),
+          kind: Primary(Primary(
+            span: Span(
+              start: 47,
+              end: 50,
+            ),
+            kind: I32,
+            id: NodeId(
+              node: 5,
+              file: 10839056640497253060,
+            ),
+          )),
+          id: NodeId(
+            node: 6,
+            file: 10839056640497253060,
+          ),
+        )), None),
+        (Symbol(
+          span: Span(
+            start: 52,
+            end: 55,
+          ),
+          inner: Interned(8532538918699698226, PhantomData),
+        ), Some(Expression(
+          span: Span(
+            start: 57,
+            end: 60,
+          ),
+          kind: Primary(Primary(
+            span: Span(
+              start: 57,
+              end: 60,
+            ),
+            kind: I32,
+            id: NodeId(
+              node: 7,
+              file: 10839056640497253060,
+            ),
+          )),
+          id: NodeId(
+            node: 8,
+            file: 10839056640497253060,
+          ),
+        )), None),
+      ],
+      ret_ty: r#Some(Expression(
+        span: Span(
+          start: 62,
+          end: 65,
+        ),
+        kind: Primary(Primary(
+          span: Span(
+            start: 62,
+            end: 65,
+          ),
+          kind: I32,
+          id: NodeId(
+            node: 9,
+            file: 10839056640497253060,
+          ),
+        )),
+        id: NodeId(
+          node: 10,
+          file: 10839056640497253060,
+        ),
+      )),
+      block: Block(
+        span: Span(
+          start: 66,
+          end: 83,
+        ),
+        stmts: [],
+        expr: Some(Expression(
+          span: Span(
+            start: 72,
+            end: 81,
+          ),
+          kind: Add(Expression(
+            span: Span(
+              start: 72,
+              end: 75,
+            ),
+            kind: Primary(Primary(
+              span: Span(
+                start: 72,
+                end: 75,
+              ),
+              kind: Binding(Symbol(
+                span: Span(
+                  start: 72,
+                  end: 75,
+                ),
+                inner: Interned(15556124562026758074, PhantomData),
+              ), None),
+              id: NodeId(
+                node: 11,
+                file: 10839056640497253060,
+              ),
+            )),
+            id: NodeId(
+              node: 12,
+              file: 10839056640497253060,
+            ),
+          ), Expression(
+            span: Span(
+              start: 78,
+              end: 81,
+            ),
+            kind: Primary(Primary(
+              span: Span(
+                start: 78,
+                end: 81,
+              ),
+              kind: Binding(Symbol(
+                span: Span(
+                  start: 78,
+                  end: 81,
+                ),
+                inner: Interned(8532538918699698226, PhantomData),
+              ), None),
+              id: NodeId(
+                node: 13,
+                file: 10839056640497253060,
+              ),
+            )),
+            id: NodeId(
+              node: 14,
+              file: 10839056640497253060,
+            ),
+          )),
+          id: NodeId(
+            node: 15,
+            file: 10839056640497253060,
+          ),
+        )),
+        id: NodeId(
+          node: 16,
+          file: 10839056640497253060,
+        ),
+      ),
+      binding: None,
+      id: NodeId(
+        node: 17,
+        file: 10839056640497253060,
+      ),
+    )),
+  ],
+  id: NodeId(
+    node: 18,
+    file: 10839056640497253060,
+  ),
+))
