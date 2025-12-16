@@ -290,7 +290,8 @@ impl AstNode for FuncItem {
             parts.push(format!(
                 "{}: {}",
                 ident.display(global),
-                ty.as_ref().map_or_else(|| String::from("<ERROR>"), |ty| ty.display(global))
+                ty.as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |ty| ty.display(global))
             ));
         }
         let ret = self
