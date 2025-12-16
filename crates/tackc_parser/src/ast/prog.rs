@@ -95,7 +95,7 @@ impl AstNode for Program {
         if let Some(e) = errors {
             Err(e)
         } else {
-            Ok(Program {
+            Ok(Self {
                 span: Span::full(p.file),
                 mod_stmt: mod_stmt.expect("This is a bug. Please bug file a bug report."),
                 items,
@@ -142,7 +142,7 @@ impl AstNode for ModStatement {
         let mod_tok = p.expect_token_kind(None, kind!(TokenKind::Mod))?;
         let path = Box::new(p.parse::<Path>(recursion + 1)?);
         let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
-        Ok(ModStatement {
+        Ok(Self {
             span: Span::new_from(mod_tok.span.start, semi.span.end),
             path,
             id: p.node_id(),

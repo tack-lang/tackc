@@ -26,7 +26,7 @@ pub struct ParseErrors {
 impl ParseErrors {
     /// Create a new [`ParseErrors`]
     pub fn new(error: ParseError) -> Self {
-        ParseErrors {
+        Self {
             errors: EcoVec::from([error]),
         }
     }
@@ -99,7 +99,7 @@ impl ParseErrors {
     }
 
     /// Add a new list of parse errors to `self`.
-    pub fn merge(&mut self, other: ParseErrors) {
+    pub fn merge(&mut self, other: Self) {
         self.errors.extend(other.errors);
     }
 }
@@ -123,7 +123,7 @@ impl ParseError {
     /// Create a new expected-found parse error
     #[must_use]
     pub fn new(expected: Option<&'static str>, found: Token) -> Self {
-        ParseError {
+        Self {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
                 found: found.kind,
@@ -135,7 +135,7 @@ impl ParseError {
     /// Create a new expected-found-eof parse error
     #[must_use]
     pub fn eof(expected: Option<&'static str>) -> Self {
-        ParseError {
+        Self {
             kind: ParseErrorKind::ExpectedFound {
                 expected: expected.map(Into::into),
                 found: TokenKind::Eof,
@@ -147,7 +147,7 @@ impl ParseError {
     /// Create a new recursion parse error
     #[must_use]
     pub const fn recursion() -> Self {
-        ParseError {
+        Self {
             kind: ParseErrorKind::Recursion,
         }
     }
@@ -158,7 +158,7 @@ impl ParseError {
     /// This function will panic if the file supplied is too short to contain the token used for the error.
     /// This function will also panic if the expected field is set to `None`.
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
-        let ParseError {
+        let Self {
             kind:
                 ParseErrorKind::ExpectedFound {
                     expected,

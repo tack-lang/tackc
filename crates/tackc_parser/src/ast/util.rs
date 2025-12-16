@@ -23,7 +23,7 @@ impl AstNode for Path {
             components.push(next);
         }
 
-        Ok(Path {
+        Ok(Self {
             span: Span::new_from(
                 first.span.start,
                 components.last().unwrap_or(&first).span.end,

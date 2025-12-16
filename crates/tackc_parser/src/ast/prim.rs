@@ -16,57 +16,57 @@ impl AstNode for Primary {
     {
         let tok = p.expect_token(None)?;
         match tok.kind {
-            TokenKind::Ident(ident) => Ok(Primary {
+            TokenKind::Ident(ident) => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::Binding(Symbol::new(tok.span, ident), None),
                 id: p.node_id(),
             }),
-            TokenKind::IntLit(str, base) => Ok(Primary {
+            TokenKind::IntLit(str, base) => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::IntLit(Symbol::new(tok.span, str), base),
                 id: p.node_id(),
             }),
-            TokenKind::FloatLit(str) => Ok(Primary {
+            TokenKind::FloatLit(str) => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::FloatLit(Symbol::new(tok.span, str)),
                 id: p.node_id(),
             }),
-            TokenKind::U8 => Ok(Primary {
+            TokenKind::U8 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::U8,
                 id: p.node_id(),
             }),
-            TokenKind::U16 => Ok(Primary {
+            TokenKind::U16 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::U16,
                 id: p.node_id(),
             }),
-            TokenKind::U32 => Ok(Primary {
+            TokenKind::U32 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::U32,
                 id: p.node_id(),
             }),
-            TokenKind::U64 => Ok(Primary {
+            TokenKind::U64 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::U64,
                 id: p.node_id(),
             }),
-            TokenKind::I8 => Ok(Primary {
+            TokenKind::I8 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::I8,
                 id: p.node_id(),
             }),
-            TokenKind::I16 => Ok(Primary {
+            TokenKind::I16 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::I16,
                 id: p.node_id(),
             }),
-            TokenKind::I32 => Ok(Primary {
+            TokenKind::I32 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::I32,
                 id: p.node_id(),
             }),
-            TokenKind::I64 => Ok(Primary {
+            TokenKind::I64 => Ok(Self {
                 span: tok.span,
                 kind: PrimaryKind::I64,
                 id: p.node_id(),

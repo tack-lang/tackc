@@ -47,8 +47,8 @@ pub struct Symbol {
 
 impl Symbol {
     /// Create a new symbol
-    pub fn new(span: Span, ident: Interned<str>) -> Self {
-        Symbol { span, inner: ident }
+    pub const fn new(span: Span, ident: Interned<str>) -> Self {
+        Self { span, inner: ident }
     }
 
     /// Display the symbol
@@ -103,17 +103,17 @@ impl<T> MaybeError<T> {
 
     /// Returns true if `self` is [`Some`](MaybeError::Some)
     pub const fn is_some(&self) -> bool {
-        matches!(*self, MaybeError::Some(_))
+        matches!(*self, Self::Some(_))
     }
 
     /// Returns true if `self` is [`None`](MaybeError::None)
     pub const fn is_none(&self) -> bool {
-        matches!(*self, MaybeError::None)
+        matches!(*self, Self::None)
     }
 
     /// Returns true if `self` is [`Err`](MaybeError::Err)
     pub const fn is_err(&self) -> bool {
-        matches!(*self, MaybeError::Err)
+        matches!(*self, Self::Err)
     }
 
     /// Converts `self` to an [`Option<T>`] by turning [`MaybeError::Some`] into [`Option::Some`], and turning [`MaybeError::None`] and [`MaybeError::Err`] into [`Option::None`].
@@ -127,25 +127,25 @@ impl<T> MaybeError<T> {
     /// Maps `MaybeError<T>` to `MaybeError<U>` using `op` on the value of [`MaybeError::Some`].
     pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> MaybeError<U> {
         match self {
-            MaybeError::Some(val) => MaybeError::Some(op(val)),
-            MaybeError::None => MaybeError::None,
-            MaybeError::Err => MaybeError::Err,
+            Self::Some(val) => MaybeError::Some(op(val)),
+            Self::None => MaybeError::None,
+            Self::Err => MaybeError::Err,
         }
     }
 
     /// Converts [`&MaybeError<T>`](MaybeError<T>) to [`MaybeError<&T>`].
     pub const fn as_ref(&self) -> MaybeError<&T> {
         match self {
-            MaybeError::Some(val) => MaybeError::Some(val),
-            MaybeError::None => MaybeError::None,
-            MaybeError::Err => MaybeError::Err,
+            Self::Some(val) => MaybeError::Some(val),
+            Self::None => MaybeError::None,
+            Self::Err => MaybeError::Err,
         }
     }
 
     /// Returns an iterator over the contained value, or an empty iterator if there is no contained value.
     pub fn iter(&self) -> std::option::IntoIter<&T> {
         match self {
-            MaybeError::Some(val) => Some(val).into_iter(),
+            Self::Some(val) => Some(val).into_iter(),
             _ => None.into_iter(),
         }
     }
@@ -153,7 +153,7 @@ impl<T> MaybeError<T> {
     /// Returns an iterator over the contained value, or an empty iterator if there is no contained value.
     pub fn iter_mut(&mut self) -> std::option::IntoIter<&mut T> {
         match self {
-            MaybeError::Some(val) => Some(val).into_iter(),
+            Self::Some(val) => Some(val).into_iter(),
             _ => None.into_iter(),
         }
     }

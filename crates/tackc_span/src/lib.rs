@@ -29,7 +29,7 @@ impl Span {
     pub fn new_from(start: SpanValue, end: SpanValue) -> Self {
         assert!(end >= start, "cannot create negative-size span");
 
-        Span { start, end }
+        Self { start, end }
     }
 
     /// Creates a new `Span` pointing to the end of a string.
@@ -43,7 +43,7 @@ impl Span {
         );
 
         #[allow(clippy::cast_possible_truncation)]
-        Span {
+        Self {
             start: string.len() as SpanValue,
             end: string.len() as SpanValue,
         }
@@ -60,20 +60,20 @@ impl Span {
         );
 
         #[allow(clippy::cast_possible_truncation)]
-        Span {
+        Self {
             start: 0,
             end: string.len() as SpanValue,
         }
     }
 
     /// Grows the span from the front. This moves the end value up by `amount`.
-    pub fn grow_front(&mut self, amount: SpanValue) {
+    pub const fn grow_front(&mut self, amount: SpanValue) {
         self.end += amount;
     }
 
     /// Returns a span that is grown from the front. This moves the end value up by `amount`.
     #[must_use]
-    pub fn with_grow_front(&self, amount: SpanValue) -> Self {
+    pub const fn with_grow_front(&self, amount: SpanValue) -> Self {
         let mut new = *self;
         new.end += amount;
         new
@@ -149,17 +149,17 @@ impl Span {
     }
 
     /// Checks if a `Span`'s size is `0`. Returns `true` if `0`, and false if anything else.
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
     /// Gets the length of a `Span`.
-    pub fn len(&self) -> SpanValue {
+    pub const fn len(&self) -> SpanValue {
         self.end - self.start
     }
 
     /// Resets `self` by changing the start to be the end, plus 1, and changing the end to be the start.
-    pub fn reset(&mut self) {
+    pub const fn reset(&mut self) {
         self.start = self.end;
     }
 

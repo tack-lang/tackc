@@ -88,7 +88,7 @@ impl AstNode for Block {
             return Err(e);
         }
 
-        Ok(Block {
+        Ok(Self {
             span: Span::new_from(l_brace.span.start, r_brace.span.end),
             stmts,
             expr,

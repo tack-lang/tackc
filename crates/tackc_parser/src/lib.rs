@@ -65,7 +65,7 @@ where
 
     /// Create a new parser
     #[inline]
-    pub fn new(iter: I, global: &'a Global, file: &'a F) -> Self {
+    pub const fn new(iter: I, global: &'a Global, file: &'a F) -> Self {
         Parser {
             iter,
             file,

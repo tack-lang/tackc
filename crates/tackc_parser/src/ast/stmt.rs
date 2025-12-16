@@ -40,13 +40,13 @@ impl AstNode for StatementOrExpression {
                         inner: expr,
                         id: p.node_id(),
                     };
-                    Ok(StatementOrExpression::Statement(Box::new(
+                    Ok(Self::Statement(Box::new(
                         Statement::ExpressionStatement(Box::new(stmt)),
                     )))
                 } else if let Some(_tok) = p.consume(kind!(TokenKind::Eq)) {
                     let rvalue = p.parse::<Expression>(recursion + 1)?;
                     let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
-                    Ok(StatementOrExpression::Statement(Box::new(
+                    Ok(Self::Statement(Box::new(
                         Statement::AssignmentStatement(Box::new(AssignmentStatement {
                             span: Span::new_from(expr.span.start, semi.span.end),
                             lvalue: expr,
@@ -55,7 +55,7 @@ impl AstNode for StatementOrExpression {
                         })),
                     )))
                 } else {
-                    Ok(StatementOrExpression::Expression(Box::new(expr)))
+                    Ok(Self::Expression(Box::new(expr)))
                 }
             }
         }
@@ -63,36 +63,36 @@ impl AstNode for StatementOrExpression {
 
     fn span(&self) -> Span {
         match self {
-            StatementOrExpression::Expression(expr) => expr.span,
-            StatementOrExpression::Statement(stmt) => stmt.span(),
+            Self::Expression(expr) => expr.span,
+            Self::Statement(stmt) => stmt.span(),
         }
     }
 
     fn display(&self, global: &Global) -> String {
         match self {
-            StatementOrExpression::Expression(expr) => expr.display(global),
-            StatementOrExpression::Statement(stmt) => stmt.display(global),
+            Self::Expression(expr) => expr.display(global),
+            Self::Statement(stmt) => stmt.display(global),
         }
     }
 
     fn id(&self) -> NodeId {
         match self {
-            StatementOrExpression::Expression(expr) => expr.id,
-            StatementOrExpression::Statement(stmt) => stmt.id(),
+            Self::Expression(expr) => expr.id,
+            Self::Statement(stmt) => stmt.id(),
         }
     }
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         match self {
-            StatementOrExpression::Expression(expr) => expr.accept(v),
-            StatementOrExpression::Statement(stmt) => stmt.accept(v),
+            Self::Expression(expr) => expr.accept(v),
+            Self::Statement(stmt) => stmt.accept(v),
         }
     }
 
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         match self {
-            StatementOrExpression::Expression(expr) => expr.accept_mut(v),
-            StatementOrExpression::Statement(stmt) => stmt.accept_mut(v),
+            Self::Expression(expr) => expr.accept_mut(v),
+            Self::Statement(stmt) => stmt.accept_mut(v),
         }
     }
 }
@@ -109,46 +109,46 @@ impl AstNode for Statement {
 
     fn span(&self) -> Span {
         match self {
-            Statement::ExpressionStatement(stmt) => stmt.span(),
-            Statement::LetStatement(stmt) => stmt.span(),
-            Statement::Item(item) => item.span(),
-            Statement::AssignmentStatement(stmt) => stmt.span(),
+            Self::ExpressionStatement(stmt) => stmt.span(),
+            Self::LetStatement(stmt) => stmt.span(),
+            Self::Item(item) => item.span(),
+            Self::AssignmentStatement(stmt) => stmt.span(),
         }
     }
 
     fn display(&self, global: &Global) -> String {
         match self {
-            Statement::ExpressionStatement(stmt) => stmt.display(global),
-            Statement::LetStatement(stmt) => stmt.display(global),
-            Statement::Item(item) => item.display(global),
-            Statement::AssignmentStatement(stmt) => stmt.display(global),
+            Self::ExpressionStatement(stmt) => stmt.display(global),
+            Self::LetStatement(stmt) => stmt.display(global),
+            Self::Item(item) => item.display(global),
+            Self::AssignmentStatement(stmt) => stmt.display(global),
         }
     }
 
     fn id(&self) -> NodeId {
         match self {
-            Statement::ExpressionStatement(stmt) => stmt.id,
-            Statement::LetStatement(stmt) => stmt.id,
-            Statement::AssignmentStatement(stmt) => stmt.id,
-            Statement::Item(stmt) => stmt.id(),
+            Self::ExpressionStatement(stmt) => stmt.id,
+            Self::LetStatement(stmt) => stmt.id,
+            Self::AssignmentStatement(stmt) => stmt.id,
+            Self::Item(stmt) => stmt.id(),
         }
     }
 
     fn accept<V: Visitor + ?Sized>(&self, v: &mut V) {
         match self {
-            Statement::ExpressionStatement(stmt) => stmt.accept(v),
-            Statement::LetStatement(stmt) => stmt.accept(v),
-            Statement::AssignmentStatement(stmt) => stmt.accept(v),
-            Statement::Item(item) => item.accept(v),
+            Self::ExpressionStatement(stmt) => stmt.accept(v),
+            Self::LetStatement(stmt) => stmt.accept(v),
+            Self::AssignmentStatement(stmt) => stmt.accept(v),
+            Self::Item(item) => item.accept(v),
         }
     }
 
     fn accept_mut<V: VisitorMut + ?Sized>(&mut self, v: &mut V) {
         match self {
-            Statement::ExpressionStatement(stmt) => stmt.accept_mut(v),
-            Statement::LetStatement(stmt) => stmt.accept_mut(v),
-            Statement::AssignmentStatement(stmt) => stmt.accept_mut(v),
-            Statement::Item(item) => item.accept_mut(v),
+            Self::ExpressionStatement(stmt) => stmt.accept_mut(v),
+            Self::LetStatement(stmt) => stmt.accept_mut(v),
+            Self::AssignmentStatement(stmt) => stmt.accept_mut(v),
+            Self::Item(item) => item.accept_mut(v),
         }
     }
 }
@@ -209,7 +209,7 @@ impl AstNode for LetStatement {
 
         let semi = p.expect_token_kind(Some("';'"), kind!(TokenKind::Semicolon))?;
 
-        Ok(LetStatement {
+        Ok(Self {
             span: Span::new_from(let_tok.span.start, semi.span.end),
             ident,
             ty,
