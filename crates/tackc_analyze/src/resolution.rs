@@ -1,14 +1,43 @@
 use std::{collections::HashMap, mem};
 
-use tackc_ast::{Binding, Block, ConstItem, FuncItem, Item, MaybeError};
+use parking_lot::RwLock;
+
+use tackc_ast::{
+    Binding, Block, Expression, ExpressionKind, FuncItem, Item, LetStatement, MaybeError,
+    ModStatement, NodeId, Primary, PrimaryKind,
+};
 use tackc_error::Diag;
+use tackc_file::File;
 use tackc_global::{Global, Interned};
-use tackc_parser::ast::{AstNode, LetStatement, Primary, PrimaryKind, Program, Symbol, VisitorMut};
+use tackc_parser::ast::{AstNode, Program, Symbol, VisitorMut};
 use tackc_utils::hash::IdentityHasherBuilder;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-enum ErrorType {
+pub struct ResolutionError {
+    pub symbol: Symbol,
+    pub kind: ErrorKind,
+    pub node: NodeId,
+}
+
+impl ResolutionError {
+    pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
+        let sym = self.symbol.display(global);
+        let msg = match self.kind {
+            ErrorKind::Missing => format!("symbol `{sym}` not found in current scope"),
+            ErrorKind::Duplicated => {
+                format!("symbol `{sym}` defined multiple times in current scope")
+            }
+        };
+        let diag: Diag = Diag::with_span(msg, self.symbol.span);
+        diag.display(file)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum ErrorKind {
+    /// The error returned when the given symbol cannot be found in the current scope.
     Missing,
+    /// The error returned when a symbol is defined twice in the same scope.
     Duplicated,
 }
 
@@ -17,8 +46,9 @@ type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBui
 struct SymbolResolver<'a> {
     global_scope: Scope,
     scopes: Vec<Scope>,
-    errors: Vec<(Symbol, ErrorType)>,
+    errors: Vec<ResolutionError>,
     global: &'a Global,
+    mod_binding: Option<Interned<Binding>>,
 }
 
 impl<'a> SymbolResolver<'a> {
@@ -28,6 +58,7 @@ impl<'a> SymbolResolver<'a> {
             scopes: vec![],
             errors: Vec::new(),
             global,
+            mod_binding: None,
         }
     }
 
@@ -39,70 +70,84 @@ impl<'a> SymbolResolver<'a> {
         self.scopes.pop();
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Scope> {
-        self.scopes
-            .iter()
-            .rev()
-            .chain(std::iter::once(&self.global_scope))
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Scope> {
-        self.scopes
-            .iter_mut()
-            .rev()
-            .chain(std::iter::once(&mut self.global_scope))
-    }
-
-    fn get_entry_mut(&mut self, str: Interned<str>) -> Option<&mut (Interned<Binding>, bool)> {
-        for scope in self.iter_mut() {
-            if let Some(entry) = scope.get_mut(&str) {
-                return Some(entry);
-            }
-        }
-        None
-    }
-
-    pub fn exists(&self, str: Interned<str>) -> bool {
-        for scope in self.iter() {
-            if scope.get(&str).is_some() {
-                return true;
-            }
-        }
-        false
-    }
-
     pub fn resolve(&self, str: Interned<str>) -> Option<Interned<Binding>> {
-        for scope in self.iter() {
+        for scope in self.scopes.iter().rev() {
             if let Some((binding, enabled)) = scope.get(&str) {
                 if !*enabled {
-                    return None;
+                    continue;
                 }
                 return Some(*binding);
             }
         }
-        None
+        if let Some(binding) = self.mod_binding
+            && let Some((binding, enabled)) =
+                binding.get(self.global).mutable.read().fields.get(&str)
+            && *enabled
+        {
+            return Some(*binding);
+        }
+        self.global_scope
+            .get(&str)
+            .filter(|(_, enabled)| *enabled)
+            .map(|(binding, _)| *binding)
+    }
+
+    pub fn get_entry_mut<F: FnOnce(Option<&mut (Interned<Binding>, bool)>)>(
+        &mut self,
+        str: Interned<str>,
+        op: F,
+    ) {
+        for scope in self.scopes.iter_mut().rev() {
+            if let Some(entry) = scope.get_mut(&str) {
+                op(Some(entry));
+                return;
+            }
+        }
+        if let Some(binding) = self.mod_binding
+            && let Some(entry) = binding
+                .get(self.global)
+                .mutable
+                .write()
+                .fields
+                .get_mut(&str)
+        {
+            op(Some(entry));
+            return;
+        }
+        let entry = self
+            .global_scope
+            .get_mut(&str)
+            .filter(|(_, enabled)| *enabled);
+        op(entry);
     }
 
     pub fn disable(&mut self, str: Interned<str>) {
         let str_display = str.display(self.global);
-        let (_, enabled) = self
-            .get_entry_mut(str)
-            .unwrap_or_else(|| panic!("cannot disable non-existant binding {str_display}!"));
-        *enabled = false;
+        self.get_entry_mut(str, |entry| {
+            let (_, enabled) = entry
+                .unwrap_or_else(|| panic!("cannot disable non-existant binding `{str_display}`!"));
+            *enabled = false;
+        });
     }
 
     pub fn enable(&mut self, str: Interned<str>) {
         let str_display = str.display(self.global);
-        let (_, enabled) = self
-            .get_entry_mut(str)
-            .unwrap_or_else(|| panic!("cannot enable non-existant binding {str_display}!"));
-        *enabled = true;
+        self.get_entry_mut(str, |entry| {
+            let (_, enabled) = entry
+                .unwrap_or_else(|| panic!("cannot disable non-existant binding `{str_display}`!"));
+            *enabled = true;
+        });
     }
 
     pub fn define(&mut self, str: Interned<str>, binding: Binding) -> Interned<Binding> {
         let interned = self.global.intern(binding);
         self.current_scope_mut().insert(str, (interned, true));
         self.current_scope().get(&str).unwrap().0
+    }
+
+    pub fn resolve_or_define(&mut self, str: Interned<str>, binding: Binding) -> Interned<Binding> {
+        self.resolve(str)
+            .unwrap_or_else(|| self.define(str, binding))
     }
 
     pub fn current_scope(&self) -> &Scope {
@@ -115,40 +160,76 @@ impl<'a> SymbolResolver<'a> {
 }
 
 impl SymbolResolver<'_> {
-    fn visit_const_item_shallow(&mut self, item: &mut ConstItem) {
-        if self.exists(item.ident.inner) {
-            self.errors.push((item.ident, ErrorType::Duplicated));
-            return;
+    fn register_mod_statement_to_global(
+        &mut self,
+        mod_stmt: &mut ModStatement,
+    ) -> Interned<Binding> {
+        let mut components = mod_stmt.path.components.iter_mut();
+        let first = components.next().unwrap();
+        let mut last = self.resolve_or_define(
+            first.0.inner,
+            Binding {
+                symbol: first.0,
+                ty_annotation: None,
+                mutable: RwLock::default(),
+            },
+        );
+        first.1 = Some(last);
+        for component in components {
+            let binding = self.global.intern(Binding {
+                symbol: component.0,
+                ty_annotation: None,
+                mutable: RwLock::default(),
+            });
+            last.get(self.global)
+                .mutable
+                .write()
+                .fields
+                .insert(component.0.inner, (binding, true));
+            component.1 = Some(binding);
+            last = binding;
         }
 
-        item.binding = Some(self.define(
-            item.ident.inner,
-            Binding {
-                symbol: item.ident,
-                ty_annotation: item.ty.as_ref().map(|expr| expr.id),
-            },
-        ));
+        last
     }
 
-    fn visit_func_item_shallow(&mut self, item: &mut FuncItem) {
-        if self.exists(item.ident.inner) {
-            self.errors.push((item.ident, ErrorType::Duplicated));
+    fn register_item_to_global(&mut self, item: &mut Item, global_binding: Interned<Binding>) {
+        let (symbol, exported, binding) = match item {
+            Item::ConstItem(item) => (item.ident, item.exported, &mut item.binding),
+            Item::FuncItem(item) => (item.ident, item.exported, &mut item.binding),
+        };
+        if !exported {
             return;
         }
+        let new = self.global.intern(Binding {
+            symbol,
+            ty_annotation: None,
+            mutable: RwLock::default(),
+        });
+        *binding = Some(new);
+        let old = global_binding.get(self.global).add_field(symbol.inner, new);
+        if old.is_some() {
+            self.errors.push(ResolutionError {
+                symbol,
+                kind: ErrorKind::Duplicated,
+                node: item.id(),
+            });
+        }
+    }
 
-        item.binding = Some(self.define(
-            item.ident.inner,
-            Binding {
-                symbol: item.ident,
-                ty_annotation: None,
-            },
-        ));
+    fn register_program_to_global(&mut self, prog: &mut Program) {
+        let global = self.register_mod_statement_to_global(&mut prog.mod_stmt);
+
+        for item in &mut prog.items {
+            self.register_item_to_global(item, global);
+        }
     }
 }
 
 impl VisitorMut for SymbolResolver<'_> {
     fn visit_func_item_mut(&mut self, item: &mut FuncItem) {
         let env = mem::take(&mut self.scopes);
+        self.push();
         self.disable(item.ident.inner);
 
         for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
@@ -163,12 +244,14 @@ impl VisitorMut for SymbolResolver<'_> {
                 Binding {
                     symbol: *ident,
                     ty_annotation: ty.as_ref().map(|ty| ty.id),
+                    mutable: RwLock::default(),
                 },
             ));
         }
         item.block.accept_mut(self);
 
         self.enable(item.ident.inner);
+        self.pop();
         self.scopes = env;
     }
 
@@ -184,26 +267,59 @@ impl VisitorMut for SymbolResolver<'_> {
     }
 
     fn visit_program_mut(&mut self, program: &mut Program) {
-        for item in &mut program.items {
-            match item {
-                Item::ConstItem(item) => self.visit_const_item_shallow(item),
-                Item::FuncItem(item) => self.visit_func_item_shallow(item),
-            }
-        }
+        self.push();
+        self.mod_binding = Some(program.mod_stmt.path.components.last().unwrap().1.unwrap());
 
         for item in &mut program.items {
             item.accept_mut(self);
         }
+
+        self.mod_binding = None;
+        self.pop();
     }
 
     fn visit_primary_mut(&mut self, primary: &mut Primary) {
-        if let PrimaryKind::Binding(ident, binding) = &mut primary.kind {
-            let Some(new) = self.resolve(ident.inner) else {
-                self.errors.push((*ident, ErrorType::Missing));
+        if let PrimaryKind::Binding(symbol, binding) = &mut primary.kind {
+            let Some(new) = self.resolve(symbol.inner) else {
+                self.errors.push(ResolutionError {
+                    symbol: *symbol,
+                    kind: ErrorKind::Missing,
+                    node: primary.id(),
+                });
                 return;
             };
 
             *binding = Some(new);
+        }
+    }
+
+    fn visit_expression_mut(&mut self, expr: &mut Expression) {
+        match &mut *expr.kind {
+            ExpressionKind::Add(lhs, rhs)
+            | ExpressionKind::Sub(lhs, rhs)
+            | ExpressionKind::Mul(lhs, rhs)
+            | ExpressionKind::Div(lhs, rhs)
+            | ExpressionKind::Equal(lhs, rhs)
+            | ExpressionKind::Index(lhs, rhs)
+            | ExpressionKind::Gt(lhs, rhs)
+            | ExpressionKind::Lt(lhs, rhs)
+            | ExpressionKind::GtEq(lhs, rhs)
+            | ExpressionKind::LtEq(lhs, rhs)
+            | ExpressionKind::NotEqual(lhs, rhs) => {
+                lhs.accept_mut(self);
+                rhs.accept_mut(self);
+            }
+            ExpressionKind::Call(lhs, args) => {
+                lhs.accept_mut(self);
+                args.iter_mut()
+                    .flatten()
+                    .for_each(|arg| arg.accept_mut(self));
+            }
+            ExpressionKind::Grouping(lhs)
+            | ExpressionKind::Neg(lhs)
+            | ExpressionKind::Member(lhs, _) => lhs.accept_mut(self),
+            ExpressionKind::Primary(primary) => primary.accept_mut(self),
+            ExpressionKind::Block(block) => block.accept_mut(self),
         }
     }
 
@@ -220,33 +336,22 @@ impl VisitorMut for SymbolResolver<'_> {
             Binding {
                 symbol: stmt.ident,
                 ty_annotation: stmt.ty.as_ref().map(|expr| expr.id),
+                mutable: RwLock::default(),
             },
         );
     }
 }
 
 /// Resolve a program's bindings
-pub fn resolve(prog: &mut Program, global: &Global) -> Vec<Diag> {
-    let mut v = SymbolResolver::new(global);
-    prog.accept_mut(&mut v);
+pub fn resolve(progs: &mut [Program], global: &Global) -> (Vec<ResolutionError>, Scope) {
+    let mut resolver = SymbolResolver::new(global);
+    for prog in progs.iter_mut() {
+        resolver.register_program_to_global(prog);
+    }
 
-    v.errors
-        .into_iter()
-        .map(|(symbol, error)| match error {
-            ErrorType::Missing => Diag::with_span(
-                format!(
-                    "cannot find value `{}` in this scope",
-                    symbol.display(global)
-                ),
-                symbol.span,
-            ),
-            ErrorType::Duplicated => Diag::with_span(
-                format!(
-                    "name `{}` defined multiple times in scope!",
-                    symbol.display(global)
-                ),
-                symbol.span,
-            ),
-        })
-        .collect::<Vec<_>>()
+    for prog in progs.iter_mut() {
+        prog.accept_mut(&mut resolver);
+    }
+
+    (resolver.errors, resolver.global_scope)
 }

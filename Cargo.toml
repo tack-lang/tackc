@@ -26,6 +26,9 @@ honggfuzz = "0.5.58"
 insta = "1.44"
 proptest = "1.9"
 ecow = "0.2.6"
+criterion = "0.8.1"
+parking_lot = "0.12.5"
+ron = "0.12.0"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

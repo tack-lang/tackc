@@ -36,7 +36,7 @@ pub fn run(data: &[u8]) {
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
     let res = Program::parse_file(tokens.iter().copied(), &global, &file);
-    let mut prog = match res {
+    let prog = match res {
         Ok(s) => {
             s.display(&global);
             s
@@ -47,8 +47,8 @@ pub fn run(data: &[u8]) {
         }
     };
 
-    let errors = resolve(&mut prog, &global);
-    for e in errors {
-        e.display(&file);
+    let (errors, _) = resolve(&mut [prog], &global);
+    for _e in errors {
+        //e.display(&file);
     }
 }

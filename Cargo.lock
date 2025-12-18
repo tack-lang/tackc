@@ -566,6 +566,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965"
 dependencies = [
  "scopeguard",
+ "serde",
 ]
 
 [[package]]
@@ -624,6 +625,16 @@ checksum = "30d5b2194ed13191c1999ae0704b7839fb18384fa22e49b57eeaa97d79ce40da"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "parking_lot"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a"
+dependencies = [
+ "lock_api",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -1014,9 +1025,11 @@ dependencies = [
 name = "tackc_analyze"
 version = "0.1.0"
 dependencies = [
+ "parking_lot",
  "serde",
  "tackc_ast",
  "tackc_error",
+ "tackc_file",
  "tackc_global",
  "tackc_parser",
  "tackc_span",
@@ -1028,11 +1041,13 @@ name = "tackc_ast"
 version = "0.1.0"
 dependencies = [
  "ecow",
+ "parking_lot",
  "serde",
  "tackc_file",
  "tackc_global",
  "tackc_lexer",
  "tackc_span",
+ "tackc_utils",
 ]
 
 [[package]]

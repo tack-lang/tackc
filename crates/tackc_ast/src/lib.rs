@@ -1,10 +1,14 @@
 //! Tack's AST representation
 
 mod expr;
+use std::{collections::HashMap, fmt::Write, hash::Hash};
+
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+
 pub use expr::*;
 
 mod stmt;
-use serde::{Deserialize, Serialize};
 pub use stmt::*;
 
 mod block;
@@ -22,6 +26,7 @@ pub use prim::*;
 mod util;
 use tackc_global::{Global, Interned};
 use tackc_span::Span;
+use tackc_utils::hash::IdentityHasherBuilder;
 pub use util::*;
 
 /// Errors in parsing
@@ -58,12 +63,61 @@ impl Symbol {
 }
 
 /// Tack's representation of a binding, e.g. variables, modules, functions
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Binding {
     /// The symbol of the identifier defining this binding
     pub symbol: Symbol,
     /// The AST node of the expression representing the type of this binding
     pub ty_annotation: Option<NodeId>,
+    /// The mutable part of this binding.
+    pub mutable: RwLock<MutBinding>,
+}
+
+impl Binding {
+    pub fn display(&self, global: &Global) -> String {
+        let ident = self.symbol.display(global);
+        let fields = {
+            let mut f = String::from("{");
+            for (binding, _) in self.mutable.read().fields.values() {
+                _ = write!(
+                    f,
+                    "\n    {}",
+                    binding.get(global).display(global).replace('\n', "\n    "),
+                );
+            }
+            _ = write!(f, "\n}}");
+            f
+        };
+        format!("{ident} {fields}")
+    }
+
+    pub fn add_field(
+        &self,
+        name: Interned<str>,
+        binding: Interned<Self>,
+    ) -> Option<(Interned<Self>, bool)> {
+        self.mutable.write().fields.insert(name, (binding, true))
+    }
+}
+
+impl PartialEq for Binding {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol == other.symbol
+    }
+}
+
+impl Eq for Binding {}
+
+impl Hash for Binding {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.symbol.hash(state);
+    }
+}
+
+/// The mutable part of tack's representation of a binding. See [`Binding`] for more.
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MutBinding {
+    pub fields: HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBuilder>,
 }
 
 /// Equivilent to [`Option<T>`], but adds an [`Err`] variant. Used to represent something that may or may not be there, but also could be an error.

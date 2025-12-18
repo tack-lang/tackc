@@ -1,10 +1,10 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 
 use tackc_analyze::resolution::resolve;
 use tackc_error::prelude::*;
-use tackc_file::BasicFile;
+use tackc_file::{BasicFile, File};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::ast::{AstNode, Program, ProgramExt};
@@ -34,7 +34,7 @@ struct DebugModes {
 enum Stage {
     Lexer,
     Parser,
-    //BindingResolution,
+    BindingResolution,
 }
 
 fn main() {
@@ -45,15 +45,11 @@ fn main() {
     };
     let global = Global::new();
     let mut error = false;
-    let files = args
+    let files: Vec<BasicFile> = args
         .files
         .iter()
         .map(PathBuf::as_ref)
-        .map(|path| {
-            BasicFile::try_from(path)
-                .map_err(|x| (x, path))
-                .map(|file| (file, path))
-        })
+        .map(|path| BasicFile::try_from(path).map_err(|x| (x, path)))
         .consume_reporter(|(e, path)| {
             error = true;
             println!("failed to open file {}: {e:?}", path.display());
@@ -62,14 +58,24 @@ fn main() {
     if error {
         return;
     }
-
-    let asts = files
+    let files_map = files
         .into_iter()
-        .map(|(file, path)| (run_lexer(&file, global, &debug_modes), file, path))
-        .map(|(tokens, file, path)| (run_parser(tokens, &file, global, &debug_modes), path))
+        .map(|file| (file.id(), file))
+        .collect::<HashMap<u64, BasicFile>>();
+
+    let mut asts = files_map
+        .values()
+        .map(|file| (run_lexer(file, global, &debug_modes), file))
+        .map(|(tokens, file)| run_parser(tokens, file, global, &debug_modes))
+        .filter_map(|prog| {
+            if prog.is_none() {
+                error = true;
+            }
+            prog
+        })
         .collect::<Vec<_>>();
 
-    drop(asts);
+    run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
 
 fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
@@ -139,11 +145,27 @@ fn run_parser(
     }
 }
 
-fn _run_resolver(program: &mut Program, file: &BasicFile, global: &Global, _: &DebugModes) -> bool {
-    let errors = resolve(program, global);
+fn run_resolver(
+    programs: &mut [Program],
+    files: &HashMap<u64, BasicFile>,
+    global: &Global,
+    debug_modes: &DebugModes,
+) -> bool {
+    let (errors, global_scope) = resolve(programs, global);
+    if debug_modes.debug.contains(&Stage::BindingResolution) {
+        for prog in programs.iter_mut() {
+            eprintln!("{prog:#?}");
+        }
+        eprintln!("{global_scope:#?}");
+    }
+    if debug_modes.show.contains(&Stage::BindingResolution) {
+        for prog in programs.iter_mut() {
+            eprintln!("{}", prog.display(global));
+        }
+    }
     if !errors.is_empty() {
         for e in errors {
-            eprintln!("{}", e.display(file));
+            eprintln!("{}", e.display(files.get(&e.node.file).unwrap(), global));
         }
         false
     } else {
