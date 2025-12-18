@@ -11,6 +11,8 @@ tackc_ast = { workspace = true }
 tackc_span = { workspace = true }
 tackc_utils = { workspace = true }
 tackc_error = { workspace = true }
+tackc_file = { workspace = true }
+parking_lot = { workspace = true }
 
 [lints]
 workspace = true

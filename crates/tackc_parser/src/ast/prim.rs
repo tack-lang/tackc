@@ -81,8 +81,15 @@ impl AstNode for Primary {
 
     fn display(&self, global: &Global) -> String {
         match self.kind {
-            PrimaryKind::Binding(sym, _) | PrimaryKind::FloatLit(sym) => {
-                sym.display(global).to_string()
+            PrimaryKind::FloatLit(sym) => sym.display(global).to_string(),
+            PrimaryKind::Binding(sym, binding) => {
+                format!(
+                    "{}{}",
+                    sym.display(global),
+                    binding.map_or(String::new(), |bind| String::from("[")
+                        + &bind.inner().to_string()
+                        + "]")
+                )
             }
             PrimaryKind::IntLit(sym, base) => format!("{base}{}", sym.display(global)),
             PrimaryKind::U8 => "u8".to_string(),

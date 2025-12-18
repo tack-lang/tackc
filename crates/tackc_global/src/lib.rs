@@ -14,14 +14,14 @@ use serde::{Deserialize, Serialize};
 use tackc_utils::hash::IdentityHasherBuilder;
 
 /// A trait representing values that are able to be interned by [`Global`].
-pub trait Internable: Any {
+pub trait Internable: Any + Debug {
     /// Hash the value using the given hasher.
     fn dyn_hash(&self, hasher: &mut dyn Hasher);
     /// Check if the value is equal to `other`.
     fn dyn_eq(&self, other: &dyn Any) -> bool;
 }
 
-impl<T: Any + Hash + PartialEq> Internable for T {
+impl<T: Any + Hash + PartialEq + Debug> Internable for T {
     fn dyn_hash(&self, mut hasher: &mut dyn Hasher) {
         self.hash(&mut hasher);
     }
@@ -36,8 +36,14 @@ impl<T: Any + Hash + PartialEq> Internable for T {
 }
 
 /// A token type used for
-#[derive(Eq, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
+
+impl<T: ?Sized> Interned<T> {
+    pub const fn inner(self) -> u64 {
+        self.0
+    }
+}
 
 impl<T: ?Sized> Hash for Interned<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -50,6 +56,8 @@ impl<T: ?Sized> PartialEq for Interned<T> {
         self.0 == other.0
     }
 }
+
+impl<T: ?Sized> Eq for Interned<T> {}
 
 impl<T: ?Sized> Debug for Interned<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -94,6 +102,7 @@ impl Interned<str> {
 }
 
 /// tackc's global context.
+#[derive(Debug)]
 pub struct Global {
     arena: Bump,
     interned: DashMap<u64, &'static dyn Internable, IdentityHasherBuilder>,

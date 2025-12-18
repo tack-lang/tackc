@@ -110,9 +110,12 @@ impl AstNode for ConstItem {
 
     fn display(&self, global: &Global) -> String {
         format!(
-            "{}const {}{} = {};",
+            "{}const {}{}{} = {};",
             if self.exported { "exp " } else { "" },
             self.ident.display(global),
+            self.binding.map_or(String::new(), |bind| String::from("[")
+                + &bind.inner().to_string()
+                + "]"),
             self.ty
                 .as_ref()
                 .map(|ty| format!(": {}", ty.display(global)))
@@ -286,10 +289,13 @@ impl AstNode for FuncItem {
 
     fn display(&self, global: &Global) -> String {
         let mut parts = Vec::with_capacity(self.params.len());
-        for (ident, ty, _) in &self.params {
+        for (ident, ty, binding) in &self.params {
             parts.push(format!(
-                "{}: {}",
+                "{}{}: {}",
                 ident.display(global),
+                binding.map_or(String::new(), |bind| String::from("[")
+                    + &bind.inner().to_string()
+                    + "]"),
                 ty.as_ref()
                     .map_or_else(|| String::from("<ERROR>"), |ty| ty.display(global))
             ));
@@ -299,22 +305,16 @@ impl AstNode for FuncItem {
             .as_ref()
             .map(|ty| ty.display(global) + " ")
             .unwrap_or_default();
-        if parts.is_empty() {
-            format!(
-                "{}func {}() {ret}{}",
-                if self.exported { "exp " } else { "" },
-                self.ident.display(global),
-                self.block.display(global)
-            )
-        } else {
-            format!(
-                "{}func {}({}) {ret}{}",
-                if self.exported { "exp " } else { "" },
-                self.ident.display(global),
-                parts.join(", "),
-                self.block.display(global)
-            )
-        }
+        format!(
+            "{}func {}{}({}) {ret}{}",
+            if self.exported { "exp " } else { "" },
+            self.ident.display(global),
+            self.binding.map_or(String::new(), |bind| String::from("[")
+                + &bind.inner().to_string()
+                + "]"),
+            parts.join(", "),
+            self.block.display(global)
+        )
     }
 
     fn id(&self) -> NodeId {

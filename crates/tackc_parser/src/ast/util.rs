@@ -16,17 +16,17 @@ impl AstNode for Path {
         I: Iterator<Item = Token> + Clone,
     {
         let first = p.identifier().clear_expected()?;
-        let mut components = vec![first];
+        let mut components = vec![(first, None)];
 
         while p.consume(kind!(TokenKind::Dot)).is_some() {
             let next = p.identifier()?;
-            components.push(next);
+            components.push((next, None));
         }
 
         Ok(Self {
             span: Span::new_from(
                 first.span.start,
-                components.last().unwrap_or(&first).span.end,
+                components.last().unwrap_or(&(first, None)).0.span.end,
             ),
             id: p.node_id(),
             components,
@@ -40,7 +40,12 @@ impl AstNode for Path {
     fn display(&self, global: &Global) -> String {
         self.components
             .iter()
-            .map(|ident| ident.display(global))
+            .map(|(ident, binding)| {
+                ident.display(global).to_string()
+                    + &binding.map_or(String::new(), |bind| {
+                        String::from("[") + &bind.inner().to_string() + "]"
+                    })
+            })
             .collect::<Vec<_>>()
             .join(".")
     }
