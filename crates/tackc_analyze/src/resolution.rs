@@ -1,7 +1,5 @@
 use std::{collections::HashMap, mem};
 
-use parking_lot::RwLock;
-
 use tackc_ast::{
     Binding, Block, Expression, ExpressionKind, FuncItem, Item, LetStatement, MaybeError,
     ModStatement, NodeId, Primary, PrimaryKind,
@@ -122,6 +120,7 @@ impl<'a> SymbolResolver<'a> {
     }
 
     pub fn disable(&mut self, str: Interned<str>) {
+        println!("{:?}", self.global_scope);
         let str_display = str.display(self.global);
         self.get_entry_mut(str, |entry| {
             let (_, enabled) = entry
@@ -160,39 +159,6 @@ impl<'a> SymbolResolver<'a> {
 }
 
 impl SymbolResolver<'_> {
-    fn register_mod_statement_to_global(
-        &mut self,
-        mod_stmt: &mut ModStatement,
-    ) -> Interned<Binding> {
-        let mut components = mod_stmt.path.components.iter_mut();
-        let first = components.next().unwrap();
-        let mut last = self.resolve_or_define(
-            first.0.inner,
-            Binding {
-                symbol: first.0,
-                ty_annotation: None,
-                mutable: RwLock::default(),
-            },
-        );
-        first.1 = Some(last);
-        for component in components {
-            let binding = self.global.intern(Binding {
-                symbol: component.0,
-                ty_annotation: None,
-                mutable: RwLock::default(),
-            });
-            last.get(self.global)
-                .mutable
-                .write()
-                .fields
-                .insert(component.0.inner, (binding, true));
-            component.1 = Some(binding);
-            last = binding;
-        }
-
-        last
-    }
-
     fn register_item_to_global(&mut self, item: &mut Item, global_binding: Interned<Binding>) {
         let (symbol, exported, binding) = match item {
             Item::ConstItem(item) => (item.ident, item.exported, &mut item.binding),
@@ -201,11 +167,7 @@ impl SymbolResolver<'_> {
         if !exported {
             return;
         }
-        let new = self.global.intern(Binding {
-            symbol,
-            ty_annotation: None,
-            mutable: RwLock::default(),
-        });
+        let new = self.global.intern(Binding::new(symbol));
         *binding = Some(new);
         let old = global_binding.get(self.global).add_field(symbol.inner, new);
         if old.is_some() {
@@ -218,11 +180,42 @@ impl SymbolResolver<'_> {
     }
 
     fn register_program_to_global(&mut self, prog: &mut Program) {
-        let global = self.register_mod_statement_to_global(&mut prog.mod_stmt);
+        println!("{}", prog.mod_stmt.display(self.global));
+        let global = self.get_or_register_mod_statement_binding(&mut prog.mod_stmt);
 
         for item in &mut prog.items {
             self.register_item_to_global(item, global);
+            println!("{}", global.get(self.global).display(self.global));
         }
+    }
+
+    fn get_or_register_mod_statement_binding(
+        &mut self,
+        mod_stmt: &mut ModStatement,
+    ) -> Interned<Binding> {
+        let ((symbol, binding), components) = mod_stmt
+            .path
+            .components
+            .split_first_mut()
+            .expect("`Path` requires one component!");
+
+        let mut last = self.resolve_or_define(symbol.inner, Binding::new(*symbol));
+        *binding = Some(last);
+        for (symbol, binding) in components {
+            let new = {
+                let mut guard = last.get(self.global).mutable.write();
+
+                let (interned, _) = *guard
+                    .fields
+                    .entry(symbol.inner)
+                    .or_insert_with(|| (self.global.intern(Binding::new(*symbol)), true));
+                interned
+            };
+            *binding = Some(new);
+            last = new;
+        }
+
+        last
     }
 }
 
@@ -238,14 +231,10 @@ impl VisitorMut for SymbolResolver<'_> {
         if let MaybeError::Some(ty) = &mut item.ret_ty {
             ty.accept_mut(self);
         }
-        for (ident, ty, binding) in &mut item.params {
+        for (symbol, ty, binding) in &mut item.params {
             *binding = Some(self.define(
-                ident.inner,
-                Binding {
-                    symbol: *ident,
-                    ty_annotation: ty.as_ref().map(|ty| ty.id),
-                    mutable: RwLock::default(),
-                },
+                symbol.inner,
+                Binding::with_ty(*symbol, ty.as_ref().map(|ty| ty.id)),
             ));
         }
         item.block.accept_mut(self);
@@ -268,7 +257,7 @@ impl VisitorMut for SymbolResolver<'_> {
 
     fn visit_program_mut(&mut self, program: &mut Program) {
         self.push();
-        self.mod_binding = Some(program.mod_stmt.path.components.last().unwrap().1.unwrap());
+        self.mod_binding = Some(self.get_or_register_mod_statement_binding(&mut program.mod_stmt));
 
         for item in &mut program.items {
             item.accept_mut(self);
@@ -333,11 +322,7 @@ impl VisitorMut for SymbolResolver<'_> {
 
         self.define(
             stmt.ident.inner,
-            Binding {
-                symbol: stmt.ident,
-                ty_annotation: stmt.ty.as_ref().map(|expr| expr.id),
-                mutable: RwLock::default(),
-            },
+            Binding::with_ty(stmt.ident, stmt.ty.as_ref().map(|expr| expr.id)),
         );
     }
 }

@@ -1013,6 +1013,7 @@ name = "tackc"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "rustc-hash",
  "tackc_analyze",
  "tackc_error",
  "tackc_file",

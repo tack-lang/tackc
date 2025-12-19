@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
+rustc-hash.workspace = true
 tackc_analyze = { workspace = true }
 tackc_error = { workspace = true }
 tackc_file = { workspace = true }

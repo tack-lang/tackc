@@ -74,6 +74,18 @@ pub struct Binding {
 }
 
 impl Binding {
+    pub fn new(symbol: Symbol) -> Self {
+        Self::with_ty(symbol, None)
+    }
+
+    pub fn with_ty(symbol: Symbol, ty_annotation: Option<NodeId>) -> Self {
+        Self {
+            symbol,
+            ty_annotation,
+            mutable: RwLock::default(),
+        }
+    }
+
     pub fn display(&self, global: &Global) -> String {
         let ident = self.symbol.display(global);
         let fields = {

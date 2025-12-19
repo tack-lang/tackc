@@ -1,7 +1,8 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Parser, ValueEnum};
 
+use rustc_hash::FxHashMap;
 use tackc_analyze::resolution::resolve;
 use tackc_error::prelude::*;
 use tackc_file::{BasicFile, File};
@@ -61,7 +62,7 @@ fn main() {
     let files_map = files
         .into_iter()
         .map(|file| (file.id(), file))
-        .collect::<HashMap<u64, BasicFile>>();
+        .collect::<FxHashMap<u64, BasicFile>>();
 
     let mut asts = files_map
         .values()
@@ -147,7 +148,7 @@ fn run_parser(
 
 fn run_resolver(
     programs: &mut [Program],
-    files: &HashMap<u64, BasicFile>,
+    files: &FxHashMap<u64, BasicFile>,
     global: &Global,
     debug_modes: &DebugModes,
 ) -> bool {

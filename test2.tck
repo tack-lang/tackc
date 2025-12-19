@@ -1,0 +1,3 @@
+mod tack.stdlib;
+
+exp const T = 5;
