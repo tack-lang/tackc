@@ -2,6 +2,6 @@ mod tack.stdlib;
 
 exp const S = 5;
 
-exp func add(lhs: i32, rhs: i32) i32 {
+exp func add(lhs: i32, rhs: i32) T {
     lhs + rhs
 }
