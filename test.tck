@@ -1,7 +1,8 @@
-mod tack.stdlib;
+mod tack;
+func foo() {
 
-exp const S = 5;
+}
 
-exp func add(lhs: i32, rhs: i32) T {
-    lhs + rhs
+func s() {
+	foo();
 }
