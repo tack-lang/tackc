@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use clap::{Parser, ValueEnum};
 
 use rustc_hash::FxHashMap;
-use tackc_analyze::resolution::resolve;
+//use tackc_analyze::resolution::resolve;
 use tackc_error::prelude::*;
 use tackc_file::{BasicFile, File};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-use tackc_parser::ast::{AstNode, Program, ProgramExt};
+//use tackc_parser::ast::{AstNode, Program, ProgramExt};
 
 use tackc_lexer::Token;
 
@@ -34,7 +34,7 @@ struct DebugModes {
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
 enum Stage {
     Lexer,
-    Parser,
+    //Parser,
     BindingResolution,
 }
 
@@ -64,19 +64,12 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<u64, BasicFile>>();
 
-    let mut asts = files_map
+    let _tokens = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
-        .map(|(tokens, file)| run_parser(tokens, file, global, &debug_modes))
-        .filter_map(|prog| {
-            if prog.is_none() {
-                error = true;
-            }
-            prog
-        })
         .collect::<Vec<_>>();
 
-    run_resolver(&mut asts, &files_map, global, &debug_modes);
+    //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
 
 fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
@@ -117,7 +110,7 @@ fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec
     tokens
 }
 
-fn run_parser(
+/*fn run_parser(
     tokens: Vec<Token>,
     file: &BasicFile,
     global: &Global,
@@ -172,4 +165,4 @@ fn run_resolver(
     } else {
         true
     }
-}
+}*/
