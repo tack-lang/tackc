@@ -136,7 +136,6 @@ impl<'a> SymbolResolver<'a> {
     }
 
     pub fn disable(&mut self, str: Interned<str>) {
-        println!("{:?}", self.global_scope);
         let str_display = str.display(self.global);
         self.get_entry_mut(str, |entry| {
             let (_, enabled) = entry
@@ -196,12 +195,10 @@ impl SymbolResolver<'_> {
     }
 
     fn register_program_to_global(&mut self, prog: &mut Program) {
-        println!("{}", prog.mod_stmt.display(self.global));
         let global = self.get_or_register_mod_statement_binding(&mut prog.mod_stmt);
 
         for item in &mut prog.items {
             self.register_item_to_global(item, global);
-            println!("{}", global.get(self.global).display(self.global));
         }
     }
 
