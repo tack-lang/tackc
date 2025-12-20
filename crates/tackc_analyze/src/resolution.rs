@@ -43,6 +43,7 @@ type Scope = HashMap<Interned<str>, (Interned<Binding>, bool), IdentityHasherBui
 
 struct SymbolResolver<'a> {
     global_scope: Scope,
+    mod_scope: Option<Scope>,
     scopes: Vec<Scope>,
     errors: Vec<ResolutionError>,
     global: &'a Global,
@@ -53,6 +54,7 @@ impl<'a> SymbolResolver<'a> {
     pub fn new(global: &'a Global) -> Self {
         SymbolResolver {
             global_scope: HashMap::default(),
+            mod_scope: None,
             scopes: vec![],
             errors: Vec::new(),
             global,
@@ -80,6 +82,12 @@ impl<'a> SymbolResolver<'a> {
         if let Some(binding) = self.mod_binding
             && let Some((binding, enabled)) =
                 binding.get(self.global).mutable.read().fields.get(&str)
+            && *enabled
+        {
+            return Some(*binding);
+        }
+        if let Some(binding) = &self.mod_scope
+            && let Some((binding, enabled)) = binding.get(&str)
             && *enabled
         {
             return Some(*binding);
@@ -112,6 +120,14 @@ impl<'a> SymbolResolver<'a> {
             op(Some(entry));
             return;
         }
+
+        if let Some(scope) = &mut self.mod_scope
+            && let Some(entry) = scope.get_mut(&str)
+        {
+            op(Some(entry));
+            return;
+        }
+
         let entry = self
             .global_scope
             .get_mut(&str)
@@ -133,7 +149,7 @@ impl<'a> SymbolResolver<'a> {
         let str_display = str.display(self.global);
         self.get_entry_mut(str, |entry| {
             let (_, enabled) = entry
-                .unwrap_or_else(|| panic!("cannot disable non-existant binding `{str_display}`!"));
+                .unwrap_or_else(|| panic!("cannot enable non-existant binding `{str_display}`!"));
             *enabled = true;
         });
     }
@@ -219,11 +235,32 @@ impl SymbolResolver<'_> {
     }
 }
 
+impl SymbolResolver<'_> {
+    fn visit_item_shallow(&mut self, item: &mut Item) {
+        let (binding, symbol, ty) = match item {
+            Item::ConstItem(item) => (&mut item.binding, item.ident, &item.ty),
+            Item::FuncItem(item) => (&mut item.binding, item.ident, &None),
+        };
+        if binding.is_some() {
+            return;
+        }
+
+        let new = self
+            .global
+            .intern(Binding::with_ty(symbol, ty.as_ref().map(|ty| ty.id)));
+        self.mod_scope
+            .as_mut()
+            .unwrap()
+            .insert(symbol.inner, (new, true));
+        *binding = Some(new);
+    }
+}
+
 impl VisitorMut for SymbolResolver<'_> {
     fn visit_func_item_mut(&mut self, item: &mut FuncItem) {
         let env = mem::take(&mut self.scopes);
-        self.push();
         self.disable(item.ident.inner);
+        self.push();
 
         for ty in item.params.iter_mut().filter_map(|(_, ty, _)| ty.as_mut()) {
             ty.accept_mut(self);
@@ -239,8 +276,8 @@ impl VisitorMut for SymbolResolver<'_> {
         }
         item.block.accept_mut(self);
 
-        self.enable(item.ident.inner);
         self.pop();
+        self.enable(item.ident.inner);
         self.scopes = env;
     }
 
@@ -257,12 +294,18 @@ impl VisitorMut for SymbolResolver<'_> {
 
     fn visit_program_mut(&mut self, program: &mut Program) {
         self.push();
+        self.mod_scope = Some(HashMap::default());
         self.mod_binding = Some(self.get_or_register_mod_statement_binding(&mut program.mod_stmt));
+
+        for item in &mut program.items {
+            self.visit_item_shallow(item);
+        }
 
         for item in &mut program.items {
             item.accept_mut(self);
         }
 
+        self.mod_scope = None;
         self.mod_binding = None;
         self.pop();
     }
