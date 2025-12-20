@@ -13,10 +13,10 @@ tackc_file = { version = "0.1.0", path = "crates/tackc_file" }
 tackc_global = { version = "0.1.0", path = "crates/tackc_global" }
 tackc_lexer = { version = "0.1.0", path = "crates/tackc_lexer" }
 tackc_span = { version = "0.1.0", path = "crates/tackc_span" }
-tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
+#tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
 tackc_utils = { version = "0.1.0", path = "crates/tackc_utils" }
-tackc_analyze = { version = "0.1.0", path = "crates/tackc_analyze" }
-tackc_ast = { version = "0.1.0", path = "crates/tackc_ast" }
+#tackc_analyze = { version = "0.1.0", path = "crates/tackc_analyze" }
+#tackc_ast = { version = "0.1.0", path = "crates/tackc_ast" }
 tackc_fuzz = { version = "0.0.0", path = "fuzz/shared" }
 bumpalo = "3.19"
 libfuzzer-sys = "0.4"
