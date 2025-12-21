@@ -14,7 +14,7 @@ impl NonZeroHasher {
 
     pub const fn default() -> Self {
         Self {
-            inner: FxHasher::default()
+            inner: FxHasher::default(),
         }
     }
 }

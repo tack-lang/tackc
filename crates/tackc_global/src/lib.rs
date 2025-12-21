@@ -4,7 +4,8 @@ use std::{
     any::Any,
     fmt::Debug,
     hash::{Hash, Hasher},
-    marker::PhantomData, num::NonZeroU64,
+    marker::PhantomData,
+    num::NonZeroU64,
 };
 
 use bumpalo::Bump;
