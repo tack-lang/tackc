@@ -4,13 +4,13 @@ use std::{
     any::Any,
     fmt::Debug,
     hash::{Hash, Hasher},
-    marker::PhantomData,
+    marker::PhantomData, num::NonZeroU64,
 };
 
 use bumpalo::Bump;
 use dashmap::DashMap;
-use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
+use tackc_hash::NonZeroHasher;
 use tackc_utils::hash::IdentityHasherBuilder;
 
 /// A trait representing values that are able to be interned by [`Global`].
@@ -37,17 +37,18 @@ impl<T: Any + Hash + PartialEq + Debug> Internable for T {
 
 /// A token type used for
 #[derive(Serialize, Deserialize)]
-pub struct Interned<T: ?Sized>(u64, PhantomData<fn() -> T>);
+#[repr(transparent)]
+pub struct Interned<T: ?Sized>(NonZeroU64, PhantomData<fn() -> T>);
 
 impl<T: ?Sized> Interned<T> {
-    pub const fn inner(self) -> u64 {
+    pub const fn inner(self) -> NonZeroU64 {
         self.0
     }
 }
 
 impl<T: ?Sized> Hash for Interned<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u64(self.0);
+        state.write_u64(self.0.get());
     }
 }
 
@@ -105,11 +106,15 @@ impl Interned<str> {
 #[derive(Debug)]
 pub struct Global {
     arena: Bump,
-    interned: DashMap<u64, &'static dyn Internable, IdentityHasherBuilder>,
-    interned_strs: DashMap<u64, &'static str, IdentityHasherBuilder>,
+    interned: DashMap<NonZeroU64, &'static dyn Internable, IdentityHasherBuilder>,
+    interned_strs: DashMap<NonZeroU64, &'static str, IdentityHasherBuilder>,
 }
 
 impl Global {
+    pub const fn get_hasher() -> NonZeroHasher {
+        NonZeroHasher::default()
+    }
+
     /// Creates a new 'static `Global` by leaking it. Recomended for applications that compile entire files, and should hold one `Global` the entire time.
     /// Should only be called once during an entire program. For programs that need multiple `Global`s in a program, use [`Global::create_heap`].
     ///
@@ -143,8 +148,8 @@ impl Global {
 
     fn intern_value<T: ?Sized>(
         val: *const T,
-        hash: u64,
-        map: &DashMap<u64, &'static T, IdentityHasherBuilder>,
+        hash: NonZeroU64,
+        map: &DashMap<NonZeroU64, &'static T, IdentityHasherBuilder>,
     ) {
         // SAFETY: The value is allocated in the arena and lives as long as `self`.
         #[allow(unsafe_code)]
@@ -158,10 +163,10 @@ impl Global {
     /// # Panics
     /// This function will only panic in the event of a hash collision.
     pub fn intern<T: Internable>(&self, val: T) -> Interned<T> {
-        let mut hasher = FxHasher::default();
+        let mut hasher = Self::get_hasher();
         val.type_id().hash(&mut hasher);
         val.dyn_hash(&mut hasher);
-        let hash = hasher.finish();
+        let hash = hasher.finish_non_zero();
 
         if let Some(interned) = self.interned.get(&hash) {
             assert!(interned.dyn_eq(&val), "Hash collision!");
@@ -188,9 +193,9 @@ impl Global {
     /// # Panics
     /// This function will only panic in the event of a hash collision.
     pub fn intern_str<S: AsRef<str>>(&self, val: S) -> Interned<str> {
-        let mut hasher = FxHasher::default();
+        let mut hasher = Self::get_hasher();
         val.as_ref().hash(&mut hasher);
-        let hash = hasher.finish();
+        let hash = hasher.finish_non_zero();
 
         if let Some(interned) = self.interned_strs.get(&hash) {
             assert!(*interned == val.as_ref(), "Hash collision!");
