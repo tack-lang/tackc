@@ -784,9 +784,16 @@ version = "0.1.0"
 dependencies = [
  "bumpalo",
  "dashmap",
- "rustc-hash",
  "serde",
+ "tackc_hash",
  "tackc_utils",
+]
+
+[[package]]
+name = "tackc_hash"
+version = "0.1.0"
+dependencies = [
+ "rustc-hash",
 ]
 
 [[package]]

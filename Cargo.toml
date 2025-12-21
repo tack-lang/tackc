@@ -25,10 +25,7 @@ sha2 = "0.10.9"
 honggfuzz = "0.5.58"
 insta = "1.44"
 proptest = "1.9"
-ecow = "0.2.6"
-criterion = "0.8.1"
-parking_lot = "0.12.5"
-ron = "0.12.0"
+tackc_hash = { version = "0.1.0", path = "crates/tackc_hash" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }
