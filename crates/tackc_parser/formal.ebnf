@@ -1,0 +1,3 @@
+Expr = Primary ;
+
+Primary = INT_TOKEN ;

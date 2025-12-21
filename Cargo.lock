@@ -834,6 +834,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tackc_parser"
+version = "0.1.0"
+dependencies = [
+ "tackc_file",
+ "tackc_global",
+ "tackc_lexer",
+ "tackc_span",
+ "tackc_utils",
+]
+
+[[package]]
 name = "tackc_span"
 version = "0.1.0"
 dependencies = [
