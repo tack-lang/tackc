@@ -24,7 +24,7 @@ pub struct Token {
 impl Token {
     /// Create a new token.
     pub const fn new(span: Span, kind: TokenKind, lexeme: Interned<str>) -> Self {
-        Self { span, kind, lexeme, }
+        Self { span, kind, lexeme }
     }
 }
 
@@ -153,7 +153,9 @@ impl Token {
     /// Display this token, using `global`.
     pub fn display(&self, global: &Global) -> String {
         match self.kind {
-            TokenKind::Ident | TokenKind::StringLit | TokenKind::IntLit | TokenKind::FloatLit => self.lexeme.display(global).to_string(),
+            TokenKind::Ident | TokenKind::StringLit | TokenKind::IntLit | TokenKind::FloatLit => {
+                self.lexeme.display(global).to_string()
+            }
 
             ty => format!("{ty}"),
         }

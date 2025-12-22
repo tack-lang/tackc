@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+tackc_hash.workspace = true
 tackc_span = { workspace = true }
 
 [lints]

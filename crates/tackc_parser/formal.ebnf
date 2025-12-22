@@ -1,3 +1,6 @@
-Expr = Primary ;
+Expression = Primary ;
 
-Primary = INT_TOKEN ;
+Primary = IDENTIFIER
+    | INT_LIT
+    | FLOAT_LIT
+    ;

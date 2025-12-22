@@ -1,4 +1,7 @@
-use std::{hash::Hasher, num::NonZeroU64};
+use std::{
+    hash::{BuildHasher, Hash, Hasher},
+    num::NonZeroU64,
+};
 
 use rustc_hash::FxHasher;
 
@@ -35,5 +38,23 @@ impl Hasher for NonZeroHasher {
         let hash = self.inner.finish();
         // Map a result of 0 to 1
         hash | u64::from(hash == 0)
+    }
+}
+
+pub struct NonZeroHasherBuilder;
+
+impl NonZeroHasherBuilder {
+    pub fn hash_one_non_zero<T: Hash>(&self, val: T) -> NonZeroU64 {
+        let mut hasher = self.build_hasher();
+        val.hash(&mut hasher);
+        hasher.finish_non_zero()
+    }
+}
+
+impl BuildHasher for NonZeroHasherBuilder {
+    type Hasher = NonZeroHasher;
+
+    fn build_hasher(&self) -> Self::Hasher {
+        NonZeroHasher::default()
     }
 }

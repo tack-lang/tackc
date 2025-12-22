@@ -1,6 +1,7 @@
 (*
     NOTE: This is a spec grammar, not a parsing grammar. 
     This grammar does not encode precedence or associativity, and is heavily ambiguous.
+    See crates/tackc_parser/formal.ebnf for a more formal grammar
 *)
 
 Prog = ModStmt Item* ;

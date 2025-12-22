@@ -1,6 +1,7 @@
+use std::num::NonZeroU64;
 use std::path::PathBuf;
 
-use clap::{Parser, ValueEnum};
+use clap::{Parser as ClapParser, ValueEnum};
 
 use rustc_hash::FxHashMap;
 //use tackc_analyze::resolution::resolve;
@@ -11,8 +12,9 @@ use tackc_lexer::Lexer;
 //use tackc_parser::ast::{AstNode, Program, ProgramExt};
 
 use tackc_lexer::Token;
+use tackc_parser::Parser;
 
-#[derive(Parser)]
+#[derive(ClapParser)]
 struct Args {
     #[cfg_attr(debug_assertions, clap(short, long))]
     #[cfg_attr(not(debug_assertions), clap(skip))]
@@ -62,12 +64,18 @@ fn main() {
     let files_map = files
         .into_iter()
         .map(|file| (file.id(), file))
-        .collect::<FxHashMap<u64, BasicFile>>();
+        .collect::<FxHashMap<NonZeroU64, BasicFile>>();
 
-    let _tokens = files_map
+    let tokens = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .collect::<Vec<_>>();
+
+    for (tokens, file) in tokens {
+        let (res, errors) = Parser::parse(&tokens, file, global);
+        println!("{res:#?}");
+        println!("{errors:#?}");
+    }
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
