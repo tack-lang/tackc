@@ -253,20 +253,17 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn unary(&mut self) -> Result<Expression> {
-        let op = self.eat(&[TokenKind::Minus, TokenKind::Bang]);
-        let rhs = self.grouping()?;
-        match op {
-            Some(tok) => {
-                let span = Span::new_from(tok.span.start, self.span(rhs.id).end);
-                let kind = match tok.kind {
-                    TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, Box::new(rhs)),
-                    TokenKind::Bang => ExpressionKind::Unary(UnOp::Not, Box::new(rhs)),
-                    _ => unreachable!(),
-                };
-                Ok(Expression::new(kind, self.prepare_node(span)))
-            }
-            None => Ok(rhs),
-        }
+        let Some(op) = self.eat(&[TokenKind::Minus, TokenKind::Bang]) else {
+            return self.grouping();
+        };
+        let rhs = self.unary()?;
+        let span = Span::new_from(op.span.start, self.span(rhs.id).end);
+        let kind = match op.kind {
+            TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, Box::new(rhs)),
+            TokenKind::Bang => ExpressionKind::Unary(UnOp::Not, Box::new(rhs)),
+            _ => unreachable!(),
+        };
+        Ok(Expression::new(kind, self.prepare_node(span)))
     }
 
     fn grouping(&mut self) -> Result<Expression> {

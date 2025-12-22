@@ -85,11 +85,6 @@ fn main() {
 }
 
 fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
-    #[cfg(not(debug_assertions))]
-    {
-        _ = debug_modes;
-    }
-
     let lexer = Lexer::new(file, global);
     let tokens = lexer.collect::<Vec<_>>();
 
