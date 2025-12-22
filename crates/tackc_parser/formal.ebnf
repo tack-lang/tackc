@@ -3,8 +3,11 @@ Expression = Term ;
 Term = Factor ( ( PLUS | MINUS ) Factor )* ;
 Factor = Grouping ( ( STAR | SLASH ) Grouping )* ;
 
-Unary = ( ( MINUS | BANG )? Unary ) | Grouping ;
-Grouping = (L_PAREN Expression R_PAREN) | Primary ;
+Unary = ( MINUS | BANG )? Unary
+    | Grouping
+    ;
+Grouping = L_PAREN Expression R_PAREN
+    | Primary ;
 Primary = IDENTIFIER
     | INT_LIT
     | FLOAT_LIT
