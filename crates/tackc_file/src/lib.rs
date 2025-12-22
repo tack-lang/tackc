@@ -2,15 +2,14 @@
 
 use std::{
     borrow::Cow,
-    fs,
-    hash::BuildHasher,
-    io,
+    fs, io,
+    num::NonZeroU64,
     ops::Deref,
     path::{Path, PathBuf},
 };
 
-use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
+use tackc_hash::NonZeroHasherBuilder;
 use tackc_span::SpanValue;
 
 /// The main trait of `tackc_file`.
@@ -23,7 +22,7 @@ pub trait File: Deref<Target = str> {
     /// Get the file's line starts.
     fn line_starts(&self) -> &[SpanValue];
     /// Get the file's ID. Should be unique to any other files.
-    fn id(&self) -> u64;
+    fn id(&self) -> NonZeroU64;
 
     /// Find the line and column numbers of an index using the given line starts.
     fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
@@ -80,7 +79,7 @@ pub struct BasicFile<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
     line_starts: Vec<SpanValue>,
-    id: u64,
+    id: NonZeroU64,
 }
 
 impl<'a> BasicFile<'a> {
@@ -89,7 +88,7 @@ impl<'a> BasicFile<'a> {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
-        let id = FxBuildHasher.hash_one((&src, &path));
+        let id = NonZeroHasherBuilder.hash_one_non_zero((&src, &path));
         BasicFile {
             src,
             path,
@@ -112,7 +111,7 @@ impl File for BasicFile<'_> {
         &self.line_starts
     }
 
-    fn id(&self) -> u64 {
+    fn id(&self) -> NonZeroU64 {
         self.id
     }
 }

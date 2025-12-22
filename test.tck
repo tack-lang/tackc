@@ -1,8 +1,1 @@
-mod tack;
-func foo() {
-
-}
-
-func s() {
-	foo();
-}
+(((5))
