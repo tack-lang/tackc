@@ -10,6 +10,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 4,
     ),
     kind: Func,
+    lexeme: Interned(14513702477577586159, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -17,6 +18,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 8,
     ),
     kind: Let,
+    lexeme: Interned(12960948860117005790, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -24,48 +26,55 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 14,
     ),
     kind: Const,
+    lexeme: Interned(4021016191261256089, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 15,
       end: 25,
     ),
-    kind: Ident(Interned(816153717365776555, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(13881270030764443163, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 26,
       end: 27,
     ),
-    kind: Ident(Interned(7125721452462380643, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(1744093692151495636, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 28,
       end: 33,
     ),
-    kind: Ident(Interned(2939068791100266317, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(16004185104431824061, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 34,
       end: 38,
     ),
-    kind: Ident(Interned(14191706153052377477, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(8810078392741492470, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 39,
       end: 45,
     ),
-    kind: Ident(Interned(1849339485681556047, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(14914455799080222655, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 46,
       end: 55,
     ),
-    kind: Ident(Interned(4556722434798906291, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(17621838748197572899, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -73,6 +82,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 59,
     ),
     kind: I32,
+    lexeme: Interned(1629207603688809684, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -80,6 +90,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 62,
     ),
     kind: U8,
+    lexeme: Interned(6133658421577569729, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -87,6 +98,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 66,
     ),
     kind: I64,
+    lexeme: Interned(1687693054702409156, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -94,6 +106,7 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 70,
     ),
     kind: Exp,
+    lexeme: Interned(9467368404845537658, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -101,5 +114,6 @@ input_file: crates/tackc_lexer/src/lexer/keywords-identifiers.tck
       end: 74,
     ),
     kind: Imp,
+    lexeme: Interned(4323320986108109594, PhantomData),
   )),
 ]

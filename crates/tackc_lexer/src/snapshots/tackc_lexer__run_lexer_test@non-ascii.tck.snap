@@ -9,13 +9,15 @@ input_file: crates/tackc_lexer/src/lexer/non-ascii.tck
       start: 0,
       end: 50,
     ),
-    kind: StringLit(Interned(17011932770600777675, PhantomData)),
+    kind: StringLit,
+    lexeme: Interned(11630305010289892668, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 52,
       end: 109,
     ),
-    kind: StringLit(Interned(14995452377924657312, PhantomData)),
+    kind: StringLit,
+    lexeme: Interned(9613824617613772305, PhantomData),
   )),
 ]

@@ -17,17 +17,14 @@ pub struct Token {
     pub span: Span,
     /// The kind of token this token is.
     pub kind: TokenKind,
+    /// Lexeme of this token. For string literals, this is the value of the literal.
+    pub lexeme: Interned<str>,
 }
 
 impl Token {
     /// Create a new token.
-    pub const fn new(span: Span, kind: TokenKind) -> Self {
-        Self { span, kind }
-    }
-
-    /// Display this token, using `global`.
-    pub fn display(&self, global: &Global) -> String {
-        self.kind.display(global)
+    pub const fn new(span: Span, kind: TokenKind, lexeme: Interned<str>) -> Self {
+        Self { span, kind, lexeme, }
     }
 }
 
@@ -41,15 +38,15 @@ impl Display for Token {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenKind {
     /// Identifiers
-    Ident(Interned<str>),
+    Ident,
 
     // Literals
     /// String literals
-    StringLit(Interned<str>),
+    StringLit,
     /// Integer literals
-    IntLit(Interned<str>, IntegerBase),
+    IntLit,
     /// Float literals
-    FloatLit(Interned<str>),
+    FloatLit,
 
     /// End of file
     Eof,
@@ -152,15 +149,11 @@ pub enum TokenKind {
     PipePipe,
 }
 
-impl TokenKind {
-    /// Gets the string representation of this token kind, using the given global.
+impl Token {
+    /// Display this token, using `global`.
     pub fn display(&self, global: &Global) -> String {
-        match self {
-            Self::Ident(ident) => ident.display(global).to_string(),
-
-            Self::StringLit(string) => string.display(global).to_string(),
-            Self::IntLit(int, base) => format!("{base}{}", int.display(global)),
-            Self::FloatLit(float) => float.display(global).to_string(),
+        match self.kind {
+            TokenKind::Ident | TokenKind::StringLit | TokenKind::IntLit | TokenKind::FloatLit => self.lexeme.display(global).to_string(),
 
             ty => format!("{ty}"),
         }
@@ -170,11 +163,11 @@ impl TokenKind {
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Ident(ident) => write!(f, "<Ident: {ident:?}>"),
+            Self::Ident => write!(f, "<Ident>"),
 
-            Self::StringLit(string) => write!(f, "<StringLit: {string:?}>"),
-            Self::IntLit(int, base) => write!(f, "<IntLit: {int:?}, base: {}>", *base as u32),
-            Self::FloatLit(float) => write!(f, "<FloatLit: {float:?}>"),
+            Self::StringLit => write!(f, "<StringLit>"),
+            Self::IntLit => write!(f, "<IntLit>"),
+            Self::FloatLit => write!(f, "<FloatLit>"),
 
             Self::Eof => write!(f, "<EOF>"),
 
@@ -336,10 +329,14 @@ impl<'src, F: File> Lexer<'src, F> {
         self.span.reset();
     }
 
-    const fn make_token(&mut self, ty: TokenKind) -> Token {
+    fn make_token(&mut self, kind: TokenKind) -> Token {
+        self.make_token_with_lexeme(kind, self.current_lexeme())
+    }
+
+    fn make_token_with_lexeme(&mut self, kind: TokenKind, lexeme: &str) -> Token {
         let span = self.span;
         self.span.reset();
-        Token { span, kind: ty }
+        Token::new(span, kind, self.global.intern_str(lexeme))
     }
 
     fn current_lexeme(&self) -> &'src str {
@@ -451,7 +448,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 Some(c) => string.push(c as char),
             }
         }
-        Ok(self.make_token(TokenKind::StringLit(self.global.intern_str(string))))
+        Ok(self.make_token_with_lexeme(TokenKind::StringLit, &string))
     }
 
     fn handle_digits(&mut self, radix: u32) -> bool {
@@ -476,10 +473,6 @@ impl<'src, F: File> Lexer<'src, F> {
         true
     }
 
-    fn clean_digits(lexeme: &str) -> String {
-        lexeme.chars().filter(|&c| c != '_').collect()
-    }
-
     fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, LexError> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
@@ -489,8 +482,7 @@ impl<'src, F: File> Lexer<'src, F> {
             return Err(self.make_error(ErrorKind::MissingIntegerPrefixDigits));
         }
 
-        let digits = Self::clean_digits(&self.current_lexeme()[2..]);
-        Ok(self.make_token(TokenKind::IntLit(self.global.intern_str(digits), prefix)))
+        Ok(self.make_token(TokenKind::IntLit))
     }
 
     fn handle_num_lit(&mut self, c: u8) -> Result<Token, LexError> {
@@ -517,11 +509,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 if let Some(c) = self.peek_byte()
                     && (matches!(c, b'_' | b'.') || c.is_ascii_alphabetic())
                 {
-                    return Ok(self.make_token(TokenKind::IntLit(
-                        self.global
-                            .intern_str(Self::clean_digits(self.current_lexeme())),
-                        IntegerBase::Decimal,
-                    )));
+                    return Ok(self.make_token(TokenKind::IntLit));
                 }
 
                 // Skip `.`
@@ -531,10 +519,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 // No exponent -> simple float
                 if !matches!(self.current_byte(), Some(b'e' | b'E')) {
                     self.span.start = start;
-                    return Ok(self.make_token(TokenKind::FloatLit(
-                        self.global
-                            .intern_str(Self::clean_digits(self.current_lexeme())),
-                    )));
+                    return Ok(self.make_token(TokenKind::FloatLit));
                 }
 
                 // Exponent part
@@ -545,11 +530,7 @@ impl<'src, F: File> Lexer<'src, F> {
                 self.next_byte();
                 self.handle_float_with_exponent()
             }
-            _ => Ok(self.make_token(TokenKind::IntLit(
-                self.global
-                    .intern_str(Self::clean_digits(self.current_lexeme())),
-                IntegerBase::Decimal,
-            ))),
+            _ => Ok(self.make_token(TokenKind::IntLit)),
         }
     }
 
@@ -562,10 +543,7 @@ impl<'src, F: File> Lexer<'src, F> {
             return Err(self.make_error(ErrorKind::MissingExponentDigits));
         }
 
-        Ok(self.make_token(TokenKind::FloatLit(
-            self.global
-                .intern_str(Self::clean_digits(self.current_lexeme())),
-        )))
+        Ok(self.make_token(TokenKind::FloatLit))
     }
 
     fn handle_ident_or_keyword(&mut self) -> Token {
@@ -596,7 +574,7 @@ impl<'src, F: File> Lexer<'src, F> {
             "exp" => TokenKind::Exp,
             "imp" => TokenKind::Imp,
 
-            ident => TokenKind::Ident(self.global.intern_str(ident)),
+            _ => TokenKind::Ident,
         };
 
         self.make_token(ty)
