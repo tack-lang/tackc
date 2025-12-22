@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
+tackc_error.workspace = true
 tackc_file.workspace = true
 tackc_global.workspace = true
 tackc_lexer.workspace = true

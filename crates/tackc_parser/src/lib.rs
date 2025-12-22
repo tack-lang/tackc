@@ -168,9 +168,10 @@ impl<'src, F: File> Parser<'src, F> {
         tokens: &'src [Token],
         file: &'src F,
         global: &'src Global,
-    ) -> (Result<Expression>, Vec<ParseError>) {
+    ) -> (Option<Expression>, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        (p.expression(), p.errors)
+        let res = p.expression();
+        (p.report_error(res), p.errors)
     }
 }
 

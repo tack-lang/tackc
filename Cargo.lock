@@ -840,6 +840,7 @@ name = "tackc_parser"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "tackc_error",
  "tackc_file",
  "tackc_global",
  "tackc_lexer",

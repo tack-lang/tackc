@@ -73,8 +73,12 @@ fn main() {
 
     for (tokens, file) in tokens {
         let (res, errors) = Parser::parse(&tokens, file, global);
-        println!("{res:#?}");
-        println!("{errors:#?}");
+        if let Some(expr) = res {
+            println!("{}", expr.display(global))
+        }
+        for e in errors {
+            println!("{}\n", e.display(file, global));
+        }
     }
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
