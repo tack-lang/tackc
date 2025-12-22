@@ -1,5 +1,9 @@
-Expression = Primary ;
+Expression = Term ;
 
+Term = Factor ( ( PLUS | MINUS ) Factor )* ;
+Factor = Grouping ( ( STAR | SLASH ) Grouping )* ;
+
+Grouping = (L_PAREN Expression R_PAREN) | Primary ;
 Primary = IDENTIFIER
     | INT_LIT
     | FLOAT_LIT

@@ -27,7 +27,7 @@ struct ParserSnapshot {
 
 pub struct Parser<'src, F> {
     file: &'src F,
-    global: &'src Global,
+    _global: &'src Global,
     tokens: &'src [Token],
     ptr: usize,
     errors: Vec<ParseError>,
@@ -41,7 +41,7 @@ impl<'src, F: File> Parser<'src, F> {
     pub const fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
         Parser {
             file,
-            global,
+            _global: global,
             tokens,
             ptr: 0,
             errors: Vec::new(),
@@ -65,6 +65,8 @@ impl<'src, F: File> Parser<'src, F> {
         self.ptr = ptr;
         self.errors.truncate(errors);
         self.open = open;
+        #[allow(clippy::cast_possible_truncation)]
+        self.spans.truncate(open.get() as usize - 1);
     }
 
     fn peek(&self) -> Option<Token> {
@@ -153,11 +155,20 @@ impl<'src, F: File> Parser<'src, F> {
             .map_or_else(|| Span::eof(self.file).end, |tok| tok.span.start)
     }
 
+    fn span(&self, id: NodeId) -> Span {
+        #[allow(clippy::cast_possible_truncation)]
+        self.spans[id.id.get() as usize - 1]
+    }
+
     /// Parses an expression from `lexer`.
     ///
     /// # Errors
     /// Returns an error if it failed to parse an expression.
-    pub fn parse(tokens: &'src [Token], file: &'src F, global: &'src Global) -> (Result<Expression>, Vec<ParseError>) {
+    pub fn parse(
+        tokens: &'src [Token],
+        file: &'src F,
+        global: &'src Global,
+    ) -> (Result<Expression>, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
         (p.expression(), p.errors)
     }
@@ -165,7 +176,67 @@ impl<'src, F: File> Parser<'src, F> {
 
 impl<F: File> Parser<'_, F> {
     fn expression(&mut self) -> Result<Expression> {
-        self.grouping()
+        self.term()
+    }
+
+    fn term(&mut self) -> Result<Expression> {
+        let mut lhs = self.factor()?;
+
+        while let Some(tok) = self.peek() {
+            match tok.kind {
+                TokenKind::Plus => {
+                    self.advance(); // Skip '+'
+                    let rhs = self.factor()?;
+                    let id = self.prepare_node(Span::new_from(
+                        self.span(lhs.id).start,
+                        self.span(rhs.id).end,
+                    ));
+                    lhs = Expression::new(ExpressionKind::Add(Box::new(lhs), Box::new(rhs)), id);
+                }
+                TokenKind::Minus => {
+                    self.advance(); // Skip '-'
+                    let rhs = self.factor()?;
+                    let id = self.prepare_node(Span::new_from(
+                        self.span(lhs.id).start,
+                        self.span(rhs.id).end,
+                    ));
+                    lhs = Expression::new(ExpressionKind::Sub(Box::new(lhs), Box::new(rhs)), id);
+                }
+                _ => break,
+            }
+        }
+
+        Ok(lhs)
+    }
+
+    fn factor(&mut self) -> Result<Expression> {
+        let mut lhs = self.grouping()?;
+
+        while let Some(tok) = self.peek() {
+            match tok.kind {
+                TokenKind::Star => {
+                    self.advance(); // Skip '*'
+                    let rhs = self.grouping()?;
+                    let id = self.prepare_node(Span::new_from(
+                        self.span(lhs.id).start,
+                        self.span(rhs.id).end,
+                    ));
+                    lhs = Expression::new(ExpressionKind::Mul(Box::new(lhs), Box::new(rhs)), id);
+                }
+                TokenKind::Slash => {
+                    self.advance(); // Skip '/'
+                    let rhs = self.grouping()?;
+                    let id = self.prepare_node(Span::new_from(
+                        self.span(lhs.id).start,
+                        self.span(rhs.id).end,
+                    ));
+                    lhs = Expression::new(ExpressionKind::Div(Box::new(lhs), Box::new(rhs)), id);
+                }
+                _ => break,
+            }
+        }
+
+        Ok(lhs)
     }
 
     fn grouping(&mut self) -> Result<Expression> {
