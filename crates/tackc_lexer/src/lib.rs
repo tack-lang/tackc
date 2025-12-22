@@ -36,6 +36,7 @@ impl Display for Token {
 
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[repr(u8)]
 pub enum TokenKind {
     /// Identifiers
     Ident,

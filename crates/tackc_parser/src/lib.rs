@@ -10,7 +10,7 @@ use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::{Span, SpanValue};
 
-use crate::ast::{Expression, ExpressionKind};
+use crate::ast::{BinOp, Expression, ExpressionKind, UnOp};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct NodeId {
@@ -191,7 +191,10 @@ impl<F: File> Parser<'_, F> {
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
                     ));
-                    lhs = Expression::new(ExpressionKind::Add(Box::new(lhs), Box::new(rhs)), id);
+                    lhs = Expression::new(
+                        ExpressionKind::Binary(BinOp::Add, Box::new(lhs), Box::new(rhs)),
+                        id,
+                    );
                 }
                 TokenKind::Minus => {
                     self.advance(); // Skip '-'
@@ -200,7 +203,10 @@ impl<F: File> Parser<'_, F> {
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
                     ));
-                    lhs = Expression::new(ExpressionKind::Sub(Box::new(lhs), Box::new(rhs)), id);
+                    lhs = Expression::new(
+                        ExpressionKind::Binary(BinOp::Sub, Box::new(lhs), Box::new(rhs)),
+                        id,
+                    );
                 }
                 _ => break,
             }
@@ -221,7 +227,10 @@ impl<F: File> Parser<'_, F> {
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
                     ));
-                    lhs = Expression::new(ExpressionKind::Mul(Box::new(lhs), Box::new(rhs)), id);
+                    lhs = Expression::new(
+                        ExpressionKind::Binary(BinOp::Mul, Box::new(lhs), Box::new(rhs)),
+                        id,
+                    );
                 }
                 TokenKind::Slash => {
                     self.advance(); // Skip '/'
@@ -230,7 +239,10 @@ impl<F: File> Parser<'_, F> {
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
                     ));
-                    lhs = Expression::new(ExpressionKind::Div(Box::new(lhs), Box::new(rhs)), id);
+                    lhs = Expression::new(
+                        ExpressionKind::Binary(BinOp::Div, Box::new(lhs), Box::new(rhs)),
+                        id,
+                    );
                 }
                 _ => break,
             }
@@ -246,8 +258,8 @@ impl<F: File> Parser<'_, F> {
             Some(tok) => {
                 let span = Span::new_from(tok.span.start, self.span(rhs.id).end);
                 let kind = match tok.kind {
-                    TokenKind::Minus => ExpressionKind::Neg(Box::new(rhs)),
-                    TokenKind::Bang => ExpressionKind::Not(Box::new(rhs)),
+                    TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, Box::new(rhs)),
+                    TokenKind::Bang => ExpressionKind::Unary(UnOp::Not, Box::new(rhs)),
                     _ => unreachable!(),
                 };
                 Ok(Expression::new(kind, self.prepare_node(span)))
