@@ -9,7 +9,8 @@ input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
       start: 0,
       end: 1,
     ),
-    kind: IntLit(Interned(12543183117416492085, PhantomData), Decimal),
+    kind: IntLit,
+    lexeme: Interned(7161555357105607078, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -17,27 +18,31 @@ input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
       end: 2,
     ),
     kind: Dot,
+    lexeme: Interned(11711581811000960557, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 2,
       end: 3,
     ),
-    kind: Ident(Interned(6563574591185256773, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(1181946830874371766, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 4,
       end: 6,
     ),
-    kind: FloatLit(Interned(2739775576854559490, PhantomData)),
+    kind: FloatLit,
+    lexeme: Interned(15804891890253226098, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 7,
       end: 8,
     ),
-    kind: IntLit(Interned(14894071113539278494, PhantomData), Decimal),
+    kind: IntLit,
+    lexeme: Interned(9512443353228393487, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -45,6 +50,7 @@ input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
       end: 9,
     ),
     kind: Dot,
+    lexeme: Interned(11711581811000960557, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -52,13 +58,15 @@ input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
       end: 10,
     ),
     kind: Dot,
+    lexeme: Interned(11711581811000960557, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 11,
       end: 12,
     ),
-    kind: IntLit(Interned(15401311348005721897, PhantomData), Decimal),
+    kind: IntLit,
+    lexeme: Interned(10019683587694836890, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -66,12 +74,14 @@ input_file: crates/tackc_lexer/src/lexer/trailing-dot-floats.tck
       end: 13,
     ),
     kind: Dot,
+    lexeme: Interned(11711581811000960557, PhantomData),
   )),
   Ok(Token(
     span: Span(
       start: 13,
       end: 14,
     ),
-    kind: Ident(Interned(2195687252668807314, PhantomData)),
+    kind: Ident,
+    lexeme: Interned(15260803566067473922, PhantomData),
   )),
 ]

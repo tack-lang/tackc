@@ -10,6 +10,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 2,
     ),
     kind: PipePipe,
+    lexeme: Interned(1760668217625641319, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -17,6 +18,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 4,
     ),
     kind: Pipe,
+    lexeme: Interned(7174656023638368890, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -24,6 +26,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 7,
     ),
     kind: PlusEq,
+    lexeme: Interned(11791079616381802591, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -31,6 +34,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 9,
     ),
     kind: Eq,
+    lexeme: Interned(12662824811846108664, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -38,6 +42,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 11,
     ),
     kind: Plus,
+    lexeme: Interned(9271261535801765072, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -45,6 +50,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 13,
     ),
     kind: Minus,
+    lexeme: Interned(11570405201387466314, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -52,6 +58,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 15,
     ),
     kind: Star,
+    lexeme: Interned(17614116018362534654, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -59,6 +66,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 17,
     ),
     kind: Slash,
+    lexeme: Interned(15257379049680145570, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -66,6 +74,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 19,
     ),
     kind: LParen,
+    lexeme: Interned(11521414760139833694, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -73,6 +82,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 20,
     ),
     kind: RParen,
+    lexeme: Interned(2010386334778227314, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -80,6 +90,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 22,
     ),
     kind: LBrace,
+    lexeme: Interned(13823032201068319013, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -87,6 +98,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 23,
     ),
     kind: RBrace,
+    lexeme: Interned(1801663808303485204, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -94,6 +106,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 25,
     ),
     kind: LBracket,
+    lexeme: Interned(3593907318860349919, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -101,6 +114,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 26,
     ),
     kind: RBracket,
+    lexeme: Interned(11411644479232591381, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -108,6 +122,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 28,
     ),
     kind: Gt,
+    lexeme: Interned(79733639259789661, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -115,6 +130,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 30,
     ),
     kind: Lt,
+    lexeme: Interned(1802662262816628034, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -122,6 +138,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 33,
     ),
     kind: GtEq,
+    lexeme: Interned(11253030706894882449, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -129,6 +146,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 36,
     ),
     kind: LtEq,
+    lexeme: Interned(14457308068410203317, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -136,6 +154,7 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 39,
     ),
     kind: EqEq,
+    lexeme: Interned(7248837005833381093, PhantomData),
   )),
   Ok(Token(
     span: Span(
@@ -143,5 +162,6 @@ input_file: crates/tackc_lexer/src/lexer/operators.tck
       end: 42,
     ),
     kind: BangEq,
+    lexeme: Interned(3911589645475651280, PhantomData),
   )),
 ]
