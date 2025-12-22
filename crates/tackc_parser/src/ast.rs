@@ -21,10 +21,20 @@ pub enum ExpressionKind {
     Ident(Interned<str>),
     Grouping(Option<Box<Expression>>),
 
-    Add(Box<Expression>, Box<Expression>),
-    Sub(Box<Expression>, Box<Expression>),
-    Mul(Box<Expression>, Box<Expression>),
-    Div(Box<Expression>, Box<Expression>),
-    Neg(Box<Expression>),
-    Not(Box<Expression>),
+    Binary(BinOp, Box<Expression>, Box<Expression>),
+    Unary(UnOp, Box<Expression>),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum BinOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum UnOp {
+    Neg,
+    Not,
 }
