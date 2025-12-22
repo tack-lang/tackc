@@ -118,6 +118,8 @@ pub enum TokenKind {
     Colon,
     /// `|`
     Pipe,
+    /// `!`
+    Bang,
 
     // Arithmatic operators
     /// `+`
@@ -206,6 +208,7 @@ impl Display for TokenKind {
             Self::Dot => write!(f, "."),
             Self::Colon => write!(f, ":"),
             Self::Pipe => write!(f, "|"),
+            Self::Bang => write!(f, "!"),
 
             Self::Plus => write!(f, "+"),
             Self::Minus => write!(f, "-"),
@@ -398,6 +401,7 @@ impl<'src, F: File> Lexer<'src, F> {
             ('.', _) => TokenKind::Dot,
             (':', _) => TokenKind::Colon,
             ('|', _) => TokenKind::Pipe,
+            ('!', _) => TokenKind::Bang,
 
             ('+', _) => TokenKind::Plus,
             ('-', _) => TokenKind::Minus,

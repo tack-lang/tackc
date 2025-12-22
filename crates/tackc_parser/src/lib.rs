@@ -210,13 +210,13 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn factor(&mut self) -> Result<Expression> {
-        let mut lhs = self.grouping()?;
+        let mut lhs = self.unary()?;
 
         while let Some(tok) = self.peek() {
             match tok.kind {
                 TokenKind::Star => {
                     self.advance(); // Skip '*'
-                    let rhs = self.grouping()?;
+                    let rhs = self.unary()?;
                     let id = self.prepare_node(Span::new_from(
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
@@ -225,7 +225,7 @@ impl<F: File> Parser<'_, F> {
                 }
                 TokenKind::Slash => {
                     self.advance(); // Skip '/'
-                    let rhs = self.grouping()?;
+                    let rhs = self.unary()?;
                     let id = self.prepare_node(Span::new_from(
                         self.span(lhs.id).start,
                         self.span(rhs.id).end,
@@ -237,6 +237,23 @@ impl<F: File> Parser<'_, F> {
         }
 
         Ok(lhs)
+    }
+
+    fn unary(&mut self) -> Result<Expression> {
+        let op = self.eat(&[TokenKind::Minus, TokenKind::Bang]);
+        let rhs = self.grouping()?;
+        match op {
+            Some(tok) => {
+                let span = Span::new_from(tok.span.start, self.span(rhs.id).end);
+                let kind = match tok.kind {
+                    TokenKind::Minus => ExpressionKind::Neg(Box::new(rhs)),
+                    TokenKind::Bang => ExpressionKind::Not(Box::new(rhs)),
+                    _ => unreachable!(),
+                };
+                Ok(Expression::new(kind, self.prepare_node(span)))
+            }
+            None => Ok(rhs),
+        }
     }
 
     fn grouping(&mut self) -> Result<Expression> {

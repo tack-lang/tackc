@@ -25,4 +25,6 @@ pub enum ExpressionKind {
     Sub(Box<Expression>, Box<Expression>),
     Mul(Box<Expression>, Box<Expression>),
     Div(Box<Expression>, Box<Expression>),
+    Neg(Box<Expression>),
+    Not(Box<Expression>),
 }
