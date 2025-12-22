@@ -74,7 +74,7 @@ CallNB = ExprNB L_PAREN ArgumentList? R_PAREN ; (* No ArgumentListNB *)
 IndexNB = ExprNB L_BRACKET Expr R_BRACKET ; (* Uses Expr inside brackets *)
 
 InfixOp = PLUS | DASH | STAR | SLASH | EQ_EQ | BANG_EQ | GT | LT | GT_EQ | LT_EQ ;
-PrefixOp = PLUS | DASH ;
+PrefixOp = DASH | BANG ;
 
 Primary = IDENTIFIER
     | U8
