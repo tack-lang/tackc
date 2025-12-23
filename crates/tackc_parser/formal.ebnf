@@ -1,14 +1,19 @@
 Expression = Term ;
 
 Term = Factor ( ( PLUS | MINUS ) Factor )* ;
-Factor = Grouping ( ( STAR | SLASH ) Grouping )* ;
+Factor = Unary ( ( STAR | SLASH ) Unary )* ;
 
-Unary = ( MINUS | BANG )? Unary
-    | Grouping
+Unary = ( MINUS | BANG ) Unary
+    | Postfix
     ;
+Postfix = Grouping (L_PAREN ArgList? R_PAREN
+    | L_BRACKET Expression R_BRACKET
+    | DOT IDENTIFIER)* ;
 Grouping = L_PAREN Expression R_PAREN
     | Primary ;
 Primary = IDENTIFIER
     | INT_LIT
     | FLOAT_LIT
     ;
+
+ArgList = Expression ( COMMA Expression )* COMMA? ;

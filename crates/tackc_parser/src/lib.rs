@@ -118,7 +118,7 @@ impl<'src, F: File> Parser<'src, F> {
         &mut self,
         err: Result<T>,
         snapshot: ParserSnapshot,
-        cancel: TokenKind,
+        cancel: &[TokenKind],
     ) -> Option<T> {
         if err.is_err() {
             self.restore(snapshot);
@@ -127,7 +127,7 @@ impl<'src, F: File> Parser<'src, F> {
         self.report_error(err)
     }
 
-    fn synchronize(&mut self, cancel: TokenKind) {
+    fn synchronize(&mut self, cancel: &[TokenKind]) {
         let mut depth: u32 = 0;
 
         loop {
@@ -141,7 +141,7 @@ impl<'src, F: File> Parser<'src, F> {
                 TokenKind::RBrace | TokenKind::RBracket | TokenKind::RParen => {
                     depth = depth.saturating_sub(1);
                 }
-                kind if kind == cancel && depth == 0 => {
+                kind if cancel.contains(&kind) && depth == 0 => {
                     return;
                 }
                 _ => {}
@@ -254,7 +254,7 @@ impl<F: File> Parser<'_, F> {
 
     fn unary(&mut self) -> Result<Expression> {
         let Some(op) = self.eat(&[TokenKind::Minus, TokenKind::Bang]) else {
-            return self.grouping();
+            return self.postfix();
         };
         let rhs = self.unary()?;
         let span = Span::new_from(op.span.start, self.span(rhs.id).end);
@@ -266,6 +266,78 @@ impl<F: File> Parser<'_, F> {
         Ok(Expression::new(kind, self.prepare_node(span)))
     }
 
+    fn postfix(&mut self) -> Result<Expression> {
+        let mut lhs = self.grouping()?;
+        while let Some(tok) = self.peek() {
+            match tok.kind {
+                TokenKind::Dot => {
+                    self.advance();
+                    let ident_res = self.expect(&[TokenKind::Ident], Some("identifier"));
+                    let ident = self.report_error(ident_res);
+                    let span = Span::new_from(
+                        self.span(lhs.id).start,
+                        ident.map_or(tok.span.end, |tok| tok.span.end),
+                    );
+                    lhs = Expression::new(
+                        ExpressionKind::Member(Box::new(lhs), ident.map(Into::into)),
+                        self.prepare_node(span),
+                    );
+                }
+                TokenKind::LParen => {
+                    self.advance();
+                    let mut args = Vec::new();
+                    lhs = loop {
+                        if let Some(closing) = self.eat(&[TokenKind::RParen]) {
+                            let span = Span::new_from(self.span(lhs.id).start, closing.span.end);
+                            break Expression::new(
+                                ExpressionKind::Call(Box::new(lhs), args),
+                                self.prepare_node(span),
+                            );
+                        }
+
+                        let snapshot = self.snapshot();
+                        let expr_res = self.expression();
+                        let expr = self.handle_error_sync(
+                            expr_res,
+                            snapshot,
+                            &[TokenKind::RParen, TokenKind::Comma],
+                        );
+                        args.push(expr);
+                        if self.eat(&[TokenKind::Comma]).is_none() {
+                            let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
+                            let closing = self.report_error(closing_res);
+                            let span = Span::new_from(
+                                self.span(lhs.id).start,
+                                closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+                            );
+                            break Expression::new(
+                                ExpressionKind::Call(Box::new(lhs), args),
+                                self.prepare_node(span),
+                            );
+                        }
+                    };
+                }
+                TokenKind::LBracket => {
+                    self.advance();
+                    let snapshot = self.snapshot();
+                    let expr_res = self.expression();
+                    let expr = self.handle_error_sync(
+                            expr_res,
+                            snapshot,
+                            &[TokenKind::RBracket],
+                        );
+                    let closing_res = self.expect(&[TokenKind::RBracket], Some("']'"));
+                    let closing = self.report_error(closing_res);
+                    let span = Span::new_from(tok.span.start, closing.map_or_else(|| self.loc(), |tok| tok.span.end));
+
+                    lhs = Expression::new(ExpressionKind::Index(Box::new(lhs), expr.map(Box::new)), self.prepare_node(span));
+                }
+                _ => break,
+            }
+        }
+        Ok(lhs)
+    }
+
     fn grouping(&mut self) -> Result<Expression> {
         let Some(opening) = self.eat(&[TokenKind::LParen]) else {
             return self.primary();
@@ -273,7 +345,7 @@ impl<F: File> Parser<'_, F> {
 
         let snapshot = self.snapshot();
         let inner_result = self.expression();
-        let inner = self.handle_error_sync(inner_result, snapshot, TokenKind::RParen);
+        let inner = self.handle_error_sync(inner_result, snapshot, &[TokenKind::RParen]);
         let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
         let closing = self.report_error(closing_res);
 
