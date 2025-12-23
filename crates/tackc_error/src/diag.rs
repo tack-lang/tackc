@@ -36,7 +36,7 @@ impl Diag {
     }
 
     /// Create a [`Diag`] with multiple spans, but without a local message
-    /// 
+    ///
     /// # Panics
     /// This function will panic if `spans` is empty.
     pub fn with_spans<S, I: IntoIterator<Item = Span>>(msg: S, spans: I) -> Self
@@ -72,7 +72,9 @@ impl Diag {
         _ = write!(f, "{}", self.msg);
         _ = write!(f, "\n  --> {}", file.path().display());
         if let Some((span, _local_msg)) = &self.span {
-            let (line, column) = file.line_and_column(span[0].start).expect("file is too short");
+            let (line, column) = file
+                .line_and_column(span[0].start)
+                .expect("file is too short");
             _ = write!(f, ":{line}:{column}");
         }
 

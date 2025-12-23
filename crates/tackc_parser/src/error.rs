@@ -25,7 +25,10 @@ impl ParseError {
         Self::Eof(expected.map(Into::into))
     }
 
-    pub fn other<S: Into<Cow<'static, str>>, Sp: Into<Span>, I: IntoIterator<Item = Sp>>(msg: S, tok: I) -> Self {
+    pub fn other<S: Into<Cow<'static, str>>, Sp: Into<Span>, I: IntoIterator<Item = Sp>>(
+        msg: S,
+        tok: I,
+    ) -> Self {
         Self::Other(msg.into(), tok.into_iter().map(Into::into).collect())
     }
 
@@ -48,7 +51,9 @@ impl ParseError {
                 Span::eof(file),
             )
             .display(file),
-            Self::Other(msg, spans) => Diag::with_spans(msg.to_string(), spans.clone()).display(file),
+            Self::Other(msg, spans) => {
+                Diag::with_spans(msg.to_string(), spans.clone()).display(file)
+            }
         }
     }
 }
