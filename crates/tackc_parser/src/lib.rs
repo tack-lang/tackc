@@ -282,9 +282,9 @@ impl<F: File> Parser<'_, F> {
         }
         if !ops.is_empty() {
             self.push_err(ParseError::other(
-                    "comparison operators cannot be chained",
-                    ops,
-                ));
+                "comparison operators cannot be chained",
+                ops,
+            ));
         }
         Ok(lhs)
     }
