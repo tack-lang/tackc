@@ -110,8 +110,12 @@ impl<'src, F: File> Parser<'src, F> {
         open
     }
 
+    fn push_err(&mut self, e: ParseError) {
+        self.errors.push(e);
+    }
+
     fn report_error<T>(&mut self, err: Result<T>) -> Option<T> {
-        err.map_err(|e| self.errors.push(e)).ok()
+        err.map_err(|e| self.push_err(e)).ok()
     }
 
     fn handle_error_sync<T>(
@@ -185,7 +189,8 @@ impl<F: File> Parser<'_, F> {
         let mut args = Vec::new();
         loop {
             if let Some(tok) = self.peek()
-            && tok.kind == closing {
+                && tok.kind == closing
+            {
                 break;
             }
 
@@ -202,7 +207,22 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn expression(&mut self) -> Result<Expression> {
-        self.term()
+        self.comparison()
+    }
+
+    fn comparison(&mut self) -> Result<Expression> {
+        self.binary_expr(
+            &[
+                (TokenKind::Gt, BinOp::Gt),
+                (TokenKind::Lt, BinOp::Lt),
+                (TokenKind::GtEq, BinOp::GtEq),
+                (TokenKind::LtEq, BinOp::LtEq),
+                (TokenKind::EqEq, BinOp::Eq),
+                (TokenKind::BangEq, BinOp::NotEq),
+            ],
+            Self::term,
+            true,
+        )
     }
 
     fn term(&mut self) -> Result<Expression> {
@@ -212,6 +232,7 @@ impl<F: File> Parser<'_, F> {
                 (TokenKind::Minus, BinOp::Sub),
             ],
             Self::factor,
+            false,
         )
     }
 
@@ -222,15 +243,19 @@ impl<F: File> Parser<'_, F> {
                 (TokenKind::Slash, BinOp::Div),
             ],
             Self::unary,
+            false,
         )
     }
 
+    #[inline]
     fn binary_expr(
         &mut self,
         tokens: &[(TokenKind, BinOp)],
         next: fn(&mut Self) -> Result<Expression>,
+        comparison: bool,
     ) -> Result<Expression> {
         let mut lhs = next(self)?;
+        let mut ops = Vec::new();
         while let Some(peeked) = self.peek() {
             let Some((_, op)) = tokens.iter().find(|(tok, _)| peeked.kind == *tok) else {
                 break;
@@ -246,6 +271,20 @@ impl<F: File> Parser<'_, F> {
                 ExpressionKind::Binary(*op, Box::new(lhs), Box::new(rhs)),
                 id,
             );
+
+            if comparison
+                && let Some(peeked2) = self.peek()
+                && let Some((_, _)) = tokens.iter().find(|(tok, _)| peeked2.kind == *tok)
+            {
+                ops.push(peeked);
+                ops.push(peeked2);
+            }
+        }
+        if !ops.is_empty() {
+            self.push_err(ParseError::other(
+                    "comparison operators cannot be chained",
+                    ops,
+                ));
         }
         Ok(lhs)
     }

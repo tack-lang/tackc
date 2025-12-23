@@ -100,6 +100,13 @@ pub enum BinOp {
     Sub,
     Mul,
     Div,
+
+    Gt,
+    Lt,
+    GtEq,
+    LtEq,
+    Eq,
+    NotEq,
 }
 
 impl Display for BinOp {
@@ -109,6 +116,12 @@ impl Display for BinOp {
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
+            Self::Gt => write!(f, ">"),
+            Self::Lt => write!(f, "<"),
+            Self::GtEq => write!(f, ">="),
+            Self::LtEq => write!(f, "<="),
+            Self::Eq => write!(f, "=="),
+            Self::NotEq => write!(f, "!="),
         }
     }
 }

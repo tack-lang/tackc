@@ -93,7 +93,7 @@ Path = IDENTIFIER ( DOT IDENTIFIER )* ;
 
 (*
     Operators (in precedence order, lowest to highest):
-    Comparison (<, >, <=, >=, ==, !=, left-associative)
+    Comparison (<, >, <=, >=, ==, !=, no associativity)
 
     Term (+, -, left-associative)
 

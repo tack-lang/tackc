@@ -13,6 +13,7 @@ pub type Result<T, E = ParseError> = StdResult<T, E>;
 pub enum ParseError {
     Expected(Option<Cow<'static, str>>, Token),
     Eof(Option<Cow<'static, str>>),
+    Other(Cow<'static, str>, Vec<Span>),
 }
 
 impl ParseError {
@@ -22,6 +23,10 @@ impl ParseError {
 
     pub fn eof(expected: Option<&'static str>) -> Self {
         Self::Eof(expected.map(Into::into))
+    }
+
+    pub fn other<S: Into<Cow<'static, str>>, Sp: Into<Span>, I: IntoIterator<Item = Sp>>(msg: S, tok: I) -> Self {
+        Self::Other(msg.into(), tok.into_iter().map(Into::into).collect())
     }
 
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
@@ -43,6 +48,7 @@ impl ParseError {
                 Span::eof(file),
             )
             .display(file),
+            Self::Other(msg, spans) => Diag::with_spans(msg.to_string(), spans.clone()).display(file),
         }
     }
 }
