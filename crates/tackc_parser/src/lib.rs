@@ -184,7 +184,8 @@ impl<F: File> Parser<'_, F> {
     ) -> Vec<Option<T>> {
         let mut args = Vec::new();
         loop {
-            if self.eat(&[closing]).is_some() {
+            if let Some(tok) = self.peek()
+            && tok.kind == closing {
                 break;
             }
 
