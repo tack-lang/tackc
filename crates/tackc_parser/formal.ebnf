@@ -1,5 +1,6 @@
 Expression = Term ;
 
+Comparison = Term ( ( GT | LT | GT_EQ | LT_EQ | EQ_EQ | BANG_EQ ) Term )?
 Term = Factor ( ( PLUS | MINUS ) Factor )* ;
 Factor = Unary ( ( STAR | SLASH ) Unary )* ;
 

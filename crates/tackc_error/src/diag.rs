@@ -8,7 +8,7 @@ use tackc_span::Span;
 /// Diagnostic error struct
 #[derive(Serialize, Deserialize)]
 pub struct Diag {
-    span: Option<(Span, Option<Cow<'static, str>>)>,
+    span: Option<(Vec<Span>, Option<Cow<'static, str>>)>,
     msg: Cow<'static, str>,
 }
 
@@ -30,7 +30,23 @@ impl Diag {
         S: Into<Cow<'static, str>>,
     {
         Self {
-            span: Some((span, None)),
+            span: Some((vec![span], None)),
+            msg: msg.into(),
+        }
+    }
+
+    /// Create a [`Diag`] with multiple spans, but without a local message
+    /// 
+    /// # Panics
+    /// This function will panic if `spans` is empty.
+    pub fn with_spans<S, I: IntoIterator<Item = Span>>(msg: S, spans: I) -> Self
+    where
+        S: Into<Cow<'static, str>>,
+    {
+        let spans: Vec<Span> = spans.into_iter().collect();
+        assert!(!spans.is_empty(), "`spans` cannot be empty!");
+        Self {
+            span: Some((spans, None)),
             msg: msg.into(),
         }
     }
@@ -42,7 +58,7 @@ impl Diag {
         S2: Into<Cow<'static, str>>,
     {
         Self {
-            span: Some((span, Some(local_msg.into()))),
+            span: Some((vec![span], Some(local_msg.into()))),
             msg: msg.into(),
         }
     }
@@ -56,7 +72,7 @@ impl Diag {
         _ = write!(f, "{}", self.msg);
         _ = write!(f, "\n  --> {}", file.path().display());
         if let Some((span, _local_msg)) = &self.span {
-            let (line, column) = file.line_and_column(span.start).expect("file is too short");
+            let (line, column) = file.line_and_column(span[0].start).expect("file is too short");
             _ = write!(f, ":{line}:{column}");
         }
 

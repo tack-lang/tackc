@@ -21,6 +21,12 @@ pub struct Token {
     pub lexeme: Interned<str>,
 }
 
+impl From<Token> for Span {
+    fn from(value: Token) -> Self {
+        value.span
+    }
+}
+
 impl Token {
     /// Create a new token.
     pub const fn new(span: Span, kind: TokenKind, lexeme: Interned<str>) -> Self {
