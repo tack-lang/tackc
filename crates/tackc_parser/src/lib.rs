@@ -176,6 +176,30 @@ impl<'src, F: File> Parser<'src, F> {
 }
 
 impl<F: File> Parser<'_, F> {
+    fn delimited<T>(
+        &mut self,
+        seperator: TokenKind,
+        closing: TokenKind,
+        parse: fn(&mut Self) -> Result<T>,
+    ) -> Vec<Option<T>> {
+        let mut args = Vec::new();
+        loop {
+            if self.eat(&[closing]).is_some() {
+                break;
+            }
+
+            let snapshot = self.snapshot();
+            let expr_res = parse(self);
+            let expr = self.handle_error_sync(expr_res, snapshot, &[closing, seperator]);
+            args.push(expr);
+            if self.eat(&[seperator]).is_none() {
+                break;
+            }
+        }
+
+        args
+    }
+
     fn expression(&mut self) -> Result<Expression> {
         self.term()
     }
@@ -272,34 +296,17 @@ impl<F: File> Parser<'_, F> {
 
     fn parse_call(&mut self, lhs: Expression) -> Expression {
         self.advance();
-        let mut args = Vec::new();
-        loop {
-            if let Some(closing) = self.eat(&[TokenKind::RParen]) {
-                let span = Span::new_from(self.span(lhs.id).start, closing.span.end);
-                break Expression::new(
-                    ExpressionKind::Call(Box::new(lhs), args),
-                    self.prepare_node(span),
-                );
-            }
-
-            let snapshot = self.snapshot();
-            let expr_res = self.expression();
-            let expr =
-                self.handle_error_sync(expr_res, snapshot, &[TokenKind::RParen, TokenKind::Comma]);
-            args.push(expr);
-            if self.eat(&[TokenKind::Comma]).is_none() {
-                let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
-                let closing = self.report_error(closing_res);
-                let span = Span::new_from(
-                    self.span(lhs.id).start,
-                    closing.map_or_else(|| self.loc(), |tok| tok.span.end),
-                );
-                break Expression::new(
-                    ExpressionKind::Call(Box::new(lhs), args),
-                    self.prepare_node(span),
-                );
-            }
-        }
+        let args = self.delimited(TokenKind::Comma, TokenKind::RParen, Self::expression);
+        let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
+        let closing = self.report_error(closing_res);
+        let span = Span::new_from(
+            self.span(lhs.id).start,
+            closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+        );
+        Expression::new(
+            ExpressionKind::Call(Box::new(lhs), args),
+            self.prepare_node(span),
+        )
     }
 
     fn parse_access(&mut self, lhs: Expression) -> Expression {
