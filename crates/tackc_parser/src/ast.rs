@@ -1,8 +1,25 @@
 use std::fmt::Display;
 
 use tackc_global::{Global, Interned};
+use tackc_lexer::Token;
+use tackc_span::Span;
 
 use crate::NodeId;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Symbol(pub Interned<str>, pub Span);
+
+impl Symbol {
+    pub fn display<'a>(&self, global: &'a Global) -> &'a str {
+        self.0.display(global)
+    }
+}
+
+impl From<Token> for Symbol {
+    fn from(value: Token) -> Self {
+        Self(value.lexeme, value.span)
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Expression {
@@ -24,6 +41,30 @@ impl Expression {
                 || String::from("(<ERROR>)"),
                 |expr| format!("({})", expr.display(global)),
             ),
+            ExpressionKind::Member(lhs, sym) => format!(
+                "(. {} {})",
+                lhs.display(global),
+                sym.map_or("<ERROR>", |sym| sym.display(global))
+            ),
+            ExpressionKind::Call(lhs, args) => {
+                let arg_list = args
+                    .iter()
+                    .map(|expr| {
+                        expr.as_ref()
+                            .map_or_else(|| "<ERROR>".to_string(), |e| e.display(global))
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                let formatted_args = if arg_list.is_empty() {
+                    String::default()
+                } else {
+                    format!(" {arg_list}")
+                };
+
+                format!("(call {}{})", lhs.display(global), formatted_args)
+            },
+            ExpressionKind::Index(lhs, index) => format!("(index {} {})", lhs.display(global), index.as_ref().map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))),
 
             ExpressionKind::Binary(op, lhs, rhs) => {
                 format!("({op} {} {})", lhs.display(global), rhs.display(global))
@@ -39,6 +80,9 @@ pub enum ExpressionKind {
     FloatLit(Interned<str>),
     Ident(Interned<str>),
     Grouping(Option<Box<Expression>>),
+    Member(Box<Expression>, Option<Symbol>),
+    Call(Box<Expression>, Vec<Option<Expression>>),
+    Index(Box<Expression>, Option<Box<Expression>>),
 
     Binary(BinOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
