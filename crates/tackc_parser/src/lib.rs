@@ -181,74 +181,47 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn term(&mut self) -> Result<Expression> {
-        let mut lhs = self.factor()?;
-
-        while let Some(tok) = self.peek() {
-            match tok.kind {
-                TokenKind::Plus => {
-                    self.advance(); // Skip '+'
-                    let rhs = self.factor()?;
-                    let id = self.prepare_node(Span::new_from(
-                        self.span(lhs.id).start,
-                        self.span(rhs.id).end,
-                    ));
-                    lhs = Expression::new(
-                        ExpressionKind::Binary(BinOp::Add, Box::new(lhs), Box::new(rhs)),
-                        id,
-                    );
-                }
-                TokenKind::Minus => {
-                    self.advance(); // Skip '-'
-                    let rhs = self.factor()?;
-                    let id = self.prepare_node(Span::new_from(
-                        self.span(lhs.id).start,
-                        self.span(rhs.id).end,
-                    ));
-                    lhs = Expression::new(
-                        ExpressionKind::Binary(BinOp::Sub, Box::new(lhs), Box::new(rhs)),
-                        id,
-                    );
-                }
-                _ => break,
-            }
-        }
-
-        Ok(lhs)
+        self.binary_expr(
+            &[
+                (TokenKind::Plus, BinOp::Add),
+                (TokenKind::Minus, BinOp::Sub),
+            ],
+            Self::factor,
+        )
     }
 
     fn factor(&mut self) -> Result<Expression> {
-        let mut lhs = self.unary()?;
+        self.binary_expr(
+            &[
+                (TokenKind::Star, BinOp::Mul),
+                (TokenKind::Slash, BinOp::Div),
+            ],
+            Self::unary,
+        )
+    }
 
-        while let Some(tok) = self.peek() {
-            match tok.kind {
-                TokenKind::Star => {
-                    self.advance(); // Skip '*'
-                    let rhs = self.unary()?;
-                    let id = self.prepare_node(Span::new_from(
-                        self.span(lhs.id).start,
-                        self.span(rhs.id).end,
-                    ));
-                    lhs = Expression::new(
-                        ExpressionKind::Binary(BinOp::Mul, Box::new(lhs), Box::new(rhs)),
-                        id,
-                    );
-                }
-                TokenKind::Slash => {
-                    self.advance(); // Skip '/'
-                    let rhs = self.unary()?;
-                    let id = self.prepare_node(Span::new_from(
-                        self.span(lhs.id).start,
-                        self.span(rhs.id).end,
-                    ));
-                    lhs = Expression::new(
-                        ExpressionKind::Binary(BinOp::Div, Box::new(lhs), Box::new(rhs)),
-                        id,
-                    );
-                }
-                _ => break,
-            }
+    fn binary_expr(
+        &mut self,
+        tokens: &[(TokenKind, BinOp)],
+        next: fn(&mut Self) -> Result<Expression>,
+    ) -> Result<Expression> {
+        let mut lhs = next(self)?;
+        while let Some(peeked) = self.peek() {
+            let Some((_, op)) = tokens.iter().find(|(tok, _)| peeked.kind == *tok) else {
+                break;
+            };
+
+            self.advance(); // Skip operator
+            let rhs = next(self)?;
+            let id = self.prepare_node(Span::new_from(
+                self.span(lhs.id).start,
+                self.span(rhs.id).end,
+            ));
+            lhs = Expression::new(
+                ExpressionKind::Binary(*op, Box::new(lhs), Box::new(rhs)),
+                id,
+            );
         }
-
         Ok(lhs)
     }
 
@@ -270,74 +243,77 @@ impl<F: File> Parser<'_, F> {
         let mut lhs = self.grouping()?;
         while let Some(tok) = self.peek() {
             match tok.kind {
-                TokenKind::Dot => {
-                    self.advance();
-                    let ident_res = self.expect(&[TokenKind::Ident], Some("identifier"));
-                    let ident = self.report_error(ident_res);
-                    let span = Span::new_from(
-                        self.span(lhs.id).start,
-                        ident.map_or(tok.span.end, |tok| tok.span.end),
-                    );
-                    lhs = Expression::new(
-                        ExpressionKind::Member(Box::new(lhs), ident.map(Into::into)),
-                        self.prepare_node(span),
-                    );
-                }
-                TokenKind::LParen => {
-                    self.advance();
-                    let mut args = Vec::new();
-                    lhs = loop {
-                        if let Some(closing) = self.eat(&[TokenKind::RParen]) {
-                            let span = Span::new_from(self.span(lhs.id).start, closing.span.end);
-                            break Expression::new(
-                                ExpressionKind::Call(Box::new(lhs), args),
-                                self.prepare_node(span),
-                            );
-                        }
-
-                        let snapshot = self.snapshot();
-                        let expr_res = self.expression();
-                        let expr = self.handle_error_sync(
-                            expr_res,
-                            snapshot,
-                            &[TokenKind::RParen, TokenKind::Comma],
-                        );
-                        args.push(expr);
-                        if self.eat(&[TokenKind::Comma]).is_none() {
-                            let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
-                            let closing = self.report_error(closing_res);
-                            let span = Span::new_from(
-                                self.span(lhs.id).start,
-                                closing.map_or_else(|| self.loc(), |tok| tok.span.end),
-                            );
-                            break Expression::new(
-                                ExpressionKind::Call(Box::new(lhs), args),
-                                self.prepare_node(span),
-                            );
-                        }
-                    };
-                }
-                TokenKind::LBracket => {
-                    self.advance();
-                    let snapshot = self.snapshot();
-                    let expr_res = self.expression();
-                    let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket]);
-                    let closing_res = self.expect(&[TokenKind::RBracket], Some("']'"));
-                    let closing = self.report_error(closing_res);
-                    let span = Span::new_from(
-                        tok.span.start,
-                        closing.map_or_else(|| self.loc(), |tok| tok.span.end),
-                    );
-
-                    lhs = Expression::new(
-                        ExpressionKind::Index(Box::new(lhs), expr.map(Box::new)),
-                        self.prepare_node(span),
-                    );
-                }
+                TokenKind::Dot => lhs = self.parse_access(lhs),
+                TokenKind::LParen => lhs = self.parse_call(lhs),
+                TokenKind::LBracket => lhs = self.parse_index(lhs),
                 _ => break,
             }
         }
         Ok(lhs)
+    }
+
+    fn parse_index(&mut self, lhs: Expression) -> Expression {
+        self.advance();
+        let snapshot = self.snapshot();
+        let expr_res = self.expression();
+        let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket]);
+        let closing_res = self.expect(&[TokenKind::RBracket], Some("']'"));
+        let closing = self.report_error(closing_res);
+        let span = Span::new_from(
+            self.span(lhs.id).start,
+            closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+        );
+
+        Expression::new(
+            ExpressionKind::Index(Box::new(lhs), expr.map(Box::new)),
+            self.prepare_node(span),
+        )
+    }
+
+    fn parse_call(&mut self, lhs: Expression) -> Expression {
+        self.advance();
+        let mut args = Vec::new();
+        loop {
+            if let Some(closing) = self.eat(&[TokenKind::RParen]) {
+                let span = Span::new_from(self.span(lhs.id).start, closing.span.end);
+                break Expression::new(
+                    ExpressionKind::Call(Box::new(lhs), args),
+                    self.prepare_node(span),
+                );
+            }
+
+            let snapshot = self.snapshot();
+            let expr_res = self.expression();
+            let expr =
+                self.handle_error_sync(expr_res, snapshot, &[TokenKind::RParen, TokenKind::Comma]);
+            args.push(expr);
+            if self.eat(&[TokenKind::Comma]).is_none() {
+                let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
+                let closing = self.report_error(closing_res);
+                let span = Span::new_from(
+                    self.span(lhs.id).start,
+                    closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+                );
+                break Expression::new(
+                    ExpressionKind::Call(Box::new(lhs), args),
+                    self.prepare_node(span),
+                );
+            }
+        }
+    }
+
+    fn parse_access(&mut self, lhs: Expression) -> Expression {
+        self.advance();
+        let ident_res = self.expect(&[TokenKind::Ident], Some("identifier"));
+        let ident = self.report_error(ident_res);
+        let span = Span::new_from(
+            self.span(lhs.id).start,
+            ident.map_or_else(|| self.loc(), |tok| tok.span.end),
+        );
+        Expression::new(
+            ExpressionKind::Member(Box::new(lhs), ident.map(Into::into)),
+            self.prepare_node(span),
+        )
     }
 
     fn grouping(&mut self) -> Result<Expression> {
