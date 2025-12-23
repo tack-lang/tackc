@@ -321,16 +321,18 @@ impl<F: File> Parser<'_, F> {
                     self.advance();
                     let snapshot = self.snapshot();
                     let expr_res = self.expression();
-                    let expr = self.handle_error_sync(
-                            expr_res,
-                            snapshot,
-                            &[TokenKind::RBracket],
-                        );
+                    let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket]);
                     let closing_res = self.expect(&[TokenKind::RBracket], Some("']'"));
                     let closing = self.report_error(closing_res);
-                    let span = Span::new_from(tok.span.start, closing.map_or_else(|| self.loc(), |tok| tok.span.end));
+                    let span = Span::new_from(
+                        tok.span.start,
+                        closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+                    );
 
-                    lhs = Expression::new(ExpressionKind::Index(Box::new(lhs), expr.map(Box::new)), self.prepare_node(span));
+                    lhs = Expression::new(
+                        ExpressionKind::Index(Box::new(lhs), expr.map(Box::new)),
+                        self.prepare_node(span),
+                    );
                 }
                 _ => break,
             }

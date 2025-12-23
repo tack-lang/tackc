@@ -63,8 +63,14 @@ impl Expression {
                 };
 
                 format!("(call {}{})", lhs.display(global), formatted_args)
-            },
-            ExpressionKind::Index(lhs, index) => format!("(index {} {})", lhs.display(global), index.as_ref().map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))),
+            }
+            ExpressionKind::Index(lhs, index) => format!(
+                "(index {} {})",
+                lhs.display(global),
+                index
+                    .as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))
+            ),
 
             ExpressionKind::Binary(op, lhs, rhs) => {
                 format!("({op} {} {})", lhs.display(global), rhs.display(global))
