@@ -5,8 +5,7 @@ use tackc_error::iter::IteratorExt;
 use tackc_file::BasicFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-//use tackc_parser::ast::{AstNode, Program, ProgramExt};
-//use tackc_analyze::resolution::resolve;
+use tackc_parser::Parser;
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
@@ -24,31 +23,28 @@ pub fn run(data: &[u8]) {
     let lexer = Lexer::new(&file, &global).consume_reporter(|e| {
         errors.push(e);
     });
-    let _tokens = lexer.collect::<Vec<_>>();
+    let tokens = lexer.collect::<Vec<_>>();
 
     if !errors.is_empty() {
         for e in errors {
             e.to_string();
         }
-        //return;
+        return;
     }
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    /*let res = Program::parse_file(tokens.iter().copied(), &global, &file);
-    let prog = match res {
-        Ok(s) => {
+    let (res, errors) = Parser::parse(&tokens, &file, &global);
+    for e in errors {
+        e.display(&file, &global);
+    }
+    let _prog = match res {
+        Some(s) => {
             s.display(&global);
             s
         }
-        Err(e) => {
-            e.display(&file, &global);
+        None => {
             return;
         }
     };
-
-    let (errors, _) = resolve(&mut [prog], &global);
-    for _e in errors {
-        //e.display(&file);
-    }*/
 }
