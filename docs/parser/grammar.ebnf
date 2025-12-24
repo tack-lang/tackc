@@ -11,6 +11,7 @@ ModStmt = MOD Path SEMICOLON ;
 Stmt = Item
     | LetStmt
     | ExprStmt
+    | AssignmentStmt
     ;
 
 LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
@@ -20,6 +21,10 @@ LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
     The second requirement can't be verified in parsing, so it's verified later.
 *)
 ExprStmt = Expr SEMICOLON? ;
+(*
+    Not every expression can go into the left hand side of AssignmentStmt, but this can be verified later.
+*)
+AssignmentStmt = Expr EQ Expr SEMICOLON ;
 
 Item = ConstItem
     | FuncItem
