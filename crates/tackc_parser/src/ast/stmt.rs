@@ -1,4 +1,5 @@
 use tackc_global::Global;
+use tackc_lexer::Token;
 
 use crate::{
     NodeId,
@@ -34,6 +35,7 @@ impl Statement {
                 format!("let {ident}{ty}{expr};")
             },
             StatementKind::Item(item) => item.display(global),
+            StatementKind::ExpressionStatement(stmt) => format!("{}{}", stmt.expr.display(global), stmt.semi.map_or("", |_| ";")),
         }
     }
 }
@@ -41,10 +43,16 @@ impl Statement {
 pub enum StatementKind {
     LetStatement(Box<LetStatement>),
     Item(Item),
+    ExpressionStatement(Box<ExpressionStatement>),
 }
 
 pub struct LetStatement {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Option<Expression>>,
     pub ident: Option<Symbol>,
+}
+
+pub struct ExpressionStatement {
+    pub expr: Expression,
+    pub semi: Option<Token>,
 }
