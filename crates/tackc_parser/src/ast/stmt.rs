@@ -34,6 +34,7 @@ impl Statement {
                 };
                 format!("let {ident}{ty}{expr};")
             },
+            StatementKind::AssignmentStatement(stmt) => format!("{} = {};", stmt.lhs.display(global), stmt.rhs.as_ref().map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))),
             StatementKind::Item(item) => item.display(global),
             StatementKind::ExpressionStatement(stmt) => format!("{}{}", stmt.expr.display(global), stmt.semi.map_or("", |_| ";")),
         }
@@ -42,6 +43,7 @@ impl Statement {
 
 pub enum StatementKind {
     LetStatement(Box<LetStatement>),
+    AssignmentStatement(Box<AssignmentStatement>),
     Item(Item),
     ExpressionStatement(Box<ExpressionStatement>),
 }
@@ -50,6 +52,11 @@ pub struct LetStatement {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Option<Expression>>,
     pub ident: Option<Symbol>,
+}
+
+pub struct AssignmentStatement {
+    pub lhs: Expression,
+    pub rhs: Option<Expression>,
 }
 
 pub struct ExpressionStatement {
