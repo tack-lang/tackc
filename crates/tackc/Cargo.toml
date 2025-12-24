@@ -5,11 +5,11 @@ edition = "2024"
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
-rustc-hash.workspace = true
+rustc-hash = { workspace = true }
 #tackc_analyze = { workspace = true }
 tackc_error = { workspace = true }
 tackc_file = { workspace = true }
 tackc_global = { workspace = true }
 tackc_lexer = { workspace = true }
-tackc_parser = { version = "0.1.0", path = "../tackc_parser" }
+tackc_parser = { workspace = true }
 #tackc_parser = { workspace = true }

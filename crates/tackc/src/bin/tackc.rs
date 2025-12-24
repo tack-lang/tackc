@@ -1,4 +1,4 @@
-use std::num::NonZeroU64;
+use std::num::NonZeroU32;
 use std::path::PathBuf;
 
 use clap::{Parser as ClapParser, ValueEnum};
@@ -64,7 +64,7 @@ fn main() {
     let files_map = files
         .into_iter()
         .map(|file| (file.id(), file))
-        .collect::<FxHashMap<NonZeroU64, BasicFile>>();
+        .collect::<FxHashMap<NonZeroU32, BasicFile>>();
 
     let tokens = files_map
         .values()

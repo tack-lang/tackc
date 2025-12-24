@@ -1,5 +1,5 @@
 pub mod error;
-use std::num::NonZeroU64;
+use std::num::NonZeroU32;
 
 use error::{ParseError, Result};
 
@@ -9,20 +9,21 @@ use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
 use tackc_span::{Span, SpanValue};
+use thin_vec::ThinVec;
 
 use crate::ast::{BinOp, Expression, ExpressionKind, UnOp};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct NodeId {
-    id: NonZeroU64,
-    file: NonZeroU64,
+    id: NonZeroU32,
+    file: NonZeroU32,
 }
 
 #[derive(Debug, Clone, Copy)]
 struct ParserSnapshot {
     ptr: usize,
     errors: usize,
-    open: NonZeroU64,
+    open: NonZeroU32,
 }
 
 pub struct Parser<'src, F> {
@@ -32,7 +33,7 @@ pub struct Parser<'src, F> {
     ptr: usize,
     errors: Vec<ParseError>,
 
-    open: NonZeroU64,
+    open: NonZeroU32,
     spans: Vec<Span>,
 }
 
@@ -46,7 +47,7 @@ impl<'src, F: File> Parser<'src, F> {
             ptr: 0,
             errors: Vec::new(),
 
-            open: NonZeroU64::new(1).unwrap(),
+            open: NonZeroU32::new(1).unwrap(),
             spans: Vec::new(),
         }
     }
@@ -185,8 +186,8 @@ impl<F: File> Parser<'_, F> {
         seperator: TokenKind,
         closing: TokenKind,
         parse: fn(&mut Self) -> Result<T>,
-    ) -> Vec<Option<T>> {
-        let mut args = Vec::new();
+    ) -> ThinVec<Option<T>> {
+        let mut args = ThinVec::new();
         loop {
             if let Some(tok) = self.peek()
                 && tok.kind == closing
@@ -358,7 +359,7 @@ impl<F: File> Parser<'_, F> {
             ident.map_or_else(|| self.loc(), |tok| tok.span.end),
         );
         Expression::new(
-            ExpressionKind::Member(Box::new(lhs), ident.map(Into::into)),
+            ExpressionKind::Member(Box::new(lhs), ident.map(Into::into).map(Box::new)),
             self.prepare_node(span),
         )
     }

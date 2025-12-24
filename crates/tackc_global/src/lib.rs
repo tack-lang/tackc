@@ -147,6 +147,7 @@ impl Global {
         })
     }
 
+    #[inline]
     fn intern_value<T: ?Sized>(
         val: *const T,
         hash: NonZeroU64,
@@ -173,7 +174,7 @@ impl Global {
             assert!(interned.dyn_eq(&val), "Hash collision!");
         }
 
-        let ptr: *mut dyn Internable = self.arena.alloc(val);
+        let ptr: *mut dyn Internable = self.alloc(val);
 
         Self::intern_value(ptr, hash, &self.interned);
 
@@ -194,19 +195,31 @@ impl Global {
     /// # Panics
     /// This function will only panic in the event of a hash collision.
     pub fn intern_str<S: AsRef<str>>(&self, val: S) -> Interned<str> {
-        let mut hasher = Self::get_hasher();
-        val.as_ref().hash(&mut hasher);
-        let hash = hasher.finish_non_zero();
+        #[inline(never)]
+        fn inner(global: &Global, val: &str) -> Interned<str> {
+            let mut hasher = Global::get_hasher();
+            val.hash(&mut hasher);
+            let hash = hasher.finish_non_zero();
 
-        if let Some(interned) = self.interned_strs.get(&hash) {
-            assert!(*interned == val.as_ref(), "Hash collision!");
+            if let Some(interned) = global.interned_strs.get(&hash)
+                && *interned != val
+            {
+                Global::report_collision();
+            }
+
+            let ptr: *mut str = global.alloc_str(val);
+
+            Global::intern_value(ptr, hash, &global.interned_strs);
+
+            Interned(hash, PhantomData)
         }
+        inner(self, val.as_ref())
+    }
 
-        let ptr: *mut str = self.arena.alloc_str(val.as_ref());
-
-        Self::intern_value(ptr, hash, &self.interned_strs);
-
-        Interned(hash, PhantomData)
+    #[inline(never)]
+    #[cold]
+    fn report_collision() -> ! {
+        panic!("Hash collision!");
     }
 
     /// Gets a reference to the interned string value represented by `interned`.
@@ -223,5 +236,11 @@ impl Global {
     /// Allocates a value within the arena of this [`Global`] without interning it.
     pub fn alloc<T>(&self, val: T) -> &mut T {
         self.arena.alloc(val)
+    }
+
+    /// Allocates a string within the arena of this [`Global`] without interning it.
+    #[inline(never)] // `Bump::alloc_str` is huge, so don't inline.
+    pub fn alloc_str(&self, val: &str) -> &mut str {
+        self.arena.alloc_str(val)
     }
 }
