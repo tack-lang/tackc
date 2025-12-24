@@ -78,6 +78,12 @@ pub enum ExpressionKind {
     Unary(UnOp, Box<Expression>),
 }
 
+impl ExpressionKind {
+    pub const fn is_block(&self) -> bool {
+        false
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BinOp {
     Add,

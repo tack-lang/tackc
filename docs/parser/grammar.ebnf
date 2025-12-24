@@ -14,7 +14,12 @@ Stmt = Item
     ;
 
 LetStmt = LET IDENTIFIER ( COLON Expr )? ( EQ Expr )? SEMICOLON ;
-ExprStmt = Expr SEMICOLON ;
+(* 
+    The ending semicolon is only optional if the expression ends with a block, and it returns void.
+    The first requirement is too difficult to describe with a grammar.
+    The second requirement can't be verified in parsing, so it's verified later.
+*)
+ExprStmt = Expr SEMICOLON? ;
 
 Item = ConstItem
     | FuncItem

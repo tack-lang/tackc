@@ -13,8 +13,7 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{
-        BinOp, ConstItem, Expression, ExpressionKind, Item, ItemKind, LetStatement, Statement,
-        StatementKind, UnOp,
+        BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp
     },
     error::ErrorExt,
 };
@@ -95,8 +94,7 @@ impl<'src, F: File> Parser<'src, F> {
     }
 
     fn expect_peek(&self, kinds: &[TokenKind]) -> Result<Token> {
-        self.peek()
-            .ok_or_else(|| ParseError::eof(None))
+        self.expect_peek_all()
             .and_then(|token| {
                 if kinds.contains(&token.kind) {
                     Ok(token)
@@ -104,6 +102,11 @@ impl<'src, F: File> Parser<'src, F> {
                     Err(ParseError::expected(None, token))
                 }
             })
+    }
+
+    fn expect_peek_all(&self) -> Result<Token> {
+        self.peek()
+            .ok_or_else(|| ParseError::eof(None))
     }
 
     fn advance(&mut self) -> Option<Token> {
@@ -277,11 +280,11 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn statement(&mut self) -> Result<Statement> {
-        let tok = self.expect_peek(&[TokenKind::Let, TokenKind::Const])?;
+        let tok = self.expect_peek_all()?;
         match tok.kind {
             TokenKind::Let => self.let_statement(),
             TokenKind::Const => self.item_statement(),
-            _ => Err(ParseError::expected(None, tok)),
+            _ => self.expression_statement(),
         }
     }
 
@@ -325,6 +328,20 @@ impl<F: File> Parser<'_, F> {
             StatementKind::Item(item),
             self.prepare_node(span),
         ))
+    }
+
+    fn expression_statement(&mut self) -> Result<Statement> {
+        let expr = self.expression()?;
+        let semi = if expr.kind.is_block() {
+            self.eat(&[TokenKind::Semicolon])
+        } else {
+            self.expect_report(&[TokenKind::Semicolon], "';'")
+        };
+        let span = semi.map_or_else(|| self.span(expr.id), |tok| Span::new_from(self.span(expr.id).start, tok.span.end));
+        Ok(Statement::new(StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+            expr,
+            semi,
+        })), self.prepare_node(span)))
     }
 
     fn expression(&mut self) -> Result<Expression> {

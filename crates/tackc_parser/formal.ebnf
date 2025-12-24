@@ -1,8 +1,17 @@
 Item = ConstItem ;
 ConstItem = CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMICOLON ;
 
-Stmt = LetStmt ;
+Stmt = LetStmt
+    | ExprStmt
+    | Item
+    ;
 LetStmt = LET IDENTIFIER ( COLON Expression )? ( EQ Expression )? SEMICOLON ;
+(* 
+    The ending semicolon is only optional if the expression ends with a block, and it returns void.
+    The first requirement is too difficult to describe with a grammar.
+    This second requirement cannot be verified in parsing, so it's verified later.
+*)
+ExprStmt = Expr SEMICOLON? ;
 
 Expression = Comparison ;
 Comparison = Term ( ( GT | LT | GT_EQ | LT_EQ | EQ_EQ | BANG_EQ ) Term )?
