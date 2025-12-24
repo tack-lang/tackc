@@ -13,7 +13,7 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{
-        BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp
+        AssignmentStatement, BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp
     },
     error::ErrorExt,
 };
@@ -284,7 +284,7 @@ impl<F: File> Parser<'_, F> {
         match tok.kind {
             TokenKind::Let => self.let_statement(),
             TokenKind::Const => self.item_statement(),
-            _ => self.expression_statement(),
+            _ => self.statement_starting_with_expression(),
         }
     }
 
@@ -330,17 +330,36 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn expression_statement(&mut self) -> Result<Statement> {
+    fn statement_starting_with_expression(&mut self) -> Result<Statement> {
         let expr = self.expression()?;
+        match self.peek().map(|tok| tok.kind) {
+            Some(TokenKind::Eq) => self.assignment_statement(expr),
+            _ => Ok(self.expression_statement(expr)),
+        }
+    }
+
+    fn expression_statement(&mut self, expr: Expression) -> Statement {
         let semi = if expr.kind.is_block() {
             self.eat(&[TokenKind::Semicolon])
         } else {
             self.expect_report(&[TokenKind::Semicolon], "';'")
         };
         let span = semi.map_or_else(|| self.span(expr.id), |tok| Span::new_from(self.span(expr.id).start, tok.span.end));
-        Ok(Statement::new(StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+        Statement::new(StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
             expr,
             semi,
+        })), self.prepare_node(span))
+    }
+
+    fn assignment_statement(&mut self, lhs: Expression) -> Result<Statement> {
+        let _eq = self.expect(&[TokenKind::Eq])?;
+        let rhs = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
+        let span = Span::new_from(self.span(lhs.id).start, semi.map_or_else(|| self.loc(), |tok| tok.span.end));
+        Ok(Statement::new(StatementKind::AssignmentStatement(Box::new(AssignmentStatement {
+            lhs,
+            rhs,
         })), self.prepare_node(span)))
     }
 
