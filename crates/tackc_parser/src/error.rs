@@ -14,6 +14,7 @@ pub enum ParseError {
     Expected(Option<Cow<'static, str>>, Token),
     Eof(Option<Cow<'static, str>>),
     Other(Cow<'static, str>, Vec<Span>),
+    Dead,
 }
 
 impl ParseError {
@@ -22,7 +23,7 @@ impl ParseError {
             Self::Expected(expected, _) | Self::Eof(expected) => {
                 expected.get_or_insert(new.into());
             }
-            Self::Other(_, _) => {}
+            _ => {}
         }
     }
 
@@ -39,6 +40,10 @@ impl ParseError {
         tok: I,
     ) -> Self {
         Self::Other(msg.into(), tok.into_iter().map(Into::into).collect())
+    }
+
+    pub const fn dead() -> Self {
+        Self::Dead
     }
 
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
@@ -62,6 +67,9 @@ impl ParseError {
             .display(file),
             Self::Other(msg, spans) => {
                 Diag::with_spans(msg.to_string(), spans.clone()).display(file)
+            }
+            Self::Dead => {
+                String::from("error limit reached. What are you doing?")
             }
         }
     }
