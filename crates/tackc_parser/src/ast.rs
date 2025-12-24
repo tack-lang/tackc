@@ -5,6 +5,9 @@ use tackc_span::Span;
 pub mod expr;
 pub use expr::*;
 
+pub mod item;
+pub use item::*;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Symbol(pub Interned<str>, pub Span);
 
