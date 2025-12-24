@@ -778,6 +778,7 @@ dependencies = [
  "tackc_file",
  "tackc_global",
  "tackc_lexer",
+ "tackc_parser",
 ]
 
 [[package]]
