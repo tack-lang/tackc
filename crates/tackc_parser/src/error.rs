@@ -17,6 +17,15 @@ pub enum ParseError {
 }
 
 impl ParseError {
+    pub fn set_expected(&mut self, new: &'static str) {
+        match self {
+            Self::Expected(expected, _) | Self::Eof(expected) => {
+                expected.get_or_insert(new.into());
+            }
+            Self::Other(_, _) => {}
+        }
+    }
+
     pub fn expected(expected: Option<&'static str>, found: Token) -> Self {
         Self::Expected(expected.map(Into::into), found)
     }
@@ -55,5 +64,19 @@ impl ParseError {
                 Diag::with_spans(msg.to_string(), spans.clone()).display(file)
             }
         }
+    }
+}
+
+pub trait ErrorExt {
+    #[must_use]
+    fn set_expected(self, expected: &'static str) -> Self;
+}
+
+impl<T> ErrorExt for Result<T> {
+    fn set_expected(self, expected: &'static str) -> Self {
+        self.map_err(|mut err| {
+            err.set_expected(expected);
+            err
+        })
     }
 }

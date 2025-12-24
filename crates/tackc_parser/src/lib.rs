@@ -11,7 +11,10 @@ use tackc_lexer::{Token, TokenKind};
 use tackc_span::{Span, SpanValue};
 use thin_vec::ThinVec;
 
-use crate::ast::{BinOp, Expression, ExpressionKind, UnOp};
+use crate::{
+    ast::{BinOp, ConstItem, Expression, ExpressionKind, Item, ItemKind, UnOp},
+    error::ErrorExt,
+};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct NodeId {
@@ -82,15 +85,20 @@ impl<'src, F: File> Parser<'src, F> {
             })
     }
 
-    fn expect(&mut self, kinds: &[TokenKind], expected: Option<&'static str>) -> Result<Token> {
+    fn expect(&mut self, kinds: &[TokenKind]) -> Result<Token> {
+        self.expect_peek(kinds).inspect(|_| {
+            self.advance();
+        })
+    }
+
+    fn expect_peek(&self, kinds: &[TokenKind]) -> Result<Token> {
         self.peek()
-            .ok_or_else(|| ParseError::eof(expected))
+            .ok_or_else(|| ParseError::eof(None))
             .and_then(|token| {
                 if kinds.contains(&token.kind) {
-                    self.advance();
                     Ok(token)
                 } else {
-                    Err(ParseError::expected(expected, token))
+                    Err(ParseError::expected(None, token))
                 }
             })
     }
@@ -115,8 +123,10 @@ impl<'src, F: File> Parser<'src, F> {
         self.errors.push(e);
     }
 
-    fn report_error<T>(&mut self, err: Result<T>) -> Option<T> {
-        err.map_err(|e| self.push_err(e)).ok()
+    fn report_error<T>(&mut self, err: Result<T>, expected: &'static str) -> Option<T> {
+        err.set_expected(expected)
+            .map_err(|e| self.push_err(e))
+            .ok()
     }
 
     fn handle_error_sync<T>(
@@ -124,12 +134,13 @@ impl<'src, F: File> Parser<'src, F> {
         err: Result<T>,
         snapshot: ParserSnapshot,
         cancel: &[TokenKind],
+        expected: &'static str,
     ) -> Option<T> {
         if err.is_err() {
             self.restore(snapshot);
             self.synchronize(cancel);
         }
-        self.report_error(err)
+        self.report_error(err, expected)
     }
 
     fn synchronize(&mut self, cancel: &[TokenKind]) {
@@ -173,10 +184,10 @@ impl<'src, F: File> Parser<'src, F> {
         tokens: &'src [Token],
         file: &'src F,
         global: &'src Global,
-    ) -> (Option<Expression>, Vec<ParseError>) {
+    ) -> (Option<Item>, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let res = p.expression();
-        (p.report_error(res), p.errors)
+        let res = p.item();
+        (p.report_error(res, "item"), p.errors)
     }
 }
 
@@ -186,6 +197,7 @@ impl<F: File> Parser<'_, F> {
         seperator: TokenKind,
         closing: TokenKind,
         parse: fn(&mut Self) -> Result<T>,
+        expected: &'static str,
     ) -> ThinVec<Option<T>> {
         let mut args = ThinVec::new();
         loop {
@@ -197,7 +209,7 @@ impl<F: File> Parser<'_, F> {
 
             let snapshot = self.snapshot();
             let expr_res = parse(self);
-            let expr = self.handle_error_sync(expr_res, snapshot, &[closing, seperator]);
+            let expr = self.handle_error_sync(expr_res, snapshot, &[closing, seperator], expected);
             args.push(expr);
             if self.eat(&[seperator]).is_none() {
                 break;
@@ -205,6 +217,49 @@ impl<F: File> Parser<'_, F> {
         }
 
         args
+    }
+
+    fn item(&mut self) -> Result<Item> {
+        let tok = self.expect_peek(&[TokenKind::Const])?;
+        match tok.kind {
+            TokenKind::Const => self.const_item(),
+            _ => Err(ParseError::expected(None, tok)),
+        }
+    }
+
+    fn const_item(&mut self) -> Result<Item> {
+        let const_key = self.expect(&[TokenKind::Const])?;
+        let ident_res = self.expect(&[TokenKind::Ident]);
+        let ident = self.report_error(ident_res, "identifier");
+        let ty = if self.eat(&[TokenKind::Colon]).is_some() {
+            let snapshot = self.snapshot();
+            let ty_res = self.expression();
+            let ty = self.handle_error_sync(ty_res, snapshot, &[TokenKind::Eq], "type");
+            Some(ty)
+        } else {
+            None
+        };
+
+        let eq_res = self.expect(&[TokenKind::Eq]);
+        let _eq = self.report_error(eq_res, "'='");
+        let snapshot = self.snapshot();
+        let expr_res = self.expression();
+        let expr =
+            self.handle_error_sync(expr_res, snapshot, &[TokenKind::Semicolon], "expression");
+        let span = Span::new_from(
+            const_key.span.start,
+            expr.as_ref()
+                .map_or_else(|| self.loc(), |expr| self.span(expr.id).end),
+        );
+
+        Ok(Item::new(
+            ItemKind::ConstItem(Box::new(ConstItem {
+                expr,
+                ty,
+                ident: ident.map(Into::into),
+            })),
+            self.prepare_node(span),
+        ))
     }
 
     fn expression(&mut self) -> Result<Expression> {
@@ -321,9 +376,9 @@ impl<F: File> Parser<'_, F> {
         self.advance();
         let snapshot = self.snapshot();
         let expr_res = self.expression();
-        let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket]);
-        let closing_res = self.expect(&[TokenKind::RBracket], Some("']'"));
-        let closing = self.report_error(closing_res);
+        let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket], "expression");
+        let closing_res = self.expect(&[TokenKind::RBracket]);
+        let closing = self.report_error(closing_res, "']'");
         let span = Span::new_from(
             self.span(lhs.id).start,
             closing.map_or_else(|| self.loc(), |tok| tok.span.end),
@@ -337,9 +392,14 @@ impl<F: File> Parser<'_, F> {
 
     fn parse_call(&mut self, lhs: Expression) -> Expression {
         self.advance();
-        let args = self.delimited(TokenKind::Comma, TokenKind::RParen, Self::expression);
-        let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
-        let closing = self.report_error(closing_res);
+        let args = self.delimited(
+            TokenKind::Comma,
+            TokenKind::RParen,
+            Self::expression,
+            "expression",
+        );
+        let closing_res = self.expect(&[TokenKind::RParen]);
+        let closing = self.report_error(closing_res, "')'");
         let span = Span::new_from(
             self.span(lhs.id).start,
             closing.map_or_else(|| self.loc(), |tok| tok.span.end),
@@ -352,8 +412,8 @@ impl<F: File> Parser<'_, F> {
 
     fn parse_access(&mut self, lhs: Expression) -> Expression {
         self.advance();
-        let ident_res = self.expect(&[TokenKind::Ident], Some("identifier"));
-        let ident = self.report_error(ident_res);
+        let ident_res = self.expect(&[TokenKind::Ident]);
+        let ident = self.report_error(ident_res, "identifier");
         let span = Span::new_from(
             self.span(lhs.id).start,
             ident.map_or_else(|| self.loc(), |tok| tok.span.end),
@@ -371,9 +431,10 @@ impl<F: File> Parser<'_, F> {
 
         let snapshot = self.snapshot();
         let inner_result = self.expression();
-        let inner = self.handle_error_sync(inner_result, snapshot, &[TokenKind::RParen]);
-        let closing_res = self.expect(&[TokenKind::RParen], Some("')'"));
-        let closing = self.report_error(closing_res);
+        let inner =
+            self.handle_error_sync(inner_result, snapshot, &[TokenKind::RParen], "expression");
+        let closing_res = self.expect(&[TokenKind::RParen]);
+        let closing = self.report_error(closing_res, "')'");
 
         let expr = Expression::new(
             ExpressionKind::Grouping(inner.map(Box::new)),
@@ -386,10 +447,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn primary(&mut self) -> Result<Expression> {
-        let tok = self.expect(
-            &[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident],
-            None,
-        )?;
+        let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
