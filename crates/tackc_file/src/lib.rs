@@ -3,7 +3,7 @@
 use std::{
     borrow::Cow,
     fs, io,
-    num::NonZeroU64,
+    num::NonZeroU32,
     ops::Deref,
     path::{Path, PathBuf},
 };
@@ -22,7 +22,7 @@ pub trait File: Deref<Target = str> {
     /// Get the file's line starts.
     fn line_starts(&self) -> &[SpanValue];
     /// Get the file's ID. Should be unique to any other files.
-    fn id(&self) -> NonZeroU64;
+    fn id(&self) -> NonZeroU32;
 
     /// Find the line and column numbers of an index using the given line starts.
     fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
@@ -79,16 +79,20 @@ pub struct BasicFile<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
     line_starts: Vec<SpanValue>,
-    id: NonZeroU64,
+    id: NonZeroU32,
 }
 
 impl<'a> BasicFile<'a> {
     /// Create a new [`BasicFile`] from a source and a path. To open a file at a path, use [`BasicFile::try_from`].
+    #[allow(clippy::missing_panics_doc)]
     pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
-        let id = NonZeroHasherBuilder.hash_one_non_zero((&src, &path));
+        #[allow(clippy::cast_possible_truncation)]
+        let id =
+            NonZeroU32::new(NonZeroHasherBuilder.hash_one_non_zero((&src, &path)).get() as u32)
+                .unwrap();
         BasicFile {
             src,
             path,
@@ -111,7 +115,7 @@ impl File for BasicFile<'_> {
         &self.line_starts
     }
 
-    fn id(&self) -> NonZeroU64 {
+    fn id(&self) -> NonZeroU32 {
         self.id
     }
 }

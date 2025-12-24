@@ -26,6 +26,8 @@ honggfuzz = "0.5.58"
 insta = "1.44"
 proptest = "1.9"
 tackc_hash = { version = "0.1.0", path = "crates/tackc_hash" }
+tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
+thin-vec = "0.2.14"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }
