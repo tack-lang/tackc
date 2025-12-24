@@ -1,26 +1,9 @@
 use std::fmt::Display;
 
 use tackc_global::{Global, Interned};
-use tackc_lexer::Token;
-use tackc_span::Span;
 use thin_vec::ThinVec;
 
-use crate::NodeId;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Symbol(pub Interned<str>, pub Span);
-
-impl Symbol {
-    pub fn display<'a>(&self, global: &'a Global) -> &'a str {
-        self.0.display(global)
-    }
-}
-
-impl From<Token> for Symbol {
-    fn from(value: Token) -> Self {
-        Self(value.lexeme, value.span)
-    }
-}
+use crate::{NodeId, ast::Symbol};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Expression {
