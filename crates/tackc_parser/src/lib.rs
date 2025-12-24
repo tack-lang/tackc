@@ -12,7 +12,10 @@ use tackc_span::{Span, SpanValue};
 use thin_vec::ThinVec;
 
 use crate::{
-    ast::{BinOp, ConstItem, Expression, ExpressionKind, Item, ItemKind, UnOp},
+    ast::{
+        BinOp, ConstItem, Expression, ExpressionKind, Item, ItemKind, LetStatement, Statement,
+        StatementKind, UnOp,
+    },
     error::ErrorExt,
 };
 
@@ -176,6 +179,22 @@ impl<'src, F: File> Parser<'src, F> {
         self.spans[id.id.get() as usize - 1]
     }
 
+    fn expect_report(&mut self, kinds: &[TokenKind], expected: &'static str) -> Option<Token> {
+        let tok_res = self.expect(kinds);
+        self.report_error(tok_res, expected)
+    }
+
+    fn parse_sync<T, P: FnOnce(&mut Self) -> Result<T>>(
+        &mut self,
+        func: P,
+        cancel: &[TokenKind],
+        expected: &'static str,
+    ) -> Option<T> {
+        let snapshot = self.snapshot();
+        let res = func(self);
+        self.handle_error_sync(res, snapshot, cancel, expected)
+    }
+
     /// Parses an expression from `lexer`.
     ///
     /// # Errors
@@ -184,10 +203,10 @@ impl<'src, F: File> Parser<'src, F> {
         tokens: &'src [Token],
         file: &'src F,
         global: &'src Global,
-    ) -> (Option<Item>, Vec<ParseError>) {
+    ) -> (Option<Statement>, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let res = p.item();
-        (p.report_error(res, "item"), p.errors)
+        let res = p.statement();
+        (p.report_error(res, "statement"), p.errors)
     }
 }
 
@@ -229,27 +248,22 @@ impl<F: File> Parser<'_, F> {
 
     fn const_item(&mut self) -> Result<Item> {
         let const_key = self.expect(&[TokenKind::Const])?;
-        let ident_res = self.expect(&[TokenKind::Ident]);
-        let ident = self.report_error(ident_res, "identifier");
+        let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            let snapshot = self.snapshot();
-            let ty_res = self.expression();
-            let ty = self.handle_error_sync(ty_res, snapshot, &[TokenKind::Eq], "type");
-            Some(ty)
+            Some(self.parse_sync(Self::expression, &[TokenKind::Eq], "type"))
         } else {
             None
         };
 
-        let eq_res = self.expect(&[TokenKind::Eq]);
-        let _eq = self.report_error(eq_res, "'='");
-        let snapshot = self.snapshot();
-        let expr_res = self.expression();
-        let expr =
-            self.handle_error_sync(expr_res, snapshot, &[TokenKind::Semicolon], "expression");
+        let _eq = self.expect_report(&[TokenKind::Eq], "'='");
+        let expr = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
+        
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+        
         let span = Span::new_from(
             const_key.span.start,
-            expr.as_ref()
-                .map_or_else(|| self.loc(), |expr| self.span(expr.id).end),
+            semi
+                .map_or_else(|| self.loc(), |semi| semi.span.end),
         );
 
         Ok(Item::new(
@@ -258,6 +272,57 @@ impl<F: File> Parser<'_, F> {
                 ty,
                 ident: ident.map(Into::into),
             })),
+            self.prepare_node(span),
+        ))
+    }
+
+    fn statement(&mut self) -> Result<Statement> {
+        let tok = self.expect_peek(&[TokenKind::Let, TokenKind::Const])?;
+        match tok.kind {
+            TokenKind::Let => self.let_statement(),
+            TokenKind::Const => self.item_statement(),
+            _ => Err(ParseError::expected(None, tok)),
+        }
+    }
+
+    fn let_statement(&mut self) -> Result<Statement> {
+        let let_key = self.expect(&[TokenKind::Let])?;
+        let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+        let ty = if self.eat(&[TokenKind::Colon]).is_some() {
+            Some(self.parse_sync(Self::expression, &[TokenKind::Eq], "type"))
+        } else {
+            None
+        };
+
+        let expr = if self.eat(&[TokenKind::Eq]).is_some() {
+            Some(self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression"))
+        } else {
+            None
+        };
+
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
+        let span = Span::new_from(
+            let_key.span.start,
+            semi
+                .map_or_else(|| self.loc(), |semi| semi.span.end),
+        );
+
+        Ok(Statement::new(
+            StatementKind::LetStatement(Box::new(LetStatement {
+                expr,
+                ty,
+                ident: ident.map(Into::into),
+            })),
+            self.prepare_node(span),
+        ))
+    }
+
+    fn item_statement(&mut self) -> Result<Statement> {
+        let item = self.item()?;
+        let span = self.span(item.id);
+        Ok(Statement::new(
+            StatementKind::Item(item),
             self.prepare_node(span),
         ))
     }
@@ -412,8 +477,7 @@ impl<F: File> Parser<'_, F> {
 
     fn parse_access(&mut self, lhs: Expression) -> Expression {
         self.advance();
-        let ident_res = self.expect(&[TokenKind::Ident]);
-        let ident = self.report_error(ident_res, "identifier");
+        let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let span = Span::new_from(
             self.span(lhs.id).start,
             ident.map_or_else(|| self.loc(), |tok| tok.span.end),
@@ -429,12 +493,8 @@ impl<F: File> Parser<'_, F> {
             return self.primary();
         };
 
-        let snapshot = self.snapshot();
-        let inner_result = self.expression();
-        let inner =
-            self.handle_error_sync(inner_result, snapshot, &[TokenKind::RParen], "expression");
-        let closing_res = self.expect(&[TokenKind::RParen]);
-        let closing = self.report_error(closing_res, "')'");
+        let inner = self.parse_sync(Self::expression, &[TokenKind::RParen], "expression");
+        let closing = self.expect_report(&[TokenKind::RParen], "')'");
 
         let expr = Expression::new(
             ExpressionKind::Grouping(inner.map(Box::new)),

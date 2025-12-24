@@ -73,8 +73,8 @@ fn main() {
 
     for (tokens, file) in tokens {
         let (res, errors) = Parser::parse(&tokens, file, global);
-        if let Some(expr) = res {
-            println!("{}", expr.display(global))
+        if let Some(stmt) = res {
+            println!("{}", stmt.display(global))
         }
         for e in errors {
             println!("{}\n", e.display(file, global));
