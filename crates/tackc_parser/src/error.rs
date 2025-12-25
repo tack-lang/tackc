@@ -14,7 +14,9 @@ pub enum ParseError {
     Expected(Option<Cow<'static, str>>, Token),
     Eof(Option<Cow<'static, str>>),
     Other(Cow<'static, str>, Vec<Span>),
-    Dead,
+    ErrorLimit,
+    RecursionLimit,
+    Failure,
 }
 
 impl ParseError {
@@ -42,8 +44,16 @@ impl ParseError {
         Self::Other(msg.into(), tok.into_iter().map(Into::into).collect())
     }
 
-    pub const fn dead() -> Self {
-        Self::Dead
+    pub const fn error_limit() -> Self {
+        Self::ErrorLimit
+    }
+
+    pub const fn recursion_limit() -> Self {
+        Self::RecursionLimit
+    }
+
+    pub const fn failed() -> Self {
+        Self::Failure
     }
 
     pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
@@ -68,9 +78,9 @@ impl ParseError {
             Self::Other(msg, spans) => {
                 Diag::with_spans(msg.to_string(), spans.clone()).display(file)
             }
-            Self::Dead => {
-                String::from("error limit reached. What are you doing?")
-            }
+            Self::ErrorLimit => String::from("error limit reached. What are you doing?"),
+            Self::RecursionLimit => String::from("recursion limit reached. What are you doing?"),
+            Self::Failure => String::from("generic failure. Shouldn't be displayed under normal circumstances."),
         }
     }
 }
