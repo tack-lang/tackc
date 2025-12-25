@@ -28,7 +28,6 @@ pub struct NodeId {
 #[derive(Debug, Clone, Copy)]
 struct ParserSnapshot {
     ptr: usize,
-    errors: usize,
     open: NonZeroU32,
     failed: bool,
 }
@@ -72,21 +71,21 @@ impl<'src, F: File> Parser<'src, F> {
     const fn snapshot(&self) -> ParserSnapshot {
         ParserSnapshot {
             ptr: self.ptr,
-            errors: self.errors.len(),
             open: self.open,
             failed: self.failed,
         }
     }
 
     fn restore(&mut self, snapshot: ParserSnapshot) {
-        let ParserSnapshot { ptr, errors, open, failed } = snapshot;
+        let ParserSnapshot { ptr, open, failed } = snapshot;
+        if failed {
+            return;
+        }
 
         self.ptr = ptr;
-        self.errors.truncate(errors);
         self.open = open;
         #[allow(clippy::cast_possible_truncation)]
         self.spans.truncate(open.get() as usize - 1);
-        self.failed = failed;
     }
 
     fn peek(&self) -> Option<Token> {
