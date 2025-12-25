@@ -9,7 +9,7 @@ use tackc_span::Span;
 
 pub type Result<T, E = ParseError> = StdResult<T, E>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ParseError {
     Expected(Option<Cow<'static, str>>, Token),
     Eof(Option<Cow<'static, str>>),

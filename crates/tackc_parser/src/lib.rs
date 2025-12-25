@@ -30,6 +30,7 @@ struct ParserSnapshot {
     ptr: usize,
     errors: usize,
     open: NonZeroU32,
+    failed: bool,
 }
 
 pub struct Parser<'src, F> {
@@ -73,17 +74,19 @@ impl<'src, F: File> Parser<'src, F> {
             ptr: self.ptr,
             errors: self.errors.len(),
             open: self.open,
+            failed: self.failed,
         }
     }
 
     fn restore(&mut self, snapshot: ParserSnapshot) {
-        let ParserSnapshot { ptr, errors, open } = snapshot;
+        let ParserSnapshot { ptr, errors, open, failed } = snapshot;
 
         self.ptr = ptr;
         self.errors.truncate(errors);
         self.open = open;
         #[allow(clippy::cast_possible_truncation)]
         self.spans.truncate(open.get() as usize - 1);
+        self.failed = failed;
     }
 
     fn peek(&self) -> Option<Token> {
