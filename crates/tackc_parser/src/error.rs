@@ -80,7 +80,9 @@ impl ParseError {
             }
             Self::ErrorLimit => String::from("error limit reached. What are you doing?"),
             Self::RecursionLimit => String::from("recursion limit reached. What are you doing?"),
-            Self::Failure => String::from("generic failure. Shouldn't be displayed under normal circumstances."),
+            Self::Failure => {
+                String::from("generic failure. Shouldn't be displayed under normal circumstances.")
+            }
         }
     }
 }
