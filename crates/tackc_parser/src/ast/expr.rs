@@ -3,7 +3,10 @@ use std::fmt::Display;
 use tackc_global::{Global, Interned};
 use thin_vec::ThinVec;
 
-use crate::{NodeId, ast::Symbol};
+use crate::{
+    NodeId,
+    ast::{Block, Symbol},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Expression {
@@ -55,6 +58,7 @@ impl Expression {
                     .as_ref()
                     .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))
             ),
+            ExpressionKind::Block(block) => block.display(global),
 
             ExpressionKind::Binary(op, lhs, rhs) => {
                 format!("({op} {} {})", lhs.display(global), rhs.display(global))
@@ -73,6 +77,7 @@ pub enum ExpressionKind {
     Member(Box<Expression>, Option<Box<Symbol>>),
     Call(Box<Expression>, ThinVec<Option<Expression>>),
     Index(Box<Expression>, Option<Box<Expression>>),
+    Block(Box<Block>),
 
     Binary(BinOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),

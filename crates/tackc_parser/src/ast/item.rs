@@ -5,6 +5,7 @@ use crate::{
     ast::{Expression, Symbol},
 };
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Item {
     pub kind: ItemKind,
     pub id: NodeId,
@@ -36,10 +37,12 @@ impl Item {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum ItemKind {
     ConstItem(Box<ConstItem>),
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct ConstItem {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Expression>,
