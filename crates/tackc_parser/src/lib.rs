@@ -442,7 +442,10 @@ impl<F: File> Parser<'_, F> {
             |tok| Span::new_from(self.span(expr.id).start, tok.span.end),
         );
         Ok(Statement::new(
-            StatementKind::ExpressionStatement(Box::new(ExpressionStatement { expr, semi: semi.is_some().then_some(semi) })),
+            StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+                expr,
+                semi: semi.is_some().then_some(semi),
+            })),
             self.prepare_node(span),
         ))
     }
