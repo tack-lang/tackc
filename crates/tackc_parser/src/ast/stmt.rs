@@ -33,10 +33,20 @@ impl Statement {
                     None => String::new(),
                 };
                 format!("let {ident}{ty}{expr};")
-            },
-            StatementKind::AssignmentStatement(stmt) => format!("{} = {};", stmt.lhs.display(global), stmt.rhs.as_ref().map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))),
+            }
+            StatementKind::AssignmentStatement(stmt) => format!(
+                "{} = {};",
+                stmt.lhs.display(global),
+                stmt.rhs
+                    .as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))
+            ),
             StatementKind::Item(item) => item.display(global),
-            StatementKind::ExpressionStatement(stmt) => format!("{}{}", stmt.expr.display(global), stmt.semi.map_or("", |_| ";")),
+            StatementKind::ExpressionStatement(stmt) => format!(
+                "{}{}",
+                stmt.expr.display(global),
+                stmt.semi.map_or("", |_| ";")
+            ),
         }
     }
 }

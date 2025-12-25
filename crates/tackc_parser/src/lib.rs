@@ -13,7 +13,8 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{
-        AssignmentStatement, BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp
+        AssignmentStatement, BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement,
+        Item, ItemKind, LetStatement, Statement, StatementKind, UnOp,
     },
     error::ErrorExt,
 };
@@ -37,7 +38,7 @@ pub struct Parser<'src, F> {
     tokens: &'src [Token],
     ptr: usize,
     errors: Vec<ParseError>,
-    dead: bool,
+    failed: bool,
 
     open: NonZeroU32,
     spans: Vec<Span>,
@@ -47,7 +48,7 @@ impl<'src, F: File> Parser<'src, F> {
     #[allow(clippy::missing_panics_doc)]
     pub const fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
         Parser {
-            dead: false,
+            failed: false,
             file,
             _global: global,
             tokens,
@@ -59,9 +60,9 @@ impl<'src, F: File> Parser<'src, F> {
         }
     }
 
-    const fn check_dead(&self) -> Result<()> {
-        if self.dead {
-            Err(ParseError::dead())
+    const fn check_failed(&self) -> Result<()> {
+        if self.failed {
+            Err(ParseError::failed())
         } else {
             Ok(())
         }
@@ -104,19 +105,17 @@ impl<'src, F: File> Parser<'src, F> {
     }
 
     fn expect_peek(&self, kinds: &[TokenKind]) -> Result<Token> {
-        self.expect_peek_all()
-            .and_then(|token| {
-                if kinds.contains(&token.kind) {
-                    Ok(token)
-                } else {
-                    Err(ParseError::expected(None, token))
-                }
-            })
+        self.expect_peek_all().and_then(|token| {
+            if kinds.contains(&token.kind) {
+                Ok(token)
+            } else {
+                Err(ParseError::expected(None, token))
+            }
+        })
     }
 
     fn expect_peek_all(&self) -> Result<Token> {
-        self.peek()
-            .ok_or_else(|| ParseError::eof(None))
+        self.peek().ok_or_else(|| ParseError::eof(None))
     }
 
     fn advance(&mut self) -> Option<Token> {
@@ -137,9 +136,9 @@ impl<'src, F: File> Parser<'src, F> {
 
     fn push_err(&mut self, e: ParseError) {
         if self.errors.len() > 100 {
-            if !self.dead {
-                self.dead = true;
-                self.errors.push(ParseError::dead());
+            if !self.failed {
+                self.failed = true;
+                self.errors.push(ParseError::error_limit());
             }
             return;
         }
@@ -259,7 +258,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn item(&mut self) -> Result<Item> {
-        self.check_dead()?;
+        self.check_failed()?;
         let tok = self.expect_peek(&[TokenKind::Const])?;
         match tok.kind {
             TokenKind::Const => self.const_item(),
@@ -268,7 +267,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn const_item(&mut self) -> Result<Item> {
-        self.check_dead()?;
+        self.check_failed()?;
         let const_key = self.expect(&[TokenKind::Const])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
@@ -279,13 +278,12 @@ impl<F: File> Parser<'_, F> {
 
         let _eq = self.expect_report(&[TokenKind::Eq], "'='");
         let expr = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
-        
+
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
-        
+
         let span = Span::new_from(
             const_key.span.start,
-            semi
-                .map_or_else(|| self.loc(), |semi| semi.span.end),
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
         );
 
         Ok(Item::new(
@@ -299,7 +297,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn statement(&mut self) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let tok = self.expect_peek_all()?;
         match tok.kind {
             TokenKind::Let => self.let_statement(),
@@ -309,7 +307,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn let_statement(&mut self) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let let_key = self.expect(&[TokenKind::Let])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
@@ -328,8 +326,7 @@ impl<F: File> Parser<'_, F> {
 
         let span = Span::new_from(
             let_key.span.start,
-            semi
-                .map_or_else(|| self.loc(), |semi| semi.span.end),
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
         );
 
         Ok(Statement::new(
@@ -343,7 +340,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn item_statement(&mut self) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let item = self.item()?;
         let span = self.span(item.id);
         Ok(Statement::new(
@@ -353,7 +350,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn statement_starting_with_expression(&mut self) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let expr = self.expression()?;
         match self.peek().map(|tok| tok.kind) {
             Some(TokenKind::Eq) => self.assignment_statement(expr),
@@ -362,30 +359,36 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn expression_statement(&mut self, expr: Expression) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let semi = if expr.kind.is_block() {
             self.eat(&[TokenKind::Semicolon])
         } else {
             self.expect_report(&[TokenKind::Semicolon], "';'")
         };
-        let span = semi.map_or_else(|| self.span(expr.id), |tok| Span::new_from(self.span(expr.id).start, tok.span.end));
-        Ok(Statement::new(StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
-            expr,
-            semi,
-        })), self.prepare_node(span)))
+        let span = semi.map_or_else(
+            || self.span(expr.id),
+            |tok| Span::new_from(self.span(expr.id).start, tok.span.end),
+        );
+        Ok(Statement::new(
+            StatementKind::ExpressionStatement(Box::new(ExpressionStatement { expr, semi })),
+            self.prepare_node(span),
+        ))
     }
 
     fn assignment_statement(&mut self, lhs: Expression) -> Result<Statement> {
-        self.check_dead()?;
+        self.check_failed()?;
         let _eq = self.expect(&[TokenKind::Eq])?;
         let rhs = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
-        let span = Span::new_from(self.span(lhs.id).start, semi.map_or_else(|| self.loc(), |tok| tok.span.end));
-        Ok(Statement::new(StatementKind::AssignmentStatement(Box::new(AssignmentStatement {
-            lhs,
-            rhs,
-        })), self.prepare_node(span)))
+        let span = Span::new_from(
+            self.span(lhs.id).start,
+            semi.map_or_else(|| self.loc(), |tok| tok.span.end),
+        );
+        Ok(Statement::new(
+            StatementKind::AssignmentStatement(Box::new(AssignmentStatement { lhs, rhs })),
+            self.prepare_node(span),
+        ))
     }
 
     fn expression(&mut self) -> Result<Expression> {
@@ -436,7 +439,7 @@ impl<F: File> Parser<'_, F> {
         next: fn(&mut Self) -> Result<Expression>,
         comparison: bool,
     ) -> Result<Expression> {
-        self.check_dead()?;
+        self.check_failed()?;
         let mut lhs = next(self)?;
         let mut ops = Vec::new();
         while let Some(peeked) = self.peek() {
@@ -473,7 +476,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn unary(&mut self) -> Result<Expression> {
-        self.check_dead()?;
+        self.check_failed()?;
         let Some(op) = self.eat(&[TokenKind::Minus, TokenKind::Bang]) else {
             return self.postfix();
         };
@@ -488,7 +491,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn postfix(&mut self) -> Result<Expression> {
-        self.check_dead()?;
+        self.check_failed()?;
         let mut lhs = self.grouping()?;
         while let Some(tok) = self.peek() {
             match tok.kind {
@@ -553,7 +556,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn grouping(&mut self) -> Result<Expression> {
-        self.check_dead()?;
+        self.check_failed()?;
         let Some(opening) = self.eat(&[TokenKind::LParen]) else {
             return self.primary();
         };
@@ -572,7 +575,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn primary(&mut self) -> Result<Expression> {
-        self.check_dead()?;
+        self.check_failed()?;
         let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
