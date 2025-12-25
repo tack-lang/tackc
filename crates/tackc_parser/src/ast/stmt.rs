@@ -6,6 +6,7 @@ use crate::{
     ast::{Expression, Item, Symbol},
 };
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Statement {
     pub kind: StatementKind,
     pub id: NodeId,
@@ -29,7 +30,7 @@ impl Statement {
                 };
                 let expr = match &stmt.expr {
                     Some(Some(expr)) => format!(" = {}", expr.display(global)),
-                    Some(None) => String::from(" <ERROR>"),
+                    Some(None) => String::from(" = <ERROR>"),
                     None => String::new(),
                 };
                 format!("let {ident}{ty}{expr};")
@@ -51,6 +52,7 @@ impl Statement {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum StatementKind {
     LetStatement(Box<LetStatement>),
     AssignmentStatement(Box<AssignmentStatement>),
@@ -58,18 +60,21 @@ pub enum StatementKind {
     ExpressionStatement(Box<ExpressionStatement>),
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct LetStatement {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Option<Expression>>,
     pub ident: Option<Symbol>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct AssignmentStatement {
     pub lhs: Expression,
     pub rhs: Option<Expression>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct ExpressionStatement {
     pub expr: Expression,
-    pub semi: Option<Token>,
+    pub semi: Option<Option<Token>>,
 }

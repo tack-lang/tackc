@@ -13,8 +13,8 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{
-        AssignmentStatement, BinOp, ConstItem, Expression, ExpressionKind, ExpressionStatement,
-        Item, ItemKind, LetStatement, Statement, StatementKind, UnOp,
+        AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
+        ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp,
     },
     error::ErrorExt,
 };
@@ -298,6 +298,76 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
+    fn block(&mut self) -> Result<Block> {
+        self.check_failed()?;
+        let opening = self.expect(&[TokenKind::LBrace])?;
+        let mut stmts = Vec::new();
+        let expr = loop {
+            if let Some(tok) = self.peek()
+                && tok.kind == TokenKind::RBrace
+            {
+                break None;
+            }
+
+            match self.peek().map(|tok| tok.kind) {
+                // Statements that end in semicolons
+                Some(TokenKind::Let | TokenKind::Const) => {
+                    let stmt = self.parse_sync(
+                        Self::statement,
+                        &[TokenKind::Semicolon],
+                        "statement, item, or expression",
+                    );
+                    stmts.push(stmt);
+                }
+                // Expression that end in semicolons when used as statements
+                Some(_) => {
+                    let loc = self.loc();
+                    let expr = self.parse_sync(
+                        Self::expression,
+                        &[TokenKind::Semicolon, TokenKind::RBrace],
+                        "statement, item, or expression",
+                    );
+                    if let Some(tok) = self.peek()
+                        && tok.kind == TokenKind::RBrace
+                    {
+                        break Some(expr);
+                    }
+
+                    let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+                    let span = Span::new_from(
+                        expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
+                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+                    );
+                    stmts.push(expr.map(|expr| {
+                        Statement::new(
+                            StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+                                expr,
+                                semi: Some(semi),
+                            })),
+                            self.prepare_node(span),
+                        )
+                    }));
+                }
+                None => {
+                    self.push_err(ParseError::eof(Some("statement, item, or expression")));
+                    break None;
+                }
+            }
+        };
+
+        let closing = self.expect_report(&[TokenKind::RBrace], "'}'");
+        let span = Span::new_from(
+            opening.span.start,
+            closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+        );
+
+        Ok(Block {
+            stmts,
+            expr,
+            id: self.prepare_node(span),
+        })
+    }
+
     fn statement(&mut self) -> Result<Statement> {
         self.check_failed()?;
         let tok = self.expect_peek_all()?;
@@ -372,7 +442,7 @@ impl<F: File> Parser<'_, F> {
             |tok| Span::new_from(self.span(expr.id).start, tok.span.end),
         );
         Ok(Statement::new(
-            StatementKind::ExpressionStatement(Box::new(ExpressionStatement { expr, semi })),
+            StatementKind::ExpressionStatement(Box::new(ExpressionStatement { expr, semi: semi.is_some().then_some(semi) })),
             self.prepare_node(span),
         ))
     }
@@ -560,7 +630,7 @@ impl<F: File> Parser<'_, F> {
     fn grouping(&mut self) -> Result<Expression> {
         self.check_failed()?;
         let Some(opening) = self.eat(&[TokenKind::LParen]) else {
-            return self.primary();
+            return self.block_expr();
         };
 
         let inner = self.parse_sync(Self::expression, &[TokenKind::RParen], "expression");
@@ -574,6 +644,26 @@ impl<F: File> Parser<'_, F> {
             )),
         );
         Ok(expr)
+    }
+
+    fn block_expr(&mut self) -> Result<Expression> {
+        self.check_failed()?;
+
+        if self
+            .peek()
+            .filter(|t| t.kind == TokenKind::LBrace)
+            .is_none()
+        {
+            return self.primary();
+        }
+
+        let block = self.block()?;
+        let span = self.span(block.id);
+
+        Ok(Expression::new(
+            ExpressionKind::Block(Box::new(block)),
+            self.prepare_node(span),
+        ))
     }
 
     fn primary(&mut self) -> Result<Expression> {
