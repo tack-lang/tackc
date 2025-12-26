@@ -1,6 +1,7 @@
-let S = {
-    let S = 2;
-    5;
-    5
-    2;
-};
+func main() {
+    func main2() {
+        func main3() {
+            
+        }
+    }
+}
