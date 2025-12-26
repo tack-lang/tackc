@@ -72,10 +72,8 @@ fn main() {
         .collect::<Vec<_>>();
 
     for (tokens, file) in tokens {
-        let (res, errors) = Parser::parse(&tokens, file, global);
-        if let Some(stmt) = res {
-            println!("{}", stmt.display(global))
-        }
+        let (prog, errors) = Parser::parse(&tokens, file, global);
+        println!("{}", prog.display(global));
         for e in errors {
             println!("{}\n", e.display(file, global));
         }

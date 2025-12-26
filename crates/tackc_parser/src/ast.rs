@@ -14,6 +14,9 @@ pub use stmt::*;
 pub mod block;
 pub use block::*;
 
+pub mod prog;
+pub use prog::*;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Symbol(pub Interned<str>, pub Span);
 
