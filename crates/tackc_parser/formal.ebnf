@@ -1,3 +1,9 @@
+Program = ModStatement Item* ;
+
+ModStatement = MOD Path SEMICOLON ;
+
+Path = IDENTIFIER ( DOT IDENTIFIER )* ;
+
 Item = ConstItem
     | FuncItem
     ;
