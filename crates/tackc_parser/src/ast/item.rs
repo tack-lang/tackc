@@ -2,7 +2,7 @@ use tackc_global::Global;
 
 use crate::{
     NodeId,
-    ast::{Expression, Symbol},
+    ast::{Block, Expression, Symbol},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -33,6 +33,27 @@ impl Item {
                     .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global));
                 format!("const {ident}{ty} = {expr};")
             }
+            ItemKind::FuncItem(item) => {
+                format!(
+                    "func {}({}) {}",
+                    item.ident.map_or("<ERROR>", |ident| ident.display(global)),
+                    item.params
+                        .iter()
+                        .map(|(ident, ty)| format!(
+                            "{}: {}",
+                            ident.map_or("<ERROR>", |ident| ident.display(global)),
+                            ty.as_ref().map_or_else(
+                                || String::from("<ERROR>"),
+                                |expr| expr.display(global)
+                            )
+                        ))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    item.block
+                        .as_ref()
+                        .map_or_else(|| String::from("<ERROR>"), |block| block.display(global))
+                )
+            }
         }
     }
 }
@@ -40,6 +61,7 @@ impl Item {
 #[derive(Debug, PartialEq, Eq)]
 pub enum ItemKind {
     ConstItem(Box<ConstItem>),
+    FuncItem(Box<FuncItem>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -47,4 +69,12 @@ pub struct ConstItem {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Expression>,
     pub ident: Option<Symbol>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct FuncItem {
+    pub ident: Option<Symbol>,
+    pub params: Vec<(Option<Symbol>, Option<Expression>)>,
+    pub ret_type: Option<Option<Expression>>,
+    pub block: Option<Block>,
 }

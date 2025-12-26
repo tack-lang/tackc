@@ -14,10 +14,23 @@ use thin_vec::ThinVec;
 use crate::{
     ast::{
         AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
-        ExpressionStatement, Item, ItemKind, LetStatement, Statement, StatementKind, UnOp,
+        ExpressionStatement, FuncItem, Item, ItemKind, LetStatement, Statement, StatementKind,
+        UnOp,
     },
     error::ErrorExt,
 };
+
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
+pub enum BlockMode {
+    NoBlocks,
+    Normal,
+}
+
+impl BlockMode {
+    pub fn normal(self) -> bool {
+        self == Self::Normal
+    }
+}
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct NodeId {
@@ -190,6 +203,13 @@ impl<'src, F: File> Parser<'src, F> {
         }
     }
 
+    fn synchronize_skip_next_block(&mut self) {
+        self.synchronize(&[TokenKind::LBrace]);
+        self.advance();
+        self.synchronize(&[TokenKind::RBrace]);
+        self.advance();
+    }
+
     fn loc(&self) -> SpanValue {
         self.peek()
             .map_or_else(|| Span::eof(self.file).end, |tok| tok.span.start)
@@ -214,6 +234,15 @@ impl<'src, F: File> Parser<'src, F> {
         let snapshot = self.snapshot();
         let res = func(self);
         self.handle_error_sync(res, snapshot, cancel, expected)
+    }
+
+    fn parse_report<T, P: FnOnce(&mut Self) -> Result<T>>(
+        &mut self,
+        func: P,
+        expected: &'static str,
+    ) -> Option<T> {
+        let res = func(self);
+        self.report_error(res, expected)
     }
 
     /// Parses an expression from `lexer`.
@@ -247,9 +276,7 @@ impl<F: File> Parser<'_, F> {
                 break;
             }
 
-            let snapshot = self.snapshot();
-            let expr_res = parse(self);
-            let expr = self.handle_error_sync(expr_res, snapshot, &[closing, seperator], expected);
+            let expr = self.parse_sync(parse, &[closing, seperator], expected);
             args.push(expr);
             if self.eat(&[seperator]).is_none() {
                 break;
@@ -261,9 +288,10 @@ impl<F: File> Parser<'_, F> {
 
     fn item(&mut self) -> Result<Item> {
         self.check_failed()?;
-        let tok = self.expect_peek(&[TokenKind::Const])?;
+        let tok = self.expect_peek(&[TokenKind::Const, TokenKind::Func])?;
         match tok.kind {
             TokenKind::Const => self.const_item(),
+            TokenKind::Func => self.func_item(),
             _ => Err(ParseError::expected(None, tok)),
         }
     }
@@ -273,13 +301,17 @@ impl<F: File> Parser<'_, F> {
         let const_key = self.expect(&[TokenKind::Const])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(Self::expression, &[TokenKind::Eq], "type"))
+            Some(self.parse_sync(Self::expression_normal, &[TokenKind::Eq], "type"))
         } else {
             None
         };
 
         let _eq = self.expect_report(&[TokenKind::Eq], "'='");
-        let expr = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
+        let expr = self.parse_sync(
+            Self::expression_normal,
+            &[TokenKind::Semicolon],
+            "expression",
+        );
 
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
@@ -296,6 +328,62 @@ impl<F: File> Parser<'_, F> {
             })),
             self.prepare_node(span),
         ))
+    }
+
+    fn func_item(&mut self) -> Result<Item> {
+        let func = self.expect(&[TokenKind::Func])?;
+        let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+        let _opening = self.expect_report(&[TokenKind::LParen], "'('");
+
+        let mut params = Vec::new();
+        loop {
+            if let Some(tok) = self.peek()
+                && tok.kind == TokenKind::RParen
+            {
+                break;
+            }
+
+            let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+            let _colon = self.expect_report(&[TokenKind::Colon], "':'");
+            let expr = self.parse_sync(
+                Self::expression_normal,
+                &[TokenKind::Comma, TokenKind::RParen],
+                "expression",
+            );
+            params.push((ident.map(Into::into), expr));
+            if self.eat(&[TokenKind::Comma]).is_none() {
+                break;
+            }
+        }
+
+        let _closing = self.expect_report(&[TokenKind::RParen], "')'");
+        let ret_type = if self
+            .peek()
+            .filter(|tok| tok.kind != TokenKind::LBrace)
+            .is_some()
+        {
+            Some(self.parse_sync(Self::expression_no_blocks, &[TokenKind::LBrace], "type"))
+        } else {
+            None
+        };
+        let block = self.parse_report(Self::block, "block");
+
+        let span = Span::new_from(
+            func.span.start,
+            block
+                .as_ref()
+                .map_or_else(|| self.loc(), |block| self.span(block.id).end),
+        );
+
+        Ok(Item {
+            kind: ItemKind::FuncItem(Box::new(FuncItem {
+                ident: ident.map(Into::into),
+                params,
+                ret_type,
+                block,
+            })),
+            id: self.prepare_node(span),
+        })
     }
 
     fn block(&mut self) -> Result<Block> {
@@ -319,11 +407,22 @@ impl<F: File> Parser<'_, F> {
                     );
                     stmts.push(stmt);
                 }
+                // Statements that don't end in semicolons
+                Some(TokenKind::Func) => {
+                    let snapshot = self.snapshot();
+                    let stmt_res = self.statement();
+                    let stmt = self.report_error(stmt_res, "statement, item, or expression");
+                    if stmt.is_none() {
+                        self.restore(snapshot);
+                        self.synchronize_skip_next_block();
+                    }
+                    stmts.push(stmt);
+                }
                 // Expression that end in semicolons when used as statements
                 Some(_) => {
                     let loc = self.loc();
                     let expr = self.parse_sync(
-                        Self::expression,
+                        Self::expression_normal,
                         &[TokenKind::Semicolon, TokenKind::RBrace],
                         "statement, item, or expression",
                     );
@@ -373,7 +472,7 @@ impl<F: File> Parser<'_, F> {
         let tok = self.expect_peek_all()?;
         match tok.kind {
             TokenKind::Let => self.let_statement(),
-            TokenKind::Const => self.item_statement(),
+            TokenKind::Const | TokenKind::Func => self.item_statement(),
             _ => self.statement_starting_with_expression(),
         }
     }
@@ -383,13 +482,17 @@ impl<F: File> Parser<'_, F> {
         let let_key = self.expect(&[TokenKind::Let])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(Self::expression, &[TokenKind::Eq], "type"))
+            Some(self.parse_sync(Self::expression_normal, &[TokenKind::Eq], "type"))
         } else {
             None
         };
 
         let expr = if self.eat(&[TokenKind::Eq]).is_some() {
-            Some(self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression"))
+            Some(self.parse_sync(
+                Self::expression_normal,
+                &[TokenKind::Semicolon],
+                "expression",
+            ))
         } else {
             None
         };
@@ -423,7 +526,7 @@ impl<F: File> Parser<'_, F> {
 
     fn statement_starting_with_expression(&mut self) -> Result<Statement> {
         self.check_failed()?;
-        let expr = self.expression()?;
+        let expr = self.expression(BlockMode::Normal)?;
         match self.peek().map(|tok| tok.kind) {
             Some(TokenKind::Eq) => self.assignment_statement(expr),
             _ => self.expression_statement(expr),
@@ -453,7 +556,11 @@ impl<F: File> Parser<'_, F> {
     fn assignment_statement(&mut self, lhs: Expression) -> Result<Statement> {
         self.check_failed()?;
         let _eq = self.expect(&[TokenKind::Eq])?;
-        let rhs = self.parse_sync(Self::expression, &[TokenKind::Semicolon], "expression");
+        let rhs = self.parse_sync(
+            Self::expression_normal,
+            &[TokenKind::Semicolon],
+            "expression",
+        );
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
         let span = Span::new_from(
@@ -466,11 +573,21 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn expression(&mut self) -> Result<Expression> {
-        self.comparison()
+    #[inline]
+    fn expression_normal(&mut self) -> Result<Expression> {
+        self.expression(BlockMode::Normal)
     }
 
-    fn comparison(&mut self) -> Result<Expression> {
+    #[inline]
+    fn expression_no_blocks(&mut self) -> Result<Expression> {
+        self.expression(BlockMode::NoBlocks)
+    }
+
+    fn expression(&mut self, mode: BlockMode) -> Result<Expression> {
+        self.comparison(mode)
+    }
+
+    fn comparison(&mut self, mode: BlockMode) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Gt, BinOp::Gt),
@@ -482,10 +599,11 @@ impl<F: File> Parser<'_, F> {
             ],
             Self::term,
             true,
+            mode,
         )
     }
 
-    fn term(&mut self) -> Result<Expression> {
+    fn term(&mut self, mode: BlockMode) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Plus, BinOp::Add),
@@ -493,10 +611,11 @@ impl<F: File> Parser<'_, F> {
             ],
             Self::factor,
             false,
+            mode,
         )
     }
 
-    fn factor(&mut self) -> Result<Expression> {
+    fn factor(&mut self, mode: BlockMode) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Star, BinOp::Mul),
@@ -504,6 +623,7 @@ impl<F: File> Parser<'_, F> {
             ],
             Self::unary,
             false,
+            mode,
         )
     }
 
@@ -511,11 +631,12 @@ impl<F: File> Parser<'_, F> {
     fn binary_expr(
         &mut self,
         tokens: &[(TokenKind, BinOp)],
-        next: fn(&mut Self) -> Result<Expression>,
+        next: fn(&mut Self, BlockMode) -> Result<Expression>,
         comparison: bool,
+        mode: BlockMode,
     ) -> Result<Expression> {
         self.check_failed()?;
-        let mut lhs = next(self)?;
+        let mut lhs = next(self, mode)?;
         let mut ops = Vec::new();
         while let Some(peeked) = self.peek() {
             let Some((_, op)) = tokens.iter().find(|(tok, _)| peeked.kind == *tok) else {
@@ -523,7 +644,7 @@ impl<F: File> Parser<'_, F> {
             };
 
             self.advance(); // Skip operator
-            let rhs = next(self)?;
+            let rhs = next(self, mode)?;
             let id = self.prepare_node(Span::new_from(
                 self.span(lhs.id).start,
                 self.span(rhs.id).end,
@@ -550,12 +671,12 @@ impl<F: File> Parser<'_, F> {
         Ok(lhs)
     }
 
-    fn unary(&mut self) -> Result<Expression> {
+    fn unary(&mut self, mode: BlockMode) -> Result<Expression> {
         self.check_failed()?;
         let Some(op) = self.eat(&[TokenKind::Minus, TokenKind::Bang]) else {
-            return self.postfix();
+            return self.postfix(mode);
         };
-        let rhs = self.unary()?;
+        let rhs = self.unary(mode)?;
         let span = Span::new_from(op.span.start, self.span(rhs.id).end);
         let kind = match op.kind {
             TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, Box::new(rhs)),
@@ -565,9 +686,9 @@ impl<F: File> Parser<'_, F> {
         Ok(Expression::new(kind, self.prepare_node(span)))
     }
 
-    fn postfix(&mut self) -> Result<Expression> {
+    fn postfix(&mut self, mode: BlockMode) -> Result<Expression> {
         self.check_failed()?;
-        let mut lhs = self.grouping()?;
+        let mut lhs = self.grouping(mode)?;
         while let Some(tok) = self.peek() {
             match tok.kind {
                 TokenKind::Dot => lhs = self.parse_access(lhs),
@@ -582,7 +703,7 @@ impl<F: File> Parser<'_, F> {
     fn parse_index(&mut self, lhs: Expression) -> Expression {
         self.advance();
         let snapshot = self.snapshot();
-        let expr_res = self.expression();
+        let expr_res = self.expression(BlockMode::Normal);
         let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket], "expression");
         let closing_res = self.expect(&[TokenKind::RBracket]);
         let closing = self.report_error(closing_res, "']'");
@@ -602,7 +723,7 @@ impl<F: File> Parser<'_, F> {
         let args = self.delimited(
             TokenKind::Comma,
             TokenKind::RParen,
-            Self::expression,
+            Self::expression_normal,
             "expression",
         );
         let closing_res = self.expect(&[TokenKind::RParen]);
@@ -630,13 +751,13 @@ impl<F: File> Parser<'_, F> {
         )
     }
 
-    fn grouping(&mut self) -> Result<Expression> {
+    fn grouping(&mut self, mode: BlockMode) -> Result<Expression> {
         self.check_failed()?;
         let Some(opening) = self.eat(&[TokenKind::LParen]) else {
-            return self.block_expr();
+            return self.block_expr(mode);
         };
 
-        let inner = self.parse_sync(Self::expression, &[TokenKind::RParen], "expression");
+        let inner = self.parse_sync(Self::expression_normal, &[TokenKind::RParen], "expression");
         let closing = self.expect_report(&[TokenKind::RParen], "')'");
 
         let expr = Expression::new(
@@ -649,13 +770,14 @@ impl<F: File> Parser<'_, F> {
         Ok(expr)
     }
 
-    fn block_expr(&mut self) -> Result<Expression> {
+    fn block_expr(&mut self, mode: BlockMode) -> Result<Expression> {
         self.check_failed()?;
 
-        if self
-            .peek()
-            .filter(|t| t.kind == TokenKind::LBrace)
-            .is_none()
+        if !mode.normal()
+            || self
+                .peek()
+                .filter(|t| t.kind == TokenKind::LBrace)
+                .is_none()
         {
             return self.primary();
         }
