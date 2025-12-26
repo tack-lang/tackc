@@ -1,5 +1,23 @@
-Item = ConstItem ;
+Item = ConstItem
+    | FuncItem
+    ;
 ConstItem = CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMICOLON ;
+(* 
+    The Expression right before the block is the 'return type',
+    which may not syntactically contain a valid expression followed by an L_BRACE, or start with an L_BRACE.
+
+    EXAMPLES:
+        struct { ... }
+            INVALID: `struct` is a valid expression, and is followed by an L_BRACE.
+        if true { ... }
+            VALID: `if true` is not a valid expression.
+        { ... }
+            INVALID: starts with an L_BRACE.
+*)
+FuncItem = FUNC IDENTIFIER L_PAREN ParamList? R_PAREN Expression? Block ;
+ParamList = ( IDENTIFIER COLON Expression ) ( COMMA IDENTIFIER COLON Expression )* COMMA? ;
+
+Block = L_BRACE Statement* Expression? R_BRACE ;
 
 Statement = LetStatement
     | ExpressionStatement
@@ -30,6 +48,8 @@ Postfix = Grouping (L_PAREN ArgList? R_PAREN
     | L_BRACKET Expression R_BRACKET
     | DOT IDENTIFIER)* ;
 Grouping = L_PAREN Expression R_PAREN
+    | BlockExpression ;
+BlockExpression = Block
     | Primary ;
 Primary = IDENTIFIER
     | INT_LIT
