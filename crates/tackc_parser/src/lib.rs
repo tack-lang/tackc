@@ -14,8 +14,8 @@ use thin_vec::ThinVec;
 use crate::{
     ast::{
         AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
-        ExpressionStatement, FuncItem, Item, ItemKind, LetStatement, Statement, StatementKind,
-        UnOp,
+        ExpressionStatement, FuncItem, Item, ItemKind, LetStatement, ModStatement, Path, Program,
+        Statement, StatementKind, Symbol, UnOp,
     },
     error::ErrorExt,
 };
@@ -103,6 +103,10 @@ impl<'src, F: File> Parser<'src, F> {
 
     fn peek(&self) -> Option<Token> {
         self.tokens.get(self.ptr).copied()
+    }
+
+    fn at_eof(&self) -> bool {
+        self.peek().is_none()
     }
 
     fn eat(&mut self, kinds: &[TokenKind]) -> Option<Token> {
@@ -245,18 +249,15 @@ impl<'src, F: File> Parser<'src, F> {
         self.report_error(res, expected)
     }
 
-    /// Parses an expression from `lexer`.
-    ///
-    /// # Errors
-    /// Returns an error if it failed to parse an expression.
+    /// Parses an program from `tokens` and `file`, and returns all errors.
     pub fn parse(
         tokens: &'src [Token],
         file: &'src F,
         global: &'src Global,
-    ) -> (Option<Statement>, Vec<ParseError>) {
+    ) -> (Program, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let res = p.statement();
-        (p.report_error(res, "statement"), p.errors)
+        let prog = p.program();
+        (prog, p.errors)
     }
 }
 
@@ -284,6 +285,55 @@ impl<F: File> Parser<'_, F> {
         }
 
         args
+    }
+
+    fn program(&mut self) -> Program {
+        let mod_stmt_res = self.mod_statement();
+        let mod_stmt = self.report_error(mod_stmt_res, "`mod` statement");
+
+        let mut items = ThinVec::new();
+        while !self.at_eof() {
+            let item = self.parse_sync(Self::item, &[TokenKind::Const, TokenKind::Func], "item");
+            items.push(item);
+        }
+
+        Program { mod_stmt, items }
+    }
+
+    fn mod_statement(&mut self) -> Result<ModStatement> {
+        let mod_key = self.expect(&[TokenKind::Mod])?;
+        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path");
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
+        let span = Span::new_from(
+            mod_key.span.start,
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+        );
+        Ok(ModStatement {
+            path,
+            id: self.prepare_node(span),
+        })
+    }
+
+    fn path(&mut self) -> Result<Path> {
+        let mut components = ThinVec::new();
+        let ident = self.expect(&[TokenKind::Ident])?;
+        components.push(Some(ident.into()));
+        while self.eat(&[TokenKind::Dot]).is_some() {
+            let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+            components.push(ident.map(Into::into));
+        }
+        let span = Span::new_from(
+            ident.span.start,
+            components
+                .last()
+                .unwrap()
+                .map_or_else(|| self.loc(), |sym: Symbol| sym.1.end),
+        );
+        Ok(Path {
+            components,
+            id: self.prepare_node(span),
+        })
     }
 
     fn item(&mut self) -> Result<Item> {
