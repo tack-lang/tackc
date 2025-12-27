@@ -1,4 +1,4 @@
-mod statement;
+mod tests;
 
 func main() {
     println("Hello, world!");

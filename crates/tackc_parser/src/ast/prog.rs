@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use thin_vec::ThinVec;
 
@@ -6,6 +7,7 @@ use crate::{
     ast::{Item, Symbol},
 };
 
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Program {
     pub mod_stmt: Option<ModStatement>,
     pub items: ThinVec<Option<Item>>,
@@ -30,6 +32,7 @@ impl Program {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModStatement {
     pub path: Option<Path>,
     pub id: NodeId,
@@ -46,7 +49,7 @@ impl ModStatement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Path {
     pub components: ThinVec<Option<Symbol>>,
     pub id: NodeId,

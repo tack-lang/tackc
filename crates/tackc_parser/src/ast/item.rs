@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 
 use crate::{
@@ -5,7 +6,7 @@ use crate::{
     ast::{Block, Expression, Path, Symbol},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Item {
     pub kind: ItemKind,
     pub id: NodeId,
@@ -74,14 +75,14 @@ impl Item {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ItemKind {
     ConstItem(Box<ConstItem>),
     FuncItem(Box<FuncItem>),
     ImpItem(Box<ImpItem>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConstItem {
     pub exported: bool,
     pub ty: Option<Option<Expression>>,
@@ -89,7 +90,7 @@ pub struct ConstItem {
     pub ident: Option<Symbol>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FuncItem {
     pub exported: bool,
     pub ident: Option<Symbol>,
@@ -98,7 +99,7 @@ pub struct FuncItem {
     pub block: Option<Block>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImpItem {
     pub exported: bool,
     pub path: Option<Path>,

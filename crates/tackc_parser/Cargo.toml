@@ -11,7 +11,10 @@ tackc_global = { workspace = true }
 tackc_lexer = { workspace = true }
 tackc_span = { workspace = true }
 tackc_utils = { workspace = true }
-thin-vec = { workspace = true }
+thin-vec = { workspace = true, features = ["serde"] }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+insta = { workspace = true, features = ["ron", "serde"] }

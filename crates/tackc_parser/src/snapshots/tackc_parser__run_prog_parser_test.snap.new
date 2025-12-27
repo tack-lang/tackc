@@ -1,0 +1,89 @@
+---
+source: crates/tackc_parser/src/lib.rs
+assertion_line: 1025
+expression: "(prog, err)"
+input_file: crates/tackc_parser/src/tests/basic.tck
+---
+(Program(
+  mod_stmt: Some(ModStatement(
+    path: Some(Path(
+      components: [
+        Some(Symbol(Interned(17857528027064638747, PhantomData), Span(
+          start: 4,
+          end: 13,
+        ))),
+      ],
+      id: NodeId(
+        id: 1,
+        file: 2261697147,
+      ),
+    )),
+    id: NodeId(
+      id: 2,
+      file: 2261697147,
+    ),
+  )),
+  items: [
+    Some(Item(
+      kind: FuncItem(FuncItem(
+        exported: false,
+        ident: Some(Symbol(Interned(13877981266774981813, PhantomData), Span(
+          start: 21,
+          end: 25,
+        ))),
+        params: [],
+        ret_type: None,
+        block: Some(Block(
+          stmts: [
+            Some(Statement(
+              kind: ExpressionStatement(ExpressionStatement(
+                expr: Expression(
+                  kind: Call(Expression(
+                    kind: Ident(Interned(17520576164301135459, PhantomData)),
+                    id: NodeId(
+                      id: 3,
+                      file: 2261697147,
+                    ),
+                  ), [
+                    None,
+                  ]),
+                  id: NodeId(
+                    id: 4,
+                    file: 2261697147,
+                  ),
+                ),
+                semi: Some(None),
+              )),
+              id: NodeId(
+                id: 5,
+                file: 2261697147,
+              ),
+            )),
+          ],
+          expr: None,
+          id: NodeId(
+            id: 6,
+            file: 2261697147,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 7,
+        file: 2261697147,
+      ),
+    )),
+  ],
+), [
+  Expected(Some("expression"), Token(
+    span: Span(
+      start: 42,
+      end: 57,
+    ),
+    kind: StringLit,
+    lexeme: Interned(8470909341547293647, PhantomData),
+  )),
+  Eof(Some("\')\'")),
+  Eof(Some("\';\'")),
+  Eof(Some("statement, item, or expression")),
+  Eof(Some("\'}\'")),
+])
