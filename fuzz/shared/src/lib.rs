@@ -27,7 +27,7 @@ pub fn run(data: &[u8]) {
 
     if !errors.is_empty() {
         for e in errors {
-            e.to_string();
+            e.display(&file);
         }
         return;
     }
