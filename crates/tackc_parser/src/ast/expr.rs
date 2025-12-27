@@ -25,6 +25,7 @@ impl Expression {
             ExpressionKind::IntLit(sym)
             | ExpressionKind::FloatLit(sym)
             | ExpressionKind::Ident(sym) => sym.display(global).to_string(),
+            ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
             ExpressionKind::Grouping(inner) => inner.as_ref().map_or_else(
                 || String::from("(<ERROR>)"),
                 |expr| format!("({})", expr.display(global)),
@@ -73,6 +74,7 @@ impl Expression {
 pub enum ExpressionKind {
     IntLit(Interned<str>),
     FloatLit(Interned<str>),
+    StringLit(Interned<str>),
     Ident(Interned<str>),
     Grouping(Option<Box<Expression>>),
     Member(Box<Expression>, Option<Box<Symbol>>),

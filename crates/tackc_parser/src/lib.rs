@@ -987,11 +987,12 @@ impl<F: File> Parser<'_, F> {
 
     fn primary(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
-        let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident])?;
+        let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident, TokenKind::StringLit])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
             TokenKind::Ident => ExpressionKind::Ident(tok.lexeme),
+            TokenKind::StringLit => ExpressionKind::StringLit(tok.lexeme),
             _ => unreachable!(),
         };
         let expr = Expression::new(primary, self.prepare_node(tok.span));
