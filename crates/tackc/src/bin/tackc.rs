@@ -13,6 +13,7 @@ use tackc_lexer::Lexer;
 
 use tackc_lexer::Token;
 use tackc_parser::Parser;
+use tackc_parser::ast::Program;
 
 #[derive(ClapParser)]
 struct Args {
@@ -36,7 +37,7 @@ struct DebugModes {
 #[derive(Clone, ValueEnum, PartialEq, Eq, Copy)]
 enum Stage {
     Lexer,
-    //Parser,
+    Parser,
     BindingResolution,
 }
 
@@ -66,18 +67,11 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<NonZeroU32, BasicFile>>();
 
-    let tokens = files_map
+    let _progs = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
+        .map(|(tokens, file)| (run_parser(&tokens, file, global, &debug_modes), file))
         .collect::<Vec<_>>();
-
-    for (tokens, file) in tokens {
-        let (prog, errors) = Parser::parse(&tokens, file, global);
-        println!("{}", prog.display(global));
-        for e in errors {
-            println!("{}\n", e.display(file, global));
-        }
-    }
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
@@ -115,36 +109,33 @@ fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec
     tokens
 }
 
-/*fn run_parser(
-    tokens: Vec<Token>,
+fn run_parser(
+    tokens: &[Token],
     file: &BasicFile,
     global: &Global,
     debug_modes: &DebugModes,
-) -> Option<Program> {
-    let res = Program::parse_file(tokens.iter().copied(), global, file);
+) -> Program {
+    let (prog, errs) = Parser::parse(tokens, file, global);
 
-    match res {
-        Ok(prog) => {
-            if debug_modes.debug.contains(&Stage::Parser) {
-                eprintln!("{prog:#?}");
-            }
-            if debug_modes.show.contains(&Stage::Parser) {
-                eprintln!("{}", prog.display(global));
-            }
-            Some(prog)
-        }
-        Err(errs) => {
-            if debug_modes.debug.contains(&Stage::Parser) {
-                eprintln!("{errs:#?}");
-            }
-            eprintln!("{}", errs.display(file, global));
-
-            None
-        }
+    if debug_modes.debug.contains(&Stage::Parser) {
+        eprintln!("{prog:#?}");
     }
+    if debug_modes.show.contains(&Stage::Parser) {
+        eprintln!("{}", prog.display(global));
+    }
+
+    print!(
+        "{}",
+        errs.into_iter()
+            .map(|err| err.display(file, global))
+            .collect::<Vec<_>>()
+            .join("\n\n")
+    );
+
+    prog
 }
 
-fn run_resolver(
+/*fn run_resolver(
     programs: &mut [Program],
     files: &FxHashMap<u64, BasicFile>,
     global: &Global,
