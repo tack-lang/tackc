@@ -2,10 +2,7 @@ use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_lexer::Token;
 
-use crate::{
-    NodeId,
-    Expression, Item, Symbol,
-};
+use crate::{Expression, Item, NodeId, Symbol};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Statement {

@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 
-use crate::{
-    NodeId,
-    Block, Expression, Path, Symbol,
-};
+use crate::{Block, Expression, NodeId, Path, Symbol};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Item {
