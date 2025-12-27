@@ -7,7 +7,7 @@ use error::{ParseError, Result};
 
 pub mod ast;
 
-use serde::{Deserialize, Serialize};
+use tackc_ast::NodeId;
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -33,12 +33,6 @@ impl BlockMode {
     pub fn normal(self) -> bool {
         self == Self::Normal
     }
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NodeId {
-    id: NonZeroU32,
-    file: NonZeroU32,
 }
 
 #[derive(Debug, Clone, Copy)]

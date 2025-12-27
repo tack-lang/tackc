@@ -3,7 +3,7 @@ use tackc_global::Global;
 
 use crate::{
     NodeId,
-    ast::{Block, Expression, Path, Symbol},
+    Block, Expression, Path, Symbol,
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
