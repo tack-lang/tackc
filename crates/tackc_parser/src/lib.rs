@@ -1,6 +1,8 @@
 pub mod error;
 use std::num::NonZeroU32;
 
+const RECURSION_LIMIT: u32 = 300;
+
 use error::{ParseError, Result};
 
 pub mod ast;
@@ -51,7 +53,10 @@ pub struct Parser<'src, F> {
     tokens: &'src [Token],
     ptr: usize,
     errors: Vec<ParseError>,
+
     failed: bool,
+    failed_recursion: bool,
+    failed_error: bool,
 
     open: NonZeroU32,
     spans: Vec<Span>,
@@ -61,19 +66,27 @@ impl<'src, F: File> Parser<'src, F> {
     #[allow(clippy::missing_panics_doc)]
     pub const fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
         Parser {
-            failed: false,
             file,
             _global: global,
             tokens,
             ptr: 0,
             errors: Vec::new(),
 
+            failed: false,
+            failed_recursion: false,
+            failed_error: false,
+
             open: NonZeroU32::new(1).unwrap(),
             spans: Vec::new(),
         }
     }
 
-    const fn check_failed(&self) -> Result<()> {
+    fn check_failed(&mut self, recursion: u32) -> Result<()> {
+        if recursion > RECURSION_LIMIT {
+            self.errors.push(ParseError::recursion_limit());
+            self.failed = true;
+            self.failed_recursion = true;
+        }
         if self.failed {
             Err(ParseError::failed())
         } else {
@@ -172,11 +185,12 @@ impl<'src, F: File> Parser<'src, F> {
     }
 
     fn push_err(&mut self, e: ParseError) {
-        if self.errors.len() > 100 {
-            if !self.failed {
-                self.failed = true;
-                self.errors.push(ParseError::error_limit());
-            }
+        if self.errors.len() > 100 && !self.failed_error {
+            self.failed = true;
+            self.failed_error = true;
+            self.errors.push(ParseError::error_limit());
+        }
+        if self.failed {
             return;
         }
         self.errors.push(e);
@@ -251,34 +265,37 @@ impl<'src, F: File> Parser<'src, F> {
         self.report_error(tok_res, expected)
     }
 
-    fn parse_sync<T, P: FnOnce(&mut Self) -> Result<T>>(
+    fn parse_sync<T, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
         cancel: &[TokenKind],
         expected: &'static str,
+        recursion: u32,
     ) -> Option<T> {
         let snapshot = self.snapshot();
-        let res = func(self);
+        let res = func(self, recursion + 1);
         self.handle_error_sync(res, snapshot, cancel, expected, false)
     }
 
-    fn parse_sync_skip<T, P: FnOnce(&mut Self) -> Result<T>>(
+    fn parse_sync_skip<T, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
         cancel: &[TokenKind],
         expected: &'static str,
+        recursion: u32,
     ) -> Option<T> {
         let snapshot = self.snapshot();
-        let res = func(self);
+        let res = func(self, recursion + 1);
         self.handle_error_sync(res, snapshot, cancel, expected, true)
     }
 
-    fn parse_report<T, P: FnOnce(&mut Self) -> Result<T>>(
+    fn parse_report<T, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
         expected: &'static str,
+        recursion: u32,
     ) -> Option<T> {
-        let res = func(self);
+        let res = func(self, recursion + 1);
         self.report_error(res, expected)
     }
 
@@ -289,7 +306,7 @@ impl<'src, F: File> Parser<'src, F> {
         global: &'src Global,
     ) -> (Program, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let prog = p.program();
+        let prog = p.program(0);
         (prog, p.errors)
     }
 }
@@ -299,8 +316,9 @@ impl<F: File> Parser<'_, F> {
         &mut self,
         seperator: TokenKind,
         closing: TokenKind,
-        parse: fn(&mut Self) -> Result<T>,
+        parse: fn(&mut Self, u32) -> Result<T>,
         expected: &'static str,
+        recursion: u32,
     ) -> ThinVec<Option<T>> {
         let mut args = ThinVec::new();
         loop {
@@ -310,7 +328,7 @@ impl<F: File> Parser<'_, F> {
                 break;
             }
 
-            let expr = self.parse_sync(parse, &[closing, seperator], expected);
+            let expr = self.parse_sync(parse, &[closing, seperator], expected, recursion);
             args.push(expr);
             if self.eat(&[seperator]).is_none() {
                 break;
@@ -324,23 +342,27 @@ impl<F: File> Parser<'_, F> {
         self.eat(&[TokenKind::Exp]).is_some()
     }
 
-    fn program(&mut self) -> Program {
-        let mod_stmt_res = self.mod_statement();
+    fn program(&mut self, recursion: u32) -> Program {
+        let mod_stmt_res = self.mod_statement(recursion + 1);
         let mod_stmt = self.report_error(mod_stmt_res, "`mod` statement");
 
         let mut items = ThinVec::new();
         while !self.at_eof() {
-            let item =
-                self.parse_sync_skip(Self::item, &[TokenKind::Const, TokenKind::Func], "item");
+            let item = self.parse_sync_skip(
+                Self::item,
+                &[TokenKind::Const, TokenKind::Func],
+                "item",
+                recursion + 1,
+            );
             items.push(item);
         }
 
         Program { mod_stmt, items }
     }
 
-    fn mod_statement(&mut self) -> Result<ModStatement> {
+    fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {
         let mod_key = self.expect(&[TokenKind::Mod])?;
-        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path");
+        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path", recursion + 1);
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
         let span = Span::new_from(
@@ -353,7 +375,9 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn path(&mut self) -> Result<Path> {
+    fn path(&mut self, recursion: u32) -> Result<Path> {
+        self.check_failed(recursion)?;
+
         let mut components = ThinVec::new();
         let ident = self.expect(&[TokenKind::Ident])?;
         components.push(Some(ident.into()));
@@ -374,8 +398,9 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn item(&mut self) -> Result<Item> {
-        self.check_failed()?;
+    fn item(&mut self, recursion: u32) -> Result<Item> {
+        self.check_failed(recursion)?;
+
         let starts = &[TokenKind::Const, TokenKind::Func, TokenKind::Imp];
         let tok = if self.expect_peek(&[TokenKind::Exp]).is_ok() {
             self.expect_peek2(starts)
@@ -383,21 +408,26 @@ impl<F: File> Parser<'_, F> {
             self.expect_peek(starts)
         }?;
         match tok.kind {
-            TokenKind::Const => self.const_item(),
-            TokenKind::Func => self.func_item(),
-            TokenKind::Imp => self.imp_item(),
+            TokenKind::Const => self.const_item(recursion + 1),
+            TokenKind::Func => self.func_item(recursion + 1),
+            TokenKind::Imp => self.imp_item(recursion + 1),
             _ => Err(ParseError::expected(None, tok)),
         }
     }
 
-    fn const_item(&mut self) -> Result<Item> {
-        self.check_failed()?;
+    fn const_item(&mut self, recursion: u32) -> Result<Item> {
+        self.check_failed(recursion)?;
 
         let exported = self.visibility();
         let const_key = self.expect(&[TokenKind::Const])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(Self::expression_normal, &[TokenKind::Eq], "type"))
+            Some(self.parse_sync(
+                Self::expression_normal,
+                &[TokenKind::Eq],
+                "type",
+                recursion + 1,
+            ))
         } else {
             None
         };
@@ -407,6 +437,7 @@ impl<F: File> Parser<'_, F> {
             Self::expression_normal,
             &[TokenKind::Semicolon],
             "expression",
+            recursion + 1,
         );
 
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
@@ -427,8 +458,8 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn func_item(&mut self) -> Result<Item> {
-        self.check_failed()?;
+    fn func_item(&mut self, recursion: u32) -> Result<Item> {
+        self.check_failed(recursion)?;
 
         let exported = self.visibility();
         let func = self.expect(&[TokenKind::Func])?;
@@ -449,6 +480,7 @@ impl<F: File> Parser<'_, F> {
                 Self::expression_normal,
                 &[TokenKind::Comma, TokenKind::RParen],
                 "expression",
+                recursion + 1,
             );
             params.push((ident.map(Into::into), expr));
             if self.eat(&[TokenKind::Comma]).is_none() {
@@ -462,11 +494,16 @@ impl<F: File> Parser<'_, F> {
             .filter(|tok| tok.kind != TokenKind::LBrace)
             .is_some()
         {
-            Some(self.parse_sync(Self::expression_no_blocks, &[TokenKind::LBrace], "type"))
+            Some(self.parse_sync(
+                Self::expression_no_blocks,
+                &[TokenKind::LBrace],
+                "type",
+                recursion + 1,
+            ))
         } else {
             None
         };
-        let block = self.parse_report(Self::block, "block");
+        let block = self.parse_report(Self::block, "block", recursion + 1);
 
         let span = Span::new_from(
             func.span.start,
@@ -487,10 +524,12 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn imp_item(&mut self) -> Result<Item> {
+    fn imp_item(&mut self, recursion: u32) -> Result<Item> {
+        self.check_failed(recursion)?;
+
         let exported = self.visibility();
         let imp = self.expect(&[TokenKind::Imp])?;
-        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path");
+        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path", recursion + 1);
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
         let span = Span::new_from(
@@ -503,8 +542,9 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn block(&mut self) -> Result<Block> {
-        self.check_failed()?;
+    fn block(&mut self, recursion: u32) -> Result<Block> {
+        self.check_failed(recursion)?;
+
         let opening = self.expect(&[TokenKind::LBrace])?;
         let mut stmts = Vec::new();
         let expr = loop {
@@ -521,13 +561,14 @@ impl<F: File> Parser<'_, F> {
                         Self::statement,
                         &[TokenKind::Semicolon],
                         "statement, item, or expression",
+                        recursion + 1,
                     );
                     stmts.push(stmt);
                 }
                 // Statements that don't end in semicolons
                 Some(TokenKind::Func) => {
                     let snapshot = self.snapshot();
-                    let stmt_res = self.statement();
+                    let stmt_res = self.statement(recursion + 1);
                     let stmt = self.report_error(stmt_res, "statement, item, or expression");
                     if stmt.is_none() {
                         self.restore(snapshot);
@@ -542,6 +583,7 @@ impl<F: File> Parser<'_, F> {
                         Self::expression_normal,
                         &[TokenKind::Semicolon, TokenKind::RBrace],
                         "statement, item, or expression",
+                        recursion + 1,
                     );
                     if let Some(tok) = self.peek()
                         && tok.kind == TokenKind::RBrace
@@ -584,22 +626,29 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn statement(&mut self) -> Result<Statement> {
-        self.check_failed()?;
+    fn statement(&mut self, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
         let tok = self.expect_peek_all()?;
         match tok.kind {
-            TokenKind::Let => self.let_statement(),
-            TokenKind::Const | TokenKind::Func => self.item_statement(),
-            _ => self.statement_starting_with_expression(),
+            TokenKind::Let => self.let_statement(recursion + 1),
+            TokenKind::Const | TokenKind::Func => self.item_statement(recursion + 1),
+            _ => self.statement_starting_with_expression(recursion + 1),
         }
     }
 
-    fn let_statement(&mut self) -> Result<Statement> {
-        self.check_failed()?;
+    fn let_statement(&mut self, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
         let let_key = self.expect(&[TokenKind::Let])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(Self::expression_normal, &[TokenKind::Eq], "type"))
+            Some(self.parse_sync(
+                Self::expression_normal,
+                &[TokenKind::Eq],
+                "type",
+                recursion + 1,
+            ))
         } else {
             None
         };
@@ -609,6 +658,7 @@ impl<F: File> Parser<'_, F> {
                 Self::expression_normal,
                 &[TokenKind::Semicolon],
                 "expression",
+                recursion + 1,
             ))
         } else {
             None
@@ -631,9 +681,10 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn item_statement(&mut self) -> Result<Statement> {
-        self.check_failed()?;
-        let item = self.item()?;
+    fn item_statement(&mut self, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
+        let item = self.item(recursion + 1)?;
         let span = self.span(item.id);
         Ok(Statement::new(
             StatementKind::Item(item),
@@ -641,17 +692,19 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn statement_starting_with_expression(&mut self) -> Result<Statement> {
-        self.check_failed()?;
-        let expr = self.expression(BlockMode::Normal)?;
+    fn statement_starting_with_expression(&mut self, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
+        let expr = self.expression(BlockMode::Normal, recursion + 1)?;
         match self.peek().map(|tok| tok.kind) {
-            Some(TokenKind::Eq) => self.assignment_statement(expr),
-            _ => self.expression_statement(expr),
+            Some(TokenKind::Eq) => self.assignment_statement(expr, recursion + 1),
+            _ => self.expression_statement(expr, recursion + 1),
         }
     }
 
-    fn expression_statement(&mut self, expr: Expression) -> Result<Statement> {
-        self.check_failed()?;
+    fn expression_statement(&mut self, expr: Expression, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
         let semi = if expr.kind.is_block() {
             self.eat(&[TokenKind::Semicolon])
         } else {
@@ -670,13 +723,15 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn assignment_statement(&mut self, lhs: Expression) -> Result<Statement> {
-        self.check_failed()?;
+    fn assignment_statement(&mut self, lhs: Expression, recursion: u32) -> Result<Statement> {
+        self.check_failed(recursion)?;
+
         let _eq = self.expect(&[TokenKind::Eq])?;
         let rhs = self.parse_sync(
             Self::expression_normal,
             &[TokenKind::Semicolon],
             "expression",
+            recursion + 1,
         );
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
@@ -691,20 +746,20 @@ impl<F: File> Parser<'_, F> {
     }
 
     #[inline]
-    fn expression_normal(&mut self) -> Result<Expression> {
-        self.expression(BlockMode::Normal)
+    fn expression_normal(&mut self, recursion: u32) -> Result<Expression> {
+        self.expression(BlockMode::Normal, recursion)
     }
 
     #[inline]
-    fn expression_no_blocks(&mut self) -> Result<Expression> {
-        self.expression(BlockMode::NoBlocks)
+    fn expression_no_blocks(&mut self, recursion: u32) -> Result<Expression> {
+        self.expression(BlockMode::NoBlocks, recursion)
     }
 
-    fn expression(&mut self, mode: BlockMode) -> Result<Expression> {
-        self.comparison(mode)
+    fn expression(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
+        self.comparison(mode, recursion)
     }
 
-    fn comparison(&mut self, mode: BlockMode) -> Result<Expression> {
+    fn comparison(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Gt, BinOp::Gt),
@@ -717,10 +772,11 @@ impl<F: File> Parser<'_, F> {
             Self::term,
             true,
             mode,
+            recursion,
         )
     }
 
-    fn term(&mut self, mode: BlockMode) -> Result<Expression> {
+    fn term(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Plus, BinOp::Add),
@@ -729,10 +785,11 @@ impl<F: File> Parser<'_, F> {
             Self::factor,
             false,
             mode,
+            recursion,
         )
     }
 
-    fn factor(&mut self, mode: BlockMode) -> Result<Expression> {
+    fn factor(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
                 (TokenKind::Star, BinOp::Mul),
@@ -741,6 +798,7 @@ impl<F: File> Parser<'_, F> {
             Self::unary,
             false,
             mode,
+            recursion,
         )
     }
 
@@ -748,12 +806,14 @@ impl<F: File> Parser<'_, F> {
     fn binary_expr(
         &mut self,
         tokens: &[(TokenKind, BinOp)],
-        next: fn(&mut Self, BlockMode) -> Result<Expression>,
+        next: fn(&mut Self, BlockMode, u32) -> Result<Expression>,
         comparison: bool,
         mode: BlockMode,
+        recursion: u32,
     ) -> Result<Expression> {
-        self.check_failed()?;
-        let mut lhs = next(self, mode)?;
+        self.check_failed(recursion)?;
+
+        let mut lhs = next(self, mode, recursion + 1)?;
         let mut ops = Vec::new();
         while let Some(peeked) = self.peek() {
             let Some((_, op)) = tokens.iter().find(|(tok, _)| peeked.kind == *tok) else {
@@ -761,7 +821,7 @@ impl<F: File> Parser<'_, F> {
             };
 
             self.advance(); // Skip operator
-            let rhs = next(self, mode)?;
+            let rhs = next(self, mode, recursion + 1)?;
             let id = self.prepare_node(Span::new_from(
                 self.span(lhs.id).start,
                 self.span(rhs.id).end,
@@ -788,12 +848,13 @@ impl<F: File> Parser<'_, F> {
         Ok(lhs)
     }
 
-    fn unary(&mut self, mode: BlockMode) -> Result<Expression> {
-        self.check_failed()?;
+    fn unary(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
+
         let Some(op) = self.eat(&[TokenKind::Minus, TokenKind::Bang]) else {
-            return self.postfix(mode);
+            return self.postfix(mode, recursion + 1);
         };
-        let rhs = self.unary(mode)?;
+        let rhs = self.unary(mode, recursion + 1)?;
         let span = Span::new_from(op.span.start, self.span(rhs.id).end);
         let kind = match op.kind {
             TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, Box::new(rhs)),
@@ -803,24 +864,26 @@ impl<F: File> Parser<'_, F> {
         Ok(Expression::new(kind, self.prepare_node(span)))
     }
 
-    fn postfix(&mut self, mode: BlockMode) -> Result<Expression> {
-        self.check_failed()?;
-        let mut lhs = self.grouping(mode)?;
+    fn postfix(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
+
+        let mut lhs = self.grouping(mode, recursion + 1)?;
         while let Some(tok) = self.peek() {
             match tok.kind {
                 TokenKind::Dot => lhs = self.parse_access(lhs),
-                TokenKind::LParen => lhs = self.parse_call(lhs),
-                TokenKind::LBracket => lhs = self.parse_index(lhs),
+                TokenKind::LParen => lhs = self.parse_call(lhs, recursion + 1),
+                TokenKind::LBracket => lhs = self.parse_index(lhs, recursion + 1),
                 _ => break,
             }
         }
         Ok(lhs)
     }
 
-    fn parse_index(&mut self, lhs: Expression) -> Expression {
+    fn parse_index(&mut self, lhs: Expression, recursion: u32) -> Expression {
         self.advance();
+
         let snapshot = self.snapshot();
-        let expr_res = self.expression(BlockMode::Normal);
+        let expr_res = self.expression(BlockMode::Normal, recursion + 1);
         let expr = self.handle_error_sync(
             expr_res,
             snapshot,
@@ -841,13 +904,14 @@ impl<F: File> Parser<'_, F> {
         )
     }
 
-    fn parse_call(&mut self, lhs: Expression) -> Expression {
+    fn parse_call(&mut self, lhs: Expression, recursion: u32) -> Expression {
         self.advance();
         let args = self.delimited(
             TokenKind::Comma,
             TokenKind::RParen,
             Self::expression_normal,
             "expression",
+            recursion + 1,
         );
         let closing_res = self.expect(&[TokenKind::RParen]);
         let closing = self.report_error(closing_res, "')'");
@@ -874,13 +938,19 @@ impl<F: File> Parser<'_, F> {
         )
     }
 
-    fn grouping(&mut self, mode: BlockMode) -> Result<Expression> {
-        self.check_failed()?;
+    fn grouping(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
+
         let Some(opening) = self.eat(&[TokenKind::LParen]) else {
-            return self.block_expr(mode);
+            return self.block_expr(mode, recursion + 1);
         };
 
-        let inner = self.parse_sync(Self::expression_normal, &[TokenKind::RParen], "expression");
+        let inner = self.parse_sync(
+            Self::expression_normal,
+            &[TokenKind::RParen],
+            "expression",
+            recursion + 1,
+        );
         let closing = self.expect_report(&[TokenKind::RParen], "')'");
 
         let expr = Expression::new(
@@ -893,8 +963,8 @@ impl<F: File> Parser<'_, F> {
         Ok(expr)
     }
 
-    fn block_expr(&mut self, mode: BlockMode) -> Result<Expression> {
-        self.check_failed()?;
+    fn block_expr(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
 
         if !mode.normal()
             || self
@@ -902,10 +972,10 @@ impl<F: File> Parser<'_, F> {
                 .filter(|t| t.kind == TokenKind::LBrace)
                 .is_none()
         {
-            return self.primary();
+            return self.primary(recursion);
         }
 
-        let block = self.block()?;
+        let block = self.block(recursion)?;
         let span = self.span(block.id);
 
         Ok(Expression::new(
@@ -914,8 +984,8 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
-    fn primary(&mut self) -> Result<Expression> {
-        self.check_failed()?;
+    fn primary(&mut self, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
         let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
