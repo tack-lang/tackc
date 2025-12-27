@@ -1,6 +1,6 @@
 mod tack;
 
-func main() {
+exp func main() {
     func main2() {
         func main3() {
             

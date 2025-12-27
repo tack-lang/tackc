@@ -7,7 +7,7 @@ Path = IDENTIFIER ( DOT IDENTIFIER )* ;
 Item = ConstItem
     | FuncItem
     ;
-ConstItem = CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMICOLON ;
+ConstItem = Visibility CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMICOLON ;
 (* 
     The Expression right before the block is the 'return type',
     which may not syntactically contain a valid expression followed by an L_BRACE, or start with an L_BRACE.
@@ -20,8 +20,10 @@ ConstItem = CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMICOLON ;
         { ... }
             INVALID: starts with an L_BRACE.
 *)
-FuncItem = FUNC IDENTIFIER L_PAREN ParamList? R_PAREN Expression? Block ;
+FuncItem = Visibility FUNC IDENTIFIER L_PAREN ParamList? R_PAREN Expression? Block ;
 ParamList = ( IDENTIFIER COLON Expression ) ( COMMA IDENTIFIER COLON Expression )* COMMA? ;
+
+Visibility = EXP? ;
 
 Block = L_BRACE Statement* Expression? R_BRACE ;
 

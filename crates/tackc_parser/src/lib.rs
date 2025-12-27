@@ -105,6 +105,10 @@ impl<'src, F: File> Parser<'src, F> {
         self.tokens.get(self.ptr).copied()
     }
 
+    fn peek2(&self) -> Option<Token> {
+        self.tokens.get(self.ptr + 1).copied()
+    }
+
     fn at_eof(&self) -> bool {
         self.peek().is_none()
     }
@@ -133,8 +137,22 @@ impl<'src, F: File> Parser<'src, F> {
         })
     }
 
+    fn expect_peek2(&self, kinds: &[TokenKind]) -> Result<Token> {
+        self.expect_peek2_all().and_then(|token| {
+            if kinds.contains(&token.kind) {
+                Ok(token)
+            } else {
+                Err(ParseError::expected(None, token))
+            }
+        })
+    }
+
     fn expect_peek_all(&self) -> Result<Token> {
         self.peek().ok_or_else(|| ParseError::eof(None))
+    }
+
+    fn expect_peek2_all(&self) -> Result<Token> {
+        self.peek2().ok_or_else(|| ParseError::eof(None))
     }
 
     fn advance(&mut self) -> Option<Token> {
@@ -302,6 +320,10 @@ impl<F: File> Parser<'_, F> {
         args
     }
 
+    fn visibility(&mut self) -> bool {
+        self.eat(&[TokenKind::Exp]).is_some()
+    }
+
     fn program(&mut self) -> Program {
         let mod_stmt_res = self.mod_statement();
         let mod_stmt = self.report_error(mod_stmt_res, "`mod` statement");
@@ -354,7 +376,11 @@ impl<F: File> Parser<'_, F> {
 
     fn item(&mut self) -> Result<Item> {
         self.check_failed()?;
-        let tok = self.expect_peek(&[TokenKind::Const, TokenKind::Func])?;
+        let tok = if self.expect_peek(&[TokenKind::Exp]).is_ok() {
+            self.expect_peek2(&[TokenKind::Const, TokenKind::Func])
+        } else {
+            self.expect_peek(&[TokenKind::Const, TokenKind::Func])
+        }?;
         match tok.kind {
             TokenKind::Const => self.const_item(),
             TokenKind::Func => self.func_item(),
@@ -364,6 +390,8 @@ impl<F: File> Parser<'_, F> {
 
     fn const_item(&mut self) -> Result<Item> {
         self.check_failed()?;
+
+        let exported = self.visibility();
         let const_key = self.expect(&[TokenKind::Const])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
@@ -388,6 +416,7 @@ impl<F: File> Parser<'_, F> {
 
         Ok(Item::new(
             ItemKind::ConstItem(Box::new(ConstItem {
+                exported,
                 expr,
                 ty,
                 ident: ident.map(Into::into),
@@ -397,6 +426,9 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn func_item(&mut self) -> Result<Item> {
+        self.check_failed()?;
+
+        let exported = self.visibility();
         let func = self.expect(&[TokenKind::Func])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let _opening = self.expect_report(&[TokenKind::LParen], "'('");
@@ -443,6 +475,7 @@ impl<F: File> Parser<'_, F> {
 
         Ok(Item {
             kind: ItemKind::FuncItem(Box::new(FuncItem {
+                exported,
                 ident: ident.map(Into::into),
                 params,
                 ret_type,
