@@ -332,11 +332,24 @@ impl<'src, F: File> Lexer<'src, F> {
         self.src.as_bytes().get(self.span.end as usize + 1).copied()
     }
 
-    fn skip_whitespace(&mut self) {
-        while let Some(c) = self.current_byte()
-            && c.is_ascii_whitespace()
-        {
-            self.next_byte();
+    fn skip_whitespace_and_comments(&mut self) {
+        while let Some(c) = self.current_byte() {
+            match c {
+                b'/' if self.peek_byte() == Some(b'/') => {
+                    self.next_byte();
+                    self.next_byte();
+                    while let Some(c) = self.peek_byte()
+                    && c != b'\n' {
+                        self.next_byte();
+                    }
+                    self.next_byte();
+                    self.next_byte();
+                }
+                c if c.is_ascii_whitespace() => {
+                    self.next_byte();
+                }
+                _ => break,
+            }
         }
         self.span.reset();
     }
@@ -598,7 +611,7 @@ impl<'src, F: File> Lexer<'src, F> {
     /// # Errors
     /// See [`ErrorKind`].
     pub fn next_token(&mut self) -> Result<Token, LexError> {
-        self.skip_whitespace();
+        self.skip_whitespace_and_comments();
         let Some(c) = self.next_byte() else {
             return Ok(self.make_token(TokenKind::Eof));
         };
