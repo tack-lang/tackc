@@ -4,7 +4,7 @@ use tackc_lexer::Token;
 
 use crate::{
     NodeId,
-    ast::{Expression, Item, Symbol},
+    Expression, Item, Symbol,
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

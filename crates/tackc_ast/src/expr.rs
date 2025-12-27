@@ -6,7 +6,7 @@ use thin_vec::ThinVec;
 
 use crate::{
     NodeId,
-    ast::{Block, Symbol},
+    Block, Symbol,
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
