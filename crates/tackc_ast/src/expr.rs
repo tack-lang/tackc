@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 use tackc_global::{Global, Interned};
 use thin_vec::ThinVec;
 
-use crate::{
-    NodeId,
-    Block, Symbol,
-};
+use crate::{Block, NodeId, Symbol};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Expression {

@@ -2,10 +2,7 @@ use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use thin_vec::ThinVec;
 
-use crate::{
-    NodeId,
-    Item, Symbol,
-};
+use crate::{Item, NodeId, Symbol};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Program {
