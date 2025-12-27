@@ -339,7 +339,8 @@ impl<'src, F: File> Lexer<'src, F> {
                     self.next_byte();
                     self.next_byte();
                     while let Some(c) = self.peek_byte()
-                    && c != b'\n' {
+                        && c != b'\n'
+                    {
                         self.next_byte();
                     }
                     self.next_byte();
