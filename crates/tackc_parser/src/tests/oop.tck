@@ -1,0 +1,5 @@
+mod tests.order_of_operations;
+
+func main() {
+    println("{}", 3 + 2 * 5);
+}

@@ -1,0 +1,123 @@
+---
+source: crates/tackc_parser/src/lib.rs
+expression: "(prog, err)"
+input_file: crates/tackc_parser/src/tests/oop.tck
+---
+(Program(
+  mod_stmt: Some(ModStatement(
+    path: Some(Path(
+      components: [
+        Some(Symbol(Interned(16505476364814685382, PhantomData), Span(
+          start: 4,
+          end: 9,
+        ))),
+        Some(Symbol(Interned(11674567286365986104, PhantomData), Span(
+          start: 10,
+          end: 29,
+        ))),
+      ],
+      id: NodeId(
+        id: 1,
+        file: 1734490924,
+      ),
+    )),
+    id: NodeId(
+      id: 2,
+      file: 1734490924,
+    ),
+  )),
+  items: [
+    Some(Item(
+      kind: FuncItem(FuncItem(
+        exported: false,
+        ident: Some(Symbol(Interned(13877981266774981813, PhantomData), Span(
+          start: 37,
+          end: 41,
+        ))),
+        params: [],
+        ret_type: None,
+        block: Some(Block(
+          stmts: [
+            Some(Statement(
+              kind: ExpressionStatement(ExpressionStatement(
+                expr: Expression(
+                  kind: Call(Expression(
+                    kind: Ident(Interned(17520576164301135459, PhantomData)),
+                    id: NodeId(
+                      id: 3,
+                      file: 1734490924,
+                    ),
+                  ), [
+                    Some(Expression(
+                      kind: StringLit(Interned(14598065627300119639, PhantomData)),
+                      id: NodeId(
+                        id: 4,
+                        file: 1734490924,
+                      ),
+                    )),
+                    Some(Expression(
+                      kind: Binary(Add, Expression(
+                        kind: IntLit(Interned(9512443353228393487, PhantomData)),
+                        id: NodeId(
+                          id: 5,
+                          file: 1734490924,
+                        ),
+                      ), Expression(
+                        kind: Binary(Mul, Expression(
+                          kind: IntLit(Interned(9290355111161746293, PhantomData)),
+                          id: NodeId(
+                            id: 6,
+                            file: 1734490924,
+                          ),
+                        ), Expression(
+                          kind: IntLit(Interned(7161555357105607078, PhantomData)),
+                          id: NodeId(
+                            id: 7,
+                            file: 1734490924,
+                          ),
+                        )),
+                        id: NodeId(
+                          id: 8,
+                          file: 1734490924,
+                        ),
+                      )),
+                      id: NodeId(
+                        id: 9,
+                        file: 1734490924,
+                      ),
+                    )),
+                  ]),
+                  id: NodeId(
+                    id: 10,
+                    file: 1734490924,
+                  ),
+                ),
+                semi: Some(Some(Token(
+                  span: Span(
+                    start: 74,
+                    end: 75,
+                  ),
+                  kind: Semicolon,
+                  lexeme: Interned(3447890864966814147, PhantomData),
+                ))),
+              )),
+              id: NodeId(
+                id: 11,
+                file: 1734490924,
+              ),
+            )),
+          ],
+          expr: None,
+          id: NodeId(
+            id: 12,
+            file: 1734490924,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 13,
+        file: 1734490924,
+      ),
+    )),
+  ],
+), [])
