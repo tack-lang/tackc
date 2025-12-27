@@ -987,7 +987,12 @@ impl<F: File> Parser<'_, F> {
 
     fn primary(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
-        let tok = self.expect(&[TokenKind::IntLit, TokenKind::FloatLit, TokenKind::Ident, TokenKind::StringLit])?;
+        let tok = self.expect(&[
+            TokenKind::IntLit,
+            TokenKind::FloatLit,
+            TokenKind::Ident,
+            TokenKind::StringLit,
+        ])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
