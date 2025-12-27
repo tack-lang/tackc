@@ -14,8 +14,8 @@ use thin_vec::ThinVec;
 use crate::{
     ast::{
         AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
-        ExpressionStatement, FuncItem, Item, ItemKind, LetStatement, ModStatement, Path, Program,
-        Statement, StatementKind, Symbol, UnOp,
+        ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement, Path,
+        Program, Statement, StatementKind, Symbol, UnOp,
     },
     error::ErrorExt,
 };
@@ -376,14 +376,16 @@ impl<F: File> Parser<'_, F> {
 
     fn item(&mut self) -> Result<Item> {
         self.check_failed()?;
+        let starts = &[TokenKind::Const, TokenKind::Func, TokenKind::Imp];
         let tok = if self.expect_peek(&[TokenKind::Exp]).is_ok() {
-            self.expect_peek2(&[TokenKind::Const, TokenKind::Func])
+            self.expect_peek2(starts)
         } else {
-            self.expect_peek(&[TokenKind::Const, TokenKind::Func])
+            self.expect_peek(starts)
         }?;
         match tok.kind {
             TokenKind::Const => self.const_item(),
             TokenKind::Func => self.func_item(),
+            TokenKind::Imp => self.imp_item(),
             _ => Err(ParseError::expected(None, tok)),
         }
     }
@@ -481,6 +483,22 @@ impl<F: File> Parser<'_, F> {
                 ret_type,
                 block,
             })),
+            id: self.prepare_node(span),
+        })
+    }
+
+    fn imp_item(&mut self) -> Result<Item> {
+        let exported = self.visibility();
+        let imp = self.expect(&[TokenKind::Imp])?;
+        let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path");
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
+        let span = Span::new_from(
+            imp.span.start,
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+        );
+        Ok(Item {
+            kind: ItemKind::ImpItem(Box::new(ImpItem { exported, path })),
             id: self.prepare_node(span),
         })
     }

@@ -2,7 +2,7 @@ use tackc_global::Global;
 
 use crate::{
     NodeId,
-    ast::{Block, Expression, Symbol},
+    ast::{Block, Expression, Path, Symbol},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -58,6 +58,13 @@ impl Item {
                         .map_or_else(|| String::from("<ERROR>"), |block| block.display(global))
                 )
             }
+            ItemKind::ImpItem(item) => format!(
+                "{}imp {};",
+                if item.exported { "exp " } else { "" },
+                item.path
+                    .as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |path| path.display(global))
+            ),
         }
     }
 }
@@ -66,6 +73,7 @@ impl Item {
 pub enum ItemKind {
     ConstItem(Box<ConstItem>),
     FuncItem(Box<FuncItem>),
+    ImpItem(Box<ImpItem>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -83,4 +91,10 @@ pub struct FuncItem {
     pub params: Vec<(Option<Symbol>, Option<Expression>)>,
     pub ret_type: Option<Option<Expression>>,
     pub block: Option<Block>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ImpItem {
+    pub exported: bool,
+    pub path: Option<Path>,
 }
