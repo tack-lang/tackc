@@ -176,9 +176,13 @@ impl<'src, F: File> Parser<'src, F> {
         snapshot: ParserSnapshot,
         cancel: &[TokenKind],
         expected: &'static str,
+        skip: bool,
     ) -> Option<T> {
         if err.is_err() {
             self.restore(snapshot);
+            if skip {
+                self.eat(cancel);
+            }
             self.synchronize(cancel);
         }
         self.report_error(err, expected)
@@ -237,7 +241,18 @@ impl<'src, F: File> Parser<'src, F> {
     ) -> Option<T> {
         let snapshot = self.snapshot();
         let res = func(self);
-        self.handle_error_sync(res, snapshot, cancel, expected)
+        self.handle_error_sync(res, snapshot, cancel, expected, false)
+    }
+
+    fn parse_sync_skip<T, P: FnOnce(&mut Self) -> Result<T>>(
+        &mut self,
+        func: P,
+        cancel: &[TokenKind],
+        expected: &'static str,
+    ) -> Option<T> {
+        let snapshot = self.snapshot();
+        let res = func(self);
+        self.handle_error_sync(res, snapshot, cancel, expected, true)
     }
 
     fn parse_report<T, P: FnOnce(&mut Self) -> Result<T>>(
@@ -293,7 +308,8 @@ impl<F: File> Parser<'_, F> {
 
         let mut items = ThinVec::new();
         while !self.at_eof() {
-            let item = self.parse_sync(Self::item, &[TokenKind::Const, TokenKind::Func], "item");
+            let item =
+                self.parse_sync_skip(Self::item, &[TokenKind::Const, TokenKind::Func], "item");
             items.push(item);
         }
 
@@ -754,7 +770,13 @@ impl<F: File> Parser<'_, F> {
         self.advance();
         let snapshot = self.snapshot();
         let expr_res = self.expression(BlockMode::Normal);
-        let expr = self.handle_error_sync(expr_res, snapshot, &[TokenKind::RBracket], "expression");
+        let expr = self.handle_error_sync(
+            expr_res,
+            snapshot,
+            &[TokenKind::RBracket],
+            "expression",
+            false,
+        );
         let closing_res = self.expect(&[TokenKind::RBracket]);
         let closing = self.report_error(closing_res, "']'");
         let span = Span::new_from(
