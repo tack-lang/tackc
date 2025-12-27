@@ -1,5 +1,7 @@
 mod tack;
 
+exp imp tack.tests;
+
 exp func main() {
     func main2() {
         func main3() {

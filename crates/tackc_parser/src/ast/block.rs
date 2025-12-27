@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use tackc_global::Global;
 
 use crate::{
@@ -16,21 +14,29 @@ pub struct Block {
 
 impl Block {
     pub fn display(&self, global: &Global) -> String {
-        let mut f = String::from("{");
-        for i in &self.stmts {
-            _ = write!(
-                f,
-                " {}",
-                i.as_ref()
-                    .map_or_else(|| String::from("<ERROR>;"), |stmt| stmt.display(global))
-            );
+        let stmts = self
+            .stmts
+            .iter()
+            .map(|stmt| {
+                stmt.as_ref().map_or_else(
+                    || String::from("<ERROR>;"),
+                    |s| s.display(global).replace('\n', "\n    "),
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n    ");
+
+        let expr = match &self.expr {
+            Some(Some(val)) => val.display(global),
+            Some(None) => String::from("<ERROR>"),
+            None => String::new(),
+        };
+
+        match (stmts.is_empty(), expr.is_empty()) {
+            (true, true) => String::from("{}"),
+            (false, true) => format!("{{\n    {stmts}\n}}"),
+            (true, false) => format!("{{\n    {expr}\n}}"),
+            (false, false) => format!("{{\n    {stmts}\n    {expr}\n}}"),
         }
-        match &self.expr {
-            Some(Some(value)) => _ = write!(f, " {}", value.display(global)),
-            Some(None) => _ = write!(f, " <ERROR>"),
-            None => {}
-        }
-        _ = write!(f, " }}");
-        f
     }
 }

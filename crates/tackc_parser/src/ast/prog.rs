@@ -13,20 +13,20 @@ pub struct Program {
 
 impl Program {
     pub fn display(&self, global: &Global) -> String {
-        format!(
-            "{}\n{}",
-            self.mod_stmt.as_ref().map_or_else(
-                || String::from("<ERROR>;"),
-                |mod_stmt| mod_stmt.display(global)
-            ),
-            self.items
-                .iter()
-                .map(|opt| opt
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |sym| sym.display(global)))
-                .collect::<Vec<_>>()
-                .join("\n")
-        )
+        let mod_stmt = self.mod_stmt.as_ref().map_or_else(
+            || String::from("<ERROR>;"),
+            |mod_stmt| mod_stmt.display(global),
+        );
+        let stmts = self
+            .items
+            .iter()
+            .map(|opt| {
+                opt.as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |sym| sym.display(global))
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        format!("{mod_stmt}\n{stmts}")
     }
 }
 
