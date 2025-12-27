@@ -35,19 +35,20 @@ impl Statement {
                 };
                 format!("let {ident}{ty}{expr};")
             }
-            StatementKind::AssignmentStatement(stmt) => format!(
-                "{} = {};",
-                stmt.lhs.display(global),
-                stmt.rhs
+            StatementKind::AssignmentStatement(stmt) => {
+                let lhs = stmt.lhs.display(global);
+                let rhs = stmt
+                    .rhs
                     .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))
-            ),
+                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global));
+                format!("{lhs} = {rhs};")
+            }
             StatementKind::Item(item) => item.display(global),
-            StatementKind::ExpressionStatement(stmt) => format!(
-                "{}{}",
-                stmt.expr.display(global),
-                stmt.semi.map_or("", |_| ";")
-            ),
+            StatementKind::ExpressionStatement(stmt) => {
+                let stmt_str = stmt.expr.display(global);
+                let semi = stmt.semi.map_or("", |_| ";");
+                format!("{stmt_str}{semi}")
+            }
         }
     }
 }

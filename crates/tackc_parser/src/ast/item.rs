@@ -37,34 +37,39 @@ impl Item {
                 )
             }
             ItemKind::FuncItem(item) => {
-                format!(
-                    "{}func {}({}) {}",
-                    if item.exported { "exp " } else { "" },
-                    item.ident.map_or("<ERROR>", |ident| ident.display(global)),
-                    item.params
-                        .iter()
-                        .map(|(ident, ty)| format!(
+                let exp = if item.exported { "exp " } else { "" };
+                let ident = item.ident.map_or("<ERROR>", |ident| ident.display(global));
+                let params = item
+                    .params
+                    .iter()
+                    .map(|(ident, ty)| {
+                        format!(
                             "{}: {}",
                             ident.map_or("<ERROR>", |ident| ident.display(global)),
                             ty.as_ref().map_or_else(
                                 || String::from("<ERROR>"),
                                 |expr| expr.display(global)
                             )
-                        ))
-                        .collect::<Vec<_>>()
-                        .join(", "),
-                    item.block
-                        .as_ref()
-                        .map_or_else(|| String::from("<ERROR>"), |block| block.display(global))
-                )
-            }
-            ItemKind::ImpItem(item) => format!(
-                "{}imp {};",
-                if item.exported { "exp " } else { "" },
-                item.path
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let block = item
+                    .block
                     .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |path| path.display(global))
-            ),
+                    .map_or_else(|| String::from("<ERROR>"), |block| block.display(global));
+
+                format!("{exp}func {ident}({params}) {block}")
+            }
+            ItemKind::ImpItem(item) => {
+                let exp = if item.exported { "exp " } else { "" };
+                let path = item
+                    .path
+                    .as_ref()
+                    .map_or_else(|| String::from("<ERROR>"), |path| path.display(global));
+
+                format!("{exp}imp {path};")
+            }
         }
     }
 }
