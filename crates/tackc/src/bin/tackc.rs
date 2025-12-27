@@ -89,7 +89,7 @@ fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec
         for token in &tokens {
             match token {
                 Ok(token) => eprintln!("{}", token.display(global)),
-                Err(e) => eprintln!("{e}"),
+                Err(e) => eprintln!("{}", e.display(file)),
             }
         }
     }
@@ -103,7 +103,7 @@ fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec
         .collect();
 
     for e in errors {
-        eprintln!("{e}");
+        eprintln!("{}\n", e.display(file));
     }
 
     tokens
@@ -124,15 +124,8 @@ fn run_parser(
         eprintln!("{}", prog.display(global));
     }
 
-    let str = errs
-        .into_iter()
-        .map(|err| err.display(file, global))
-        .collect::<Vec<_>>()
-        .join("\n\n");
-
-    print!("{str}");
-    if !str.is_empty() {
-        println!();
+    for err in errs {
+        eprintln!("{}\n", err.display(file, global));
     }
 
     prog

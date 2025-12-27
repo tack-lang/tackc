@@ -826,6 +826,7 @@ dependencies = [
  "insta",
  "proptest",
  "serde",
+ "tackc_error",
  "tackc_file",
  "tackc_global",
  "tackc_span",

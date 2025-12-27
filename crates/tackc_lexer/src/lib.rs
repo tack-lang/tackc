@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use proptest::prelude::*;
 use serde::{Deserialize, Serialize};
+use tackc_error::Diag;
 use tackc_span::Span;
 use thiserror::Error;
 
@@ -236,7 +237,7 @@ impl Display for TokenKind {
 }
 
 /// An error in the lexer.
-#[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LexError {
     /// The span of the file that caused the error
     pub span: Span,
@@ -244,9 +245,9 @@ pub struct LexError {
     pub kind: ErrorKind,
 }
 
-impl Display for LexError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.kind)
+impl LexError {
+    pub fn display<F: File>(&self, file: &F) -> String {
+        Diag::with_span(self.kind.to_string(), self.span).display(file)
     }
 }
 
