@@ -2,8 +2,6 @@ Program = ModStatement Item* ;
 
 ModStatement = MOD Path SEMICOLON ;
 
-Path = IDENTIFIER ( DOT IDENTIFIER )* ;
-
 Item = ConstItem
     | FuncItem
     ;
@@ -22,6 +20,7 @@ ConstItem = Visibility CONST IDENTIFIER ( COLON Expression )? EQ Expression SEMI
 *)
 FuncItem = Visibility FUNC IDENTIFIER L_PAREN ParamList? R_PAREN Expression? Block ;
 ParamList = ( IDENTIFIER COLON Expression ) ( COMMA IDENTIFIER COLON Expression )* COMMA? ;
+ImpItem = IMP Path SEMICOLON ;
 
 Visibility = EXP? ;
 
@@ -65,3 +64,5 @@ Primary = IDENTIFIER
     ;
 
 ArgList = Expression ( COMMA Expression )* COMMA? ;
+
+Path = IDENTIFIER ( DOT IDENTIFIER )* ;

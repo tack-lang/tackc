@@ -46,6 +46,7 @@ impl ModStatement {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Path {
     pub components: ThinVec<Option<Symbol>>,
     pub id: NodeId,
