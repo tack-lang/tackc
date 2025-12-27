@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tackc_global::Global;
+use tackc_span::Span;
 use thin_vec::ThinVec;
 
 use crate::{Item, NodeId, Symbol};
@@ -8,6 +9,7 @@ use crate::{Item, NodeId, Symbol};
 pub struct Program {
     pub mod_stmt: Option<ModStatement>,
     pub items: ThinVec<Option<Item>>,
+    pub spans: Vec<Span>,
 }
 
 impl Program {

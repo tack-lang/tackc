@@ -301,7 +301,9 @@ impl<'src, F: File> Parser<'src, F> {
         global: &'src Global,
     ) -> (Program, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let prog = p.program(0);
+        let mut prog = p.program(0);
+        // Override default spans
+        prog.spans = p.spans;
         (prog, p.errors)
     }
 }
@@ -352,7 +354,8 @@ impl<F: File> Parser<'_, F> {
             items.push(item);
         }
 
-        Program { mod_stmt, items }
+        // Default vec for spans
+        Program { mod_stmt, items, spans: vec![] }
     }
 
     fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {
