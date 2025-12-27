@@ -228,14 +228,14 @@ impl<'src, F: File> Parser<'src, F> {
                 return;
             };
             match tok.kind {
+                kind if cancel.contains(&kind) && depth == 0 => {
+                    return;
+                }
                 TokenKind::LBrace | TokenKind::LBracket | TokenKind::LParen => {
                     depth += 1;
                 }
                 TokenKind::RBrace | TokenKind::RBracket | TokenKind::RParen => {
                     depth = depth.saturating_sub(1);
-                }
-                kind if cancel.contains(&kind) && depth == 0 => {
-                    return;
                 }
                 _ => {}
             }
