@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 
 use crate::{
@@ -5,7 +6,7 @@ use crate::{
     ast::{Expression, Statement},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Block {
     pub stmts: Vec<Option<Statement>>,
     pub expr: Option<Option<Expression>>,

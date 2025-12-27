@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
 use tackc_global::{Global, Interned};
 use thin_vec::ThinVec;
 
@@ -8,7 +9,7 @@ use crate::{
     ast::{Block, Symbol},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Expression {
     pub kind: ExpressionKind,
     pub id: NodeId,
@@ -68,7 +69,7 @@ impl Expression {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExpressionKind {
     IntLit(Interned<str>),
     FloatLit(Interned<str>),
@@ -89,7 +90,7 @@ impl ExpressionKind {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -121,7 +122,7 @@ impl Display for BinOp {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum UnOp {
     Neg,
     Not,

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::{Global, Interned};
 use tackc_lexer::Token;
 use tackc_span::Span;
@@ -17,7 +18,7 @@ pub use block::*;
 pub mod prog;
 pub use prog::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Symbol(pub Interned<str>, pub Span);
 
 impl Symbol {

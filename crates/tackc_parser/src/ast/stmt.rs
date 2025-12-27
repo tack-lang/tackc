@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_lexer::Token;
 
@@ -6,7 +7,7 @@ use crate::{
     ast::{Expression, Item, Symbol},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Statement {
     pub kind: StatementKind,
     pub id: NodeId,
@@ -53,7 +54,7 @@ impl Statement {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum StatementKind {
     LetStatement(Box<LetStatement>),
     AssignmentStatement(Box<AssignmentStatement>),
@@ -61,20 +62,20 @@ pub enum StatementKind {
     ExpressionStatement(Box<ExpressionStatement>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LetStatement {
     pub ty: Option<Option<Expression>>,
     pub expr: Option<Option<Expression>>,
     pub ident: Option<Symbol>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AssignmentStatement {
     pub lhs: Expression,
     pub rhs: Option<Expression>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExpressionStatement {
     pub expr: Expression,
     pub semi: Option<Option<Token>>,

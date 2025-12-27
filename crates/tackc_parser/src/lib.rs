@@ -7,6 +7,7 @@ use error::{ParseError, Result};
 
 pub mod ast;
 
+use serde::{Deserialize, Serialize};
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::{Token, TokenKind};
@@ -34,7 +35,7 @@ impl BlockMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NodeId {
     id: NonZeroU32,
     file: NonZeroU32,
@@ -576,7 +577,7 @@ impl<F: File> Parser<'_, F> {
                     }
                     stmts.push(stmt);
                 }
-                // Expression that end in semicolons when used as statements
+                // Expressions that end in semicolons when used as statements
                 Some(_) => {
                     let loc = self.loc();
                     let expr = self.parse_sync(
@@ -997,4 +998,29 @@ impl<F: File> Parser<'_, F> {
 
         Ok(expr)
     }
+}
+
+#[test]
+fn prog_parser_test() {
+    insta::glob!("tests/*.tck", run_prog_parser_test);
+}
+
+#[cfg(test)]
+use std::path::Path as StdPath;
+
+#[cfg(test)]
+fn run_prog_parser_test(path: &StdPath) {
+    use std::fs;
+
+    use insta::assert_ron_snapshot;
+    use tackc_file::BasicFile;
+    use tackc_lexer::Lexer;
+
+    let src = fs::read_to_string(path).unwrap();
+    let file = BasicFile::new(src, StdPath::new("testing.tck"));
+    let global = Global::create_heap();
+    let lexer = Lexer::new(&file, &global);
+    let tokens = lexer.map(|res| res.unwrap()).collect::<Vec<_>>();
+    let (prog, err) = Parser::parse(&tokens, &file, &global);
+    assert_ron_snapshot!((prog, err));
 }
