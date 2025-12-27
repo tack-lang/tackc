@@ -124,13 +124,16 @@ fn run_parser(
         eprintln!("{}", prog.display(global));
     }
 
-    print!(
-        "{}",
-        errs.into_iter()
-            .map(|err| err.display(file, global))
-            .collect::<Vec<_>>()
-            .join("\n\n")
-    );
+    let str = errs
+        .into_iter()
+        .map(|err| err.display(file, global))
+        .collect::<Vec<_>>()
+        .join("\n\n");
+
+    print!("{str}");
+    if !str.is_empty() {
+        println!();
+    }
 
     prog
 }
