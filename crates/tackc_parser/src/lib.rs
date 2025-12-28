@@ -353,7 +353,11 @@ impl<F: File> Parser<'_, F> {
         }
 
         // Default vec for spans
-        Program { mod_stmt, items, spans: HashMap::new() }
+        Program {
+            mod_stmt,
+            items,
+            spans: HashMap::new(),
+        }
     }
 
     fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {

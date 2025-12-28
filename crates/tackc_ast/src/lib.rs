@@ -79,7 +79,7 @@ pub trait AstVisitor {
             self.visit_expression(ty);
         }
     }
-    
+
     fn visit_func_item(&mut self, item: &FuncItem) {
         for i in item.params.iter().flat_map(|tuple| &tuple.1) {
             self.visit_expression(i);
@@ -97,26 +97,36 @@ pub trait AstVisitor {
 
     fn visit_expression(&mut self, expression: &Expression) {
         match &expression.kind {
-            ExpressionKind::IntLit(_) | ExpressionKind::FloatLit(_) | ExpressionKind::StringLit(_) | ExpressionKind::Ident(_) => {},
-            ExpressionKind::Grouping(expr) => {expr.as_ref().inspect(|inner| self.visit_expression(inner));},
-            ExpressionKind::Unary(_, expr) | ExpressionKind::Member(expr, _) => self.visit_expression(expr),
+            ExpressionKind::IntLit(_)
+            | ExpressionKind::FloatLit(_)
+            | ExpressionKind::StringLit(_)
+            | ExpressionKind::Ident(_) => {}
+            ExpressionKind::Grouping(expr) => {
+                expr.as_ref().inspect(|inner| self.visit_expression(inner));
+            }
+            ExpressionKind::Unary(_, expr) | ExpressionKind::Member(expr, _) => {
+                self.visit_expression(expr)
+            }
             ExpressionKind::Call(lhs, args) => {
                 self.visit_expression(lhs);
                 for arg in args.iter().flatten() {
                     self.visit_expression(arg);
                 }
-            },
+            }
             ExpressionKind::Index(lhs, rhs) => {
                 self.visit_expression(lhs);
                 if let Some(rhs) = rhs {
                     self.visit_expression(rhs);
                 }
-            },
+            }
             ExpressionKind::Block(block) => self.visit_block(block),
-            ExpressionKind::Binary(_, lhs, rhs) => {self.visit_expression(lhs); self.visit_expression(rhs);},
+            ExpressionKind::Binary(_, lhs, rhs) => {
+                self.visit_expression(lhs);
+                self.visit_expression(rhs);
+            }
         }
     }
-    
+
     fn visit_block(&mut self, block: &Block) {
         for stmt in block.stmts.iter().flatten() {
             self.visit_statement(stmt);
