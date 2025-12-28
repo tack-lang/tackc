@@ -590,16 +590,14 @@ impl<F: File> Parser<'_, F> {
                         self.span(expr.id).start,
                         semi.map_or_else(|| self.loc(), |semi| semi.span.end),
                     );
-                    stmts.push(
-                        Some(Statement::new(
-                            StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
-                                expr,
-                                semi: semi.map(Some),
-                            })),
-                            self.prepare_node(span),
-                        ))
-                    );
-                },
+                    stmts.push(Some(Statement::new(
+                        StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+                            expr,
+                            semi: semi.map(Some),
+                        })),
+                        self.prepare_node(span),
+                    )));
+                }
                 // Expressions that end in semicolons when used as statements
                 Some(_) => {
                     let loc = self.loc();
