@@ -94,6 +94,13 @@ input_file: crates/tackc_parser/src/tests/basic.tck
       end: 9,
     ),
     NodeId(
+      id: 2,
+      file: 2083824584,
+    ): Span(
+      start: 0,
+      end: 10,
+    ),
+    NodeId(
       id: 3,
       file: 2083824584,
     ): Span(
@@ -108,11 +115,11 @@ input_file: crates/tackc_parser/src/tests/basic.tck
       end: 53,
     ),
     NodeId(
-      id: 7,
+      id: 5,
       file: 2083824584,
     ): Span(
-      start: 24,
-      end: 57,
+      start: 30,
+      end: 54,
     ),
     NodeId(
       id: 6,
@@ -122,11 +129,11 @@ input_file: crates/tackc_parser/src/tests/basic.tck
       end: 55,
     ),
     NodeId(
-      id: 2,
+      id: 7,
       file: 2083824584,
     ): Span(
-      start: 0,
-      end: 10,
+      start: 24,
+      end: 57,
     ),
     NodeId(
       id: 8,
@@ -134,13 +141,6 @@ input_file: crates/tackc_parser/src/tests/basic.tck
     ): Span(
       start: 12,
       end: 57,
-    ),
-    NodeId(
-      id: 5,
-      file: 2083824584,
-    ): Span(
-      start: 30,
-      end: 54,
     ),
   },
 ), [])

@@ -122,39 +122,18 @@ input_file: crates/tackc_parser/src/tests/oop.tck
   ],
   spans: {
     NodeId(
-      id: 9,
+      id: 1,
       file: 1888024003,
     ): Span(
-      start: 64,
-      end: 73,
+      start: 4,
+      end: 29,
     ),
     NodeId(
-      id: 4,
+      id: 2,
       file: 1888024003,
     ): Span(
-      start: 58,
-      end: 62,
-    ),
-    NodeId(
-      id: 10,
-      file: 1888024003,
-    ): Span(
-      start: 50,
-      end: 74,
-    ),
-    NodeId(
-      id: 11,
-      file: 1888024003,
-    ): Span(
-      start: 50,
-      end: 75,
-    ),
-    NodeId(
-      id: 12,
-      file: 1888024003,
-    ): Span(
-      start: 44,
-      end: 77,
+      start: 0,
+      end: 30,
     ),
     NodeId(
       id: 3,
@@ -164,18 +143,18 @@ input_file: crates/tackc_parser/src/tests/oop.tck
       end: 57,
     ),
     NodeId(
-      id: 13,
+      id: 4,
       file: 1888024003,
     ): Span(
-      start: 32,
-      end: 77,
+      start: 58,
+      end: 62,
     ),
     NodeId(
-      id: 2,
+      id: 5,
       file: 1888024003,
     ): Span(
-      start: 0,
-      end: 30,
+      start: 64,
+      end: 65,
     ),
     NodeId(
       id: 6,
@@ -199,18 +178,39 @@ input_file: crates/tackc_parser/src/tests/oop.tck
       end: 73,
     ),
     NodeId(
-      id: 5,
+      id: 9,
       file: 1888024003,
     ): Span(
       start: 64,
-      end: 65,
+      end: 73,
     ),
     NodeId(
-      id: 1,
+      id: 10,
       file: 1888024003,
     ): Span(
-      start: 4,
-      end: 29,
+      start: 50,
+      end: 74,
+    ),
+    NodeId(
+      id: 11,
+      file: 1888024003,
+    ): Span(
+      start: 50,
+      end: 75,
+    ),
+    NodeId(
+      id: 12,
+      file: 1888024003,
+    ): Span(
+      start: 44,
+      end: 77,
+    ),
+    NodeId(
+      id: 13,
+      file: 1888024003,
+    ): Span(
+      start: 32,
+      end: 77,
     ),
   },
 ), [])
