@@ -105,7 +105,7 @@ pub trait AstVisitor {
                 expr.as_ref().inspect(|inner| self.visit_expression(inner));
             }
             ExpressionKind::Unary(_, expr) | ExpressionKind::Member(expr, _) => {
-                self.visit_expression(expr)
+                self.visit_expression(expr);
             }
             ExpressionKind::Call(lhs, args) => {
                 self.visit_expression(lhs);
