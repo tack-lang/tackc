@@ -85,7 +85,7 @@ pub enum ExpressionKind {
 
 impl ExpressionKind {
     pub const fn is_block(&self) -> bool {
-        false
+        matches!(self, Self::Block(_))
     }
 }
 

@@ -576,6 +576,30 @@ impl<F: File> Parser<'_, F> {
                     }
                     stmts.push(stmt);
                 }
+                // Expressions that optionally end in semicolons when used as statements
+                Some(TokenKind::LBrace) => {
+                    let expr = self.expression(BlockMode::Normal, recursion + 1)?;
+                    if let Some(tok) = self.peek()
+                        && tok.kind == TokenKind::RBrace
+                    {
+                        break Some(Some(expr));
+                    }
+                    let semi = self.eat(&[TokenKind::Semicolon]);
+
+                    let span = Span::new_from(
+                        self.span(expr.id).start,
+                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+                    );
+                    stmts.push(
+                        Some(Statement::new(
+                            StatementKind::ExpressionStatement(Box::new(ExpressionStatement {
+                                expr,
+                                semi: semi.map(Some),
+                            })),
+                            self.prepare_node(span),
+                        ))
+                    );
+                },
                 // Expressions that end in semicolons when used as statements
                 Some(_) => {
                     let loc = self.loc();
@@ -592,6 +616,7 @@ impl<F: File> Parser<'_, F> {
                     }
 
                     let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
                     let span = Span::new_from(
                         expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
                         semi.map_or_else(|| self.loc(), |semi| semi.span.end),
