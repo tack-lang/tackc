@@ -25,7 +25,7 @@ impl Block {
             .join("\n    ");
 
         let expr = match &self.expr {
-            Some(Some(val)) => val.display(global),
+            Some(Some(val)) => val.display(global).replace('\n', "\n    "),
             Some(None) => String::from("<ERROR>"),
             None => String::new(),
         };
