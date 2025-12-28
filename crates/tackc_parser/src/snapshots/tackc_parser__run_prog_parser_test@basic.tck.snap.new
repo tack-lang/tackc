@@ -1,0 +1,147 @@
+---
+source: crates/tackc_parser/src/lib.rs
+assertion_line: 1030
+expression: "(prog, err)"
+input_file: crates/tackc_parser/src/tests/basic.tck
+---
+(Program(
+  mod_stmt: Some(ModStatement(
+    path: Some(Path(
+      components: [
+        Some(Symbol(Interned(16505476364814685382, PhantomData), Span(
+          start: 4,
+          end: 9,
+        ))),
+      ],
+      id: NodeId(
+        id: 1,
+        file: 2083824584,
+      ),
+    )),
+    id: NodeId(
+      id: 2,
+      file: 2083824584,
+    ),
+  )),
+  items: [
+    Some(Item(
+      kind: FuncItem(FuncItem(
+        exported: false,
+        ident: Some(Symbol(Interned(13877981266774981813, PhantomData), Span(
+          start: 17,
+          end: 21,
+        ))),
+        params: [],
+        ret_type: None,
+        block: Some(Block(
+          stmts: [
+            Some(Statement(
+              kind: ExpressionStatement(ExpressionStatement(
+                expr: Expression(
+                  kind: Call(Expression(
+                    kind: Ident(Interned(17520576164301135459, PhantomData)),
+                    id: NodeId(
+                      id: 3,
+                      file: 2083824584,
+                    ),
+                  ), [
+                    Some(Expression(
+                      kind: StringLit(Interned(8470909341547293647, PhantomData)),
+                      id: NodeId(
+                        id: 4,
+                        file: 2083824584,
+                      ),
+                    )),
+                  ]),
+                  id: NodeId(
+                    id: 5,
+                    file: 2083824584,
+                  ),
+                ),
+                semi: Some(Some(Token(
+                  span: Span(
+                    start: 54,
+                    end: 55,
+                  ),
+                  kind: Semicolon,
+                  lexeme: Interned(3447890864966814147, PhantomData),
+                ))),
+              )),
+              id: NodeId(
+                id: 6,
+                file: 2083824584,
+              ),
+            )),
+          ],
+          expr: None,
+          id: NodeId(
+            id: 7,
+            file: 2083824584,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 8,
+        file: 2083824584,
+      ),
+    )),
+  ],
+  spans: {
+    NodeId(
+      id: 1,
+      file: 2083824584,
+    ): Span(
+      start: 4,
+      end: 9,
+    ),
+    NodeId(
+      id: 3,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 37,
+    ),
+    NodeId(
+      id: 4,
+      file: 2083824584,
+    ): Span(
+      start: 38,
+      end: 53,
+    ),
+    NodeId(
+      id: 7,
+      file: 2083824584,
+    ): Span(
+      start: 24,
+      end: 57,
+    ),
+    NodeId(
+      id: 6,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 55,
+    ),
+    NodeId(
+      id: 2,
+      file: 2083824584,
+    ): Span(
+      start: 0,
+      end: 10,
+    ),
+    NodeId(
+      id: 8,
+      file: 2083824584,
+    ): Span(
+      start: 12,
+      end: 57,
+    ),
+    NodeId(
+      id: 5,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 54,
+    ),
+  },
+), [])
