@@ -41,6 +41,18 @@ pub struct NodeId {
     pub file: NonZeroU32,
 }
 
+impl PartialOrd for NodeId {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for NodeId {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.id.cmp(&other.id)
+    }
+}
+
 pub trait AstVisitor {
     fn visit_program(&mut self, prog: &Program) {
         if let Some(stmt) = &prog.mod_stmt {

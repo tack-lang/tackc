@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use tackc_global::Global;
 use tackc_span::Span;
 use thin_vec::ThinVec;
@@ -11,7 +11,16 @@ use crate::{Item, NodeId, Symbol};
 pub struct Program {
     pub mod_stmt: Option<ModStatement>,
     pub items: ThinVec<Option<Item>>,
+    #[serde(serialize_with = "ordered_map")]
     pub spans: HashMap<NodeId, Span>,
+}
+
+fn ordered_map<S>(value: &HashMap<NodeId, Span>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let ordered: BTreeMap<_, _> = value.iter().collect();
+    ordered.serialize(serializer)
 }
 
 impl Program {
