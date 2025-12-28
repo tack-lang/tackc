@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use tackc_global::Global;
 use tackc_span::Span;
@@ -9,7 +11,7 @@ use crate::{Item, NodeId, Symbol};
 pub struct Program {
     pub mod_stmt: Option<ModStatement>,
     pub items: ThinVec<Option<Item>>,
-    pub spans: Vec<Span>,
+    pub spans: HashMap<NodeId, Span>,
 }
 
 impl Program {

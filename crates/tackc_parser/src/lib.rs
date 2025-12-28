@@ -1,5 +1,5 @@
 pub mod error;
-use std::num::NonZeroU32;
+use std::{collections::HashMap, num::NonZeroU32};
 
 const RECURSION_LIMIT: u32 = 300;
 
@@ -54,12 +54,12 @@ pub struct Parser<'src, F> {
     failed_error: bool,
 
     open: NonZeroU32,
-    spans: Vec<Span>,
+    spans: HashMap<NodeId, Span>,
 }
 
 impl<'src, F: File> Parser<'src, F> {
     #[allow(clippy::missing_panics_doc)]
-    pub const fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
+    pub fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
         Parser {
             file,
             _global: global,
@@ -72,7 +72,7 @@ impl<'src, F: File> Parser<'src, F> {
             failed_error: false,
 
             open: NonZeroU32::new(1).unwrap(),
-            spans: Vec::new(),
+            spans: HashMap::new(),
         }
     }
 
@@ -97,7 +97,7 @@ impl<'src, F: File> Parser<'src, F> {
         }
     }
 
-    fn restore(&mut self, snapshot: ParserSnapshot) {
+    const fn restore(&mut self, snapshot: ParserSnapshot) {
         let ParserSnapshot { ptr, open, failed } = snapshot;
         if failed {
             return;
@@ -105,8 +105,6 @@ impl<'src, F: File> Parser<'src, F> {
 
         self.ptr = ptr;
         self.open = open;
-        #[allow(clippy::cast_possible_truncation)]
-        self.spans.truncate(open.get() as usize - 1);
     }
 
     fn peek(&self) -> Option<Token> {
@@ -170,11 +168,11 @@ impl<'src, F: File> Parser<'src, F> {
     }
 
     fn prepare_node(&mut self, span: Span) -> NodeId {
-        self.spans.push(span);
         let open = NodeId {
             id: self.open,
             file: self.file.id(),
         };
+        self.spans.insert(open, span);
         self.open = self.open.checked_add(1).expect("NodeId limit reached!");
         open
     }
@@ -252,7 +250,7 @@ impl<'src, F: File> Parser<'src, F> {
 
     fn span(&self, id: NodeId) -> Span {
         #[allow(clippy::cast_possible_truncation)]
-        self.spans[id.id.get() as usize - 1]
+        *self.spans.get(&id).unwrap()
     }
 
     fn expect_report(&mut self, kinds: &[TokenKind], expected: &'static str) -> Option<Token> {
@@ -355,7 +353,7 @@ impl<F: File> Parser<'_, F> {
         }
 
         // Default vec for spans
-        Program { mod_stmt, items, spans: vec![] }
+        Program { mod_stmt, items, spans: HashMap::new() }
     }
 
     fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {
