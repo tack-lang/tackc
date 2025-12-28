@@ -6,6 +6,8 @@ You may add to this document if you have contributed to the project in **ANY** w
 * Feature Feedback
 * Documentation
 
+This document will **NOT** be updated for you, but feel free to update it whenever.
+
 ## Format
 `**NAME/ALIAS** ([@username](https://github.com/username)) - CONTRIBUTIONS/ROLE`
 
