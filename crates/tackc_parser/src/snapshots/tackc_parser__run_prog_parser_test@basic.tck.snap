@@ -85,4 +85,62 @@ input_file: crates/tackc_parser/src/tests/basic.tck
       ),
     )),
   ],
+  spans: {
+    NodeId(
+      id: 1,
+      file: 2083824584,
+    ): Span(
+      start: 4,
+      end: 9,
+    ),
+    NodeId(
+      id: 3,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 37,
+    ),
+    NodeId(
+      id: 4,
+      file: 2083824584,
+    ): Span(
+      start: 38,
+      end: 53,
+    ),
+    NodeId(
+      id: 7,
+      file: 2083824584,
+    ): Span(
+      start: 24,
+      end: 57,
+    ),
+    NodeId(
+      id: 6,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 55,
+    ),
+    NodeId(
+      id: 2,
+      file: 2083824584,
+    ): Span(
+      start: 0,
+      end: 10,
+    ),
+    NodeId(
+      id: 8,
+      file: 2083824584,
+    ): Span(
+      start: 12,
+      end: 57,
+    ),
+    NodeId(
+      id: 5,
+      file: 2083824584,
+    ): Span(
+      start: 30,
+      end: 54,
+    ),
+  },
 ), [])
