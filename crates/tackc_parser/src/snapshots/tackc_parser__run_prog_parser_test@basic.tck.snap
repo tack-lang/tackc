@@ -5,6 +5,7 @@ input_file: crates/tackc_parser/src/tests/basic.tck
 ---
 (Program(
   mod_stmt: Some(ModStatement(
+    exported: false,
     path: Some(Path(
       components: [
         Some(Symbol(Interned(16505476364814685382, PhantomData), Span(
