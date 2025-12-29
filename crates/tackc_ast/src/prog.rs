@@ -51,12 +51,12 @@ pub struct ModStatement {
 
 impl ModStatement {
     pub fn display(&self, global: &Global) -> String {
-        format!(
-            "mod {};",
-            self.path
-                .as_ref()
-                .map_or_else(|| String::from("<ERROR>"), |path| path.display(global))
-        )
+        let exported = if self.exported { "exp " } else { "" };
+        let path = self
+            .path
+            .as_ref()
+            .map_or_else(|| String::from("<ERROR>"), |path| path.display(global));
+        format!("{exported}mod {path};")
     }
 }
 
