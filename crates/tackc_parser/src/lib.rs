@@ -361,6 +361,7 @@ impl<F: File> Parser<'_, F> {
     }
 
     fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {
+        let exported = self.visibility();
         let mod_key = self.expect(&[TokenKind::Mod])?;
         let path = self.parse_sync(Self::path, &[TokenKind::Semicolon], "path", recursion + 1);
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
@@ -370,6 +371,7 @@ impl<F: File> Parser<'_, F> {
             semi.map_or_else(|| self.loc(), |semi| semi.span.end),
         );
         Ok(ModStatement {
+            exported,
             path,
             id: self.prepare_node(span),
         })
