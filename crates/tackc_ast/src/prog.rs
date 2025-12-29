@@ -44,6 +44,7 @@ impl Program {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModStatement {
+    pub exported: bool,
     pub path: Option<Path>,
     pub id: NodeId,
 }
