@@ -16,8 +16,8 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{
-        AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
-        ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement, AstPath,
+        AssignmentStatement, AstPath, BinOp, Block, ConstItem, Expression, ExpressionKind,
+        ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement,
         Program, Statement, StatementKind, Symbol, UnOp,
     },
     error::ErrorExt,
