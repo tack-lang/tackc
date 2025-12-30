@@ -4,16 +4,14 @@ use std::path::PathBuf;
 use clap::{Parser as ClapParser, ValueEnum};
 
 use rustc_hash::FxHashMap;
-//use tackc_analyze::resolution::resolve;
-use tackc_error::prelude::*;
+
+use tackc_lib::prelude::*;
 use tackc_file::{BasicFile, File};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
-//use tackc_parser::ast::{AstNode, Program, ProgramExt};
-
 use tackc_lexer::Token;
 use tackc_parser::Parser;
-use tackc_parser::ast::Program;
+use tackc_ast::Program;
 use tackc_sema::name_resolution::resolve;
 
 #[derive(ClapParser)]

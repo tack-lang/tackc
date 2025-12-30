@@ -8,14 +8,7 @@ thiserror = "2.0"
 dashmap = "6.1"
 clap = "4.5"
 walkdir = "2.5"
-tackc_error = { version = "0.1.0", path = "crates/tackc_error" }
-tackc_file = { version = "0.1.0", path = "crates/tackc_file" }
-tackc_global = { version = "0.1.0", path = "crates/tackc_global" }
-tackc_lexer = { version = "0.1.0", path = "crates/tackc_lexer" }
-tackc_span = { version = "0.1.0", path = "crates/tackc_span" }
-tackc_hash = { version = "0.1.0", path = "crates/tackc_hash" }
-tackc_parser = { version = "0.1.0", path = "crates/tackc_parser" }
-tackc_utils = { version = "0.1.0", path = "crates/tackc_utils" }
+tackc_lib = { version = "0.1.0", path = "crates/tackc_lib" }
 tackc_fuzz = { version = "0.0.0", path = "fuzz/shared" }
 bumpalo = "3.19"
 libfuzzer-sys = "0.4"
@@ -25,7 +18,6 @@ honggfuzz = "0.5.58"
 insta = "1.45"
 proptest = "1.9"
 thin-vec = "0.2.14"
-tackc_ast = { version = "0.1.0", path = "crates/tackc_ast" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

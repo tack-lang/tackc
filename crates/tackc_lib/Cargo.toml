@@ -1,0 +1,19 @@
+[package]
+name = "tackc_lib"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thin-vec = { workspace = true, features = ["serde"] }
+rustc-hash = { workspace = true }
+bumpalo = { workspace = true, features = ["std"] }
+dashmap = { workspace = true }
+proptest = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+insta = { workspace = true, features = ["glob", "ron", "serde"] }

@@ -343,9 +343,9 @@ dependencies = [
 
 [[package]]
 name = "insta"
-version = "1.45.0"
+version = "1.45.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b76866be74d68b1595eb8060cb9191dca9c021db2316558e52ddc5d55d41b66c"
+checksum = "983e3b24350c84ab8a65151f537d67afbbf7153bb9f1110e03e9fa9b07f67a5c"
 dependencies = [
  "console",
  "globset",
@@ -744,72 +744,14 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "rustc-hash",
- "tackc_error",
- "tackc_file",
- "tackc_global",
- "tackc_lexer",
- "tackc_parser",
- "tackc_sema",
-]
-
-[[package]]
-name = "tackc_ast"
-version = "0.1.0"
-dependencies = [
- "serde",
- "tackc_global",
- "tackc_lexer",
- "tackc_span",
- "thin-vec",
-]
-
-[[package]]
-name = "tackc_error"
-version = "0.1.0"
-dependencies = [
- "serde",
- "tackc_file",
- "tackc_global",
- "tackc_span",
-]
-
-[[package]]
-name = "tackc_file"
-version = "0.1.0"
-dependencies = [
- "rustc-hash",
- "serde",
- "tackc_hash",
- "tackc_span",
+ "tackc_lib",
 ]
 
 [[package]]
 name = "tackc_fuzz"
 version = "0.0.0"
 dependencies = [
- "tackc_error",
- "tackc_file",
- "tackc_global",
- "tackc_lexer",
- "tackc_parser",
-]
-
-[[package]]
-name = "tackc_global"
-version = "0.1.0"
-dependencies = [
- "bumpalo",
- "dashmap",
- "serde",
- "tackc_hash",
- "tackc_utils",
-]
-
-[[package]]
-name = "tackc_hash"
-version = "0.1.0"
-dependencies = [
- "rustc-hash",
+ "tackc_lib",
 ]
 
 [[package]]
@@ -821,16 +763,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "tackc_lexer"
+name = "tackc_lib"
 version = "0.1.0"
 dependencies = [
+ "bumpalo",
+ "dashmap",
  "insta",
  "proptest",
+ "rustc-hash",
  "serde",
- "tackc_error",
- "tackc_file",
- "tackc_global",
- "tackc_span",
+ "thin-vec",
  "thiserror",
 ]
 
@@ -849,41 +791,6 @@ dependencies = [
  "sha2",
  "walkdir",
 ]
-
-[[package]]
-name = "tackc_parser"
-version = "0.1.0"
-dependencies = [
- "insta",
- "serde",
- "tackc_ast",
- "tackc_error",
- "tackc_file",
- "tackc_global",
- "tackc_lexer",
- "tackc_span",
- "tackc_utils",
- "thin-vec",
-]
-
-[[package]]
-name = "tackc_sema"
-version = "0.1.0"
-dependencies = [
- "tackc_ast",
-]
-
-[[package]]
-name = "tackc_span"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "serde",
-]
-
-[[package]]
-name = "tackc_utils"
-version = "0.1.0"
 
 [[package]]
 name = "tempfile"
