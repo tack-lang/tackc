@@ -674,6 +674,8 @@ proptest! {
 
 #[test]
 fn lexer_test_glob() {
+    setup_insta_test!();
+
     insta::glob!("lexer-tests/*.tck", run_lexer_test);
 }
 

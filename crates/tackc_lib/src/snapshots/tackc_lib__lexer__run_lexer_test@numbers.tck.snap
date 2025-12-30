@@ -1,6 +1,5 @@
 ---
 source: crates/tackc_lib/src/lexer.rs
-expression: tokens
 input_file: crates/tackc_lib/src/lexer-tests/numbers.tck
 ---
 [

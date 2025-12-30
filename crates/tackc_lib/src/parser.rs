@@ -1029,7 +1029,9 @@ impl<F: File> Parser<'_, F> {
 }
 
 #[test]
-fn prog_parser_test() {
+fn parser_test_glob() {
+    setup_insta_test!();
+    
     insta::glob!("parser/tests/*.tck", run_prog_parser_test);
 }
 

@@ -1,6 +1,5 @@
 ---
 source: crates/tackc_lib/src/parser.rs
-expression: "(prog, err)"
 input_file: crates/tackc_lib/src/parser/tests/basic.tck
 ---
 (Program(
