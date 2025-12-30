@@ -13,8 +13,8 @@ pub mod prelude {
     pub use super::error::prelude::*;
     pub use super::utils::prelude::*;
 
-    pub use super::error as tackc_error;
     pub use super::ast as tackc_ast;
+    pub use super::error as tackc_error;
     pub use super::file as tackc_file;
     pub use super::global as tackc_global;
     pub use super::hash as tackc_hash;
