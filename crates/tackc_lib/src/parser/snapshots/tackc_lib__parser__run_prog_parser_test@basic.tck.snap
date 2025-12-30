@@ -1,7 +1,7 @@
 ---
-source: crates/tackc_parser/src/lib.rs
+source: crates/tackc_lib/src/parser/mod.rs
 expression: "(prog, err)"
-input_file: crates/tackc_parser/src/tests/basic.tck
+input_file: crates/tackc_lib/src/parser/tests/basic.tck
 ---
 (Program(
   mod_stmt: Some(ModStatement(

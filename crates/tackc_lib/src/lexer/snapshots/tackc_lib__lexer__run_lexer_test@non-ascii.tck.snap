@@ -1,7 +1,7 @@
 ---
-source: crates/tackc_lexer/src/lib.rs
+source: crates/tackc_lib/src/lexer/mod.rs
 expression: tokens
-input_file: crates/tackc_lexer/src/lexer/non-ascii.tck
+input_file: crates/tackc_lib/src/lexer/lexer/non-ascii.tck
 ---
 [
   Ok(Token(
