@@ -12,4 +12,5 @@ tackc_file = { workspace = true }
 tackc_global = { workspace = true }
 tackc_lexer = { workspace = true }
 tackc_parser = { workspace = true }
+tackc_sema = { version = "0.1.0", path = "../tackc_sema" }
 #tackc_parser = { workspace = true }

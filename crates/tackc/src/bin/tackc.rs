@@ -14,6 +14,7 @@ use tackc_lexer::Lexer;
 use tackc_lexer::Token;
 use tackc_parser::Parser;
 use tackc_parser::ast::Program;
+use tackc_sema::name_resolution::resolve;
 
 #[derive(ClapParser)]
 struct Args {
@@ -67,11 +68,13 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<NonZeroU32, BasicFile>>();
 
-    let _progs = files_map
+    let progs = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
-        .map(|(tokens, file)| (run_parser(&tokens, file, global, &debug_modes), file))
+        .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
         .collect::<Vec<_>>();
+
+    resolve(&progs);
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }

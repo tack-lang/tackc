@@ -749,6 +749,7 @@ dependencies = [
  "tackc_global",
  "tackc_lexer",
  "tackc_parser",
+ "tackc_sema",
 ]
 
 [[package]]
@@ -863,6 +864,13 @@ dependencies = [
  "tackc_span",
  "tackc_utils",
  "thin-vec",
+]
+
+[[package]]
+name = "tackc_sema"
+version = "0.1.0"
+dependencies = [
+ "tackc_ast",
 ]
 
 [[package]]

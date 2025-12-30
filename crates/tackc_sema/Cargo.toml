@@ -1,0 +1,10 @@
+[package]
+name = "tackc_sema"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tackc_ast.workspace = true
+
+[lints]
+workspace = true
