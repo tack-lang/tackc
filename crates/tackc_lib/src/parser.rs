@@ -1030,7 +1030,7 @@ impl<F: File> Parser<'_, F> {
 
 #[test]
 fn prog_parser_test() {
-    insta::glob!("tests/*.tck", run_prog_parser_test);
+    insta::glob!("parser/tests/*.tck", run_prog_parser_test);
 }
 
 #[cfg(test)]

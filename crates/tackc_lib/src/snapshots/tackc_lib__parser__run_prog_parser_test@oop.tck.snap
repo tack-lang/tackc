@@ -1,5 +1,5 @@
 ---
-source: crates/tackc_lib/src/parser/mod.rs
+source: crates/tackc_lib/src/parser.rs
 expression: "(prog, err)"
 input_file: crates/tackc_lib/src/parser/tests/oop.tck
 ---

@@ -674,7 +674,7 @@ proptest! {
 
 #[test]
 fn lexer_test_glob() {
-    insta::glob!("lexer/*.tck", run_lexer_test);
+    insta::glob!("lexer-tests/*.tck", run_lexer_test);
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 ---
-source: crates/tackc_lib/src/lexer/mod.rs
+source: crates/tackc_lib/src/lexer.rs
 expression: tokens
-input_file: crates/tackc_lib/src/lexer/lexer/trailing-dot-floats.tck
+input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
 ---
 [
   Ok(Token(
