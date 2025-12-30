@@ -70,7 +70,7 @@ pub trait AstVisitor {
         }
     }
 
-    fn visit_path(&mut self, path: &Path) {
+    fn visit_path(&mut self, path: &AstPath) {
         _ = path;
     }
 

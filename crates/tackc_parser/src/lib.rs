@@ -17,7 +17,7 @@ use thin_vec::ThinVec;
 use crate::{
     ast::{
         AssignmentStatement, BinOp, Block, ConstItem, Expression, ExpressionKind,
-        ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement, Path,
+        ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement, AstPath,
         Program, Statement, StatementKind, Symbol, UnOp,
     },
     error::ErrorExt,
@@ -377,7 +377,7 @@ impl<F: File> Parser<'_, F> {
         })
     }
 
-    fn path(&mut self, recursion: u32) -> Result<Path> {
+    fn path(&mut self, recursion: u32) -> Result<AstPath> {
         self.check_failed(recursion)?;
 
         let mut components = ThinVec::new();
@@ -394,7 +394,7 @@ impl<F: File> Parser<'_, F> {
                 .unwrap()
                 .map_or_else(|| self.loc(), |sym: Symbol| sym.1.end),
         );
-        Ok(Path {
+        Ok(AstPath {
             components,
             id: self.prepare_node(span),
         })
@@ -1036,10 +1036,10 @@ fn prog_parser_test() {
 }
 
 #[cfg(test)]
-use std::path::Path as StdPath;
+use std::path::Path;
 
 #[cfg(test)]
-fn run_prog_parser_test(path: &StdPath) {
+fn run_prog_parser_test(path: &Path) {
     use std::fs;
 
     use insta::assert_ron_snapshot;
@@ -1047,7 +1047,7 @@ fn run_prog_parser_test(path: &StdPath) {
     use tackc_lexer::Lexer;
 
     let src = fs::read_to_string(path).unwrap();
-    let file = BasicFile::new(src, StdPath::new("testing.tck"));
+    let file = BasicFile::new(src, Path::new("testing.tck"));
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);
     let tokens = lexer.map(|res| res.unwrap()).collect::<Vec<_>>();

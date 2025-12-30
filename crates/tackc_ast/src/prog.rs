@@ -45,7 +45,7 @@ impl Program {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModStatement {
     pub exported: bool,
-    pub path: Option<Path>,
+    pub path: Option<AstPath>,
     pub id: NodeId,
 }
 
@@ -61,12 +61,12 @@ impl ModStatement {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Path {
+pub struct AstPath {
     pub components: ThinVec<Option<Symbol>>,
     pub id: NodeId,
 }
 
-impl Path {
+impl AstPath {
     pub fn display(&self, global: &Global) -> String {
         self.components
             .iter()
