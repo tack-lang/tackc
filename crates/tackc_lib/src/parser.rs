@@ -1014,6 +1014,14 @@ impl<F: File> Parser<'_, F> {
             return self.primary(recursion + 1);
         };
 
+        if let Some(tok) = self.eat(&[TokenKind::IntLit]) {
+            self.push_err(ParseError::other("float literals cannot start with a '.'", [tok.span]));
+            return Ok(Expression::new(
+                ExpressionKind::GlobalIdent(None),
+                self.prepare_node(Span::new_from(dot.span.start, tok.span.end)),
+            ));
+        }
+
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let span = Span::new_from(
             dot.span.start,
