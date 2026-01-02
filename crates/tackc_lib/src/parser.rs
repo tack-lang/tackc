@@ -1015,8 +1015,16 @@ impl<F: File> Parser<'_, F> {
         };
 
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
-        let span = Span::new_from(dot.span.start, ident.as_ref().map_or_else(|| self.loc(), |ident| ident.span.end));
-        Ok(Expression::new(ExpressionKind::GlobalIdent(ident.map(Into::into)), self.prepare_node(span)))
+        let span = Span::new_from(
+            dot.span.start,
+            ident
+                .as_ref()
+                .map_or_else(|| self.loc(), |ident| ident.span.end),
+        );
+        Ok(Expression::new(
+            ExpressionKind::GlobalIdent(ident.map(Into::into)),
+            self.prepare_node(span),
+        ))
     }
 
     fn primary(&mut self, recursion: u32) -> Result<Expression> {

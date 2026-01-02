@@ -25,7 +25,7 @@ impl Expression {
             ExpressionKind::GlobalIdent(sym) => {
                 let sym = sym.as_ref().map_or("<ERROR>", |sym| sym.display(global));
                 format!(".{sym}")
-            },
+            }
             ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
             ExpressionKind::Grouping(inner) => inner.as_ref().map_or_else(
                 || String::from("(<ERROR>)"),
