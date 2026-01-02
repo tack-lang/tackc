@@ -8,7 +8,7 @@ use thin_vec::ThinVec;
 use crate::ast::{Item, NodeId, Symbol};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Program {
+pub struct AstModule {
     pub mod_stmt: Option<ModStatement>,
     pub items: ThinVec<Option<Item>>,
     #[serde(serialize_with = "ordered_map")]
@@ -23,7 +23,7 @@ where
     ordered.serialize(serializer)
 }
 
-impl Program {
+impl AstModule {
     pub fn display(&self, global: &Global) -> String {
         let mod_stmt = self.mod_stmt.as_ref().map_or_else(
             || String::from("<ERROR>;"),

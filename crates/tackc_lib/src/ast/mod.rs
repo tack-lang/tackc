@@ -54,7 +54,7 @@ impl Ord for NodeId {
 }
 
 pub trait AstVisitor {
-    fn visit_program(&mut self, prog: &Program) {
+    fn visit_program(&mut self, prog: &AstModule) {
         if let Some(stmt) = &prog.mod_stmt {
             self.visit_mod_statement(stmt);
         }

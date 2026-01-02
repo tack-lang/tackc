@@ -16,7 +16,7 @@ use crate::{
     ast::{
         AssignmentStatement, AstPath, BinOp, Block, ConstItem, Expression, ExpressionKind,
         ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement, ModStatement,
-        Program, Statement, StatementKind, Symbol, UnOp,
+        AstModule, Statement, StatementKind, Symbol, UnOp,
     },
     parser::error::ErrorExt,
 };
@@ -295,12 +295,12 @@ impl<'src, F: File> Parser<'src, F> {
         tokens: &'src [Token],
         file: &'src F,
         global: &'src Global,
-    ) -> (Program, Vec<ParseError>) {
+    ) -> (AstModule, Vec<ParseError>) {
         let mut p = Parser::new(tokens, file, global);
-        let mut prog = p.program(0);
+        let mut module = p.module(0);
         // Override default spans
-        prog.spans = p.spans;
-        (prog, p.errors)
+        module.spans = p.spans;
+        (module, p.errors)
     }
 }
 
@@ -335,7 +335,7 @@ impl<F: File> Parser<'_, F> {
         self.eat(&[TokenKind::Exp]).is_some()
     }
 
-    fn program(&mut self, recursion: u32) -> Program {
+    fn module(&mut self, recursion: u32) -> AstModule {
         let mod_stmt_res = self.mod_statement(recursion + 1);
         let mod_stmt = self.report_error(mod_stmt_res, "`mod` statement");
 
@@ -350,8 +350,8 @@ impl<F: File> Parser<'_, F> {
             items.push(item);
         }
 
-        // Default vec for spans
-        Program {
+        // Default map for spans
+        AstModule {
             mod_stmt,
             items,
             spans: HashMap::new(),

@@ -5,7 +5,7 @@ use clap::{Parser as ClapParser, ValueEnum};
 
 use rustc_hash::FxHashMap;
 
-use tackc_ast::Program;
+use tackc_ast::AstModule;
 use tackc_file::{BasicFile, File};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
@@ -66,13 +66,13 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<NonZeroU32, BasicFile>>();
 
-    let progs = files_map
+    let mods = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
         .collect::<Vec<_>>();
 
-    resolve(&progs);
+    resolve(&mods);
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
@@ -115,21 +115,21 @@ fn run_parser(
     file: &BasicFile,
     global: &Global,
     debug_modes: &DebugModes,
-) -> Program {
-    let (prog, errs) = Parser::parse(tokens, file, global);
+) -> AstModule {
+    let (module, errs) = Parser::parse(tokens, file, global);
 
     if debug_modes.debug.contains(&Stage::Parser) {
-        eprintln!("{prog:#?}");
+        eprintln!("{module:#?}");
     }
     if debug_modes.show.contains(&Stage::Parser) {
-        eprintln!("{}", prog.display(global));
+        eprintln!("{}", module.display(global));
     }
 
     for err in errs {
         eprintln!("{}\n", err.display(file, global));
     }
 
-    prog
+    module
 }
 
 /*fn run_resolver(

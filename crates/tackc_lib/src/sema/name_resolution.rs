@@ -1,8 +1,6 @@
-use crate::ast::Program;
+use crate::ast::AstModule;
 
-pub struct Resolver {}
-
-pub fn resolve(progs: &[Program]) {
-    println!("{progs:?}");
-    _ = progs;
+pub fn resolve(mods: &[AstModule]) {
+    println!("{mods:?}");
+    _ = mods;
 }
