@@ -6,4 +6,4 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
 rustc-hash = { workspace = true }
-tackc_lib = { version = "0.1.0", path = "../tackc_lib" }
+tackc_lib = { workspace = true }
