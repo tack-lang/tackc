@@ -2,7 +2,7 @@
 source: crates/tackc_lib/src/parser.rs
 input_file: crates/tackc_lib/src/parser/tests/basic.tck
 ---
-(Program(
+(AstModule(
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(
