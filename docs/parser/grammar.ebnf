@@ -43,6 +43,7 @@ Expr = Primary
     | Grouping
     | Postfix
     | Block
+    | GlobalIdent
     ;
 
 Postfix = MemberAccess
@@ -57,6 +58,7 @@ MemberAccess = Expr DOT IDENTIFIER ;
 Call = Expr L_PAREN ArgumentList? R_PAREN ;
 Index = Expr L_BRACKET Expr R_BRACKET ;
 Block = L_BRACE Stmt* Expr? R_BRACE ;
+GlobalIdent = DOT IDENTIFIER ;
 
 ArgumentList = Expr ( COMMA Expr )* COMMA? ;
 
@@ -70,6 +72,7 @@ ExprNB = Primary
     | PrefixNB
     | Grouping (* Can contain blocks *)
     | PostfixNB
+    | GlobalIdent
     ;
 
 PostfixNB = MemberAccessNB

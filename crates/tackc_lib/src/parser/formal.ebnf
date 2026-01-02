@@ -57,6 +57,8 @@ Postfix = Grouping (L_PAREN ArgList? R_PAREN
 Grouping = L_PAREN Expression R_PAREN
     | BlockExpression ;
 BlockExpression = Block
+    | GlobalIdentifier ;
+GlobalIdentifier = DOT IDENTIFIER
     | Primary ;
 Primary = IDENTIFIER
     | INT_LIT

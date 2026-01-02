@@ -995,7 +995,7 @@ impl<F: File> Parser<'_, F> {
                 .filter(|t| t.kind == TokenKind::LBrace)
                 .is_none()
         {
-            return self.primary(recursion);
+            return self.global_ident(recursion);
         }
 
         let block = self.block(recursion)?;
@@ -1007,8 +1007,21 @@ impl<F: File> Parser<'_, F> {
         ))
     }
 
+    fn global_ident(&mut self, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
+
+        let Some(dot) = self.eat(&[TokenKind::Dot]) else {
+            return self.primary(recursion + 1);
+        };
+
+        let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+        let span = Span::new_from(dot.span.start, ident.as_ref().map_or_else(|| self.loc(), |ident| ident.span.end));
+        Ok(Expression::new(ExpressionKind::GlobalIdent(ident.map(Into::into)), self.prepare_node(span)))
+    }
+
     fn primary(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
+
         let tok = self.expect(&[
             TokenKind::IntLit,
             TokenKind::FloatLit,

@@ -112,7 +112,8 @@ pub trait AstVisitor {
             ExpressionKind::IntLit(_)
             | ExpressionKind::FloatLit(_)
             | ExpressionKind::StringLit(_)
-            | ExpressionKind::Ident(_) => {}
+            | ExpressionKind::Ident(_)
+            | ExpressionKind::GlobalIdent(_) => {}
             ExpressionKind::Grouping(expr) => {
                 expr.as_ref().inspect(|inner| self.visit_expression(inner));
             }
