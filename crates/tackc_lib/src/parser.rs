@@ -1015,7 +1015,10 @@ impl<F: File> Parser<'_, F> {
         };
 
         if let Some(tok) = self.eat(&[TokenKind::IntLit]) {
-            self.push_err(ParseError::other("float literals cannot start with a '.'", [tok.span]));
+            self.push_err(ParseError::other(
+                "float literals cannot start with a '.'",
+                [tok.span],
+            ));
             return Ok(Expression::new(
                 ExpressionKind::GlobalIdent(None),
                 self.prepare_node(Span::new_from(dot.span.start, tok.span.end)),
