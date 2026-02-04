@@ -12,7 +12,7 @@ use tackc_lexer::Lexer;
 use tackc_lexer::Token;
 use tackc_lib::prelude::*;
 use tackc_parser::Parser;
-use tackc_sema::name_resolution::resolve;
+use tackc_sema::module_resolution::resolve_mods;
 
 #[derive(ClapParser)]
 struct Args {
@@ -72,7 +72,10 @@ fn main() {
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
         .collect::<Vec<_>>();
 
-    resolve(&mods);
+    let mods = resolve_mods(mods);
+    println!("{mods:#?}");
+
+    println!("{global:#?}");
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }

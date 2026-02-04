@@ -8,10 +8,8 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::hash::NonZeroHasher;
-use crate::utils::hash::IdentityHasherBuilder;
+use crate::hash::{IdentityDashMap, NonZeroHasher};
 use bumpalo::Bump;
-use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 
 /// A trait representing values that are able to be interned by [`Global`].
@@ -107,8 +105,8 @@ impl Interned<str> {
 #[derive(Debug)]
 pub struct Global {
     arena: Bump,
-    interned: DashMap<NonZeroU64, &'static dyn Internable, IdentityHasherBuilder>,
-    interned_strs: DashMap<NonZeroU64, &'static str, IdentityHasherBuilder>,
+    interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
+    interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
 }
 
 impl Global {
@@ -142,8 +140,8 @@ impl Global {
     pub fn create_heap() -> Box<Self> {
         Box::new(Self {
             arena: Bump::new(),
-            interned: DashMap::with_hasher(IdentityHasherBuilder::new()),
-            interned_strs: DashMap::with_hasher(IdentityHasherBuilder::new()),
+            interned: IdentityDashMap::default(),
+            interned_strs: IdentityDashMap::default(),
         })
     }
 
@@ -151,7 +149,7 @@ impl Global {
     fn intern_value<T: ?Sized>(
         val: *const T,
         hash: NonZeroU64,
-        map: &DashMap<NonZeroU64, &'static T, IdentityHasherBuilder>,
+        map: &IdentityDashMap<NonZeroU64, &'static T>,
     ) {
         // SAFETY: The value is allocated in the arena and lives as long as `self`.
         #[allow(unsafe_code)]
