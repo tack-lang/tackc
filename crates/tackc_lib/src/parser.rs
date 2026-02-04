@@ -380,10 +380,10 @@ impl<F: File> Parser<'_, F> {
 
         let mut components = ThinVec::new();
         let ident = self.expect(&[TokenKind::Ident])?;
-        components.push(Some(ident.into()));
+        components.push(Some(Symbol::new(ident, self.file.id())));
         while self.eat(&[TokenKind::Dot]).is_some() {
             let ident = self.expect_report(&[TokenKind::Ident], "identifier");
-            components.push(ident.map(Into::into));
+            components.push(ident.map(|ident| Symbol::new(ident, self.file.id())));
         }
         let span = Span::new_from(
             ident.span.start,
@@ -452,7 +452,7 @@ impl<F: File> Parser<'_, F> {
                 exported,
                 expr,
                 ty,
-                ident: ident.map(Into::into),
+                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
             })),
             self.prepare_node(span),
         ))
@@ -482,7 +482,7 @@ impl<F: File> Parser<'_, F> {
                 "expression",
                 recursion + 1,
             );
-            params.push((ident.map(Into::into), expr));
+            params.push((ident.map(|ident| Symbol::new(ident, self.file.id())), expr));
             if self.eat(&[TokenKind::Comma]).is_none() {
                 break;
             }
@@ -515,7 +515,7 @@ impl<F: File> Parser<'_, F> {
         Ok(Item {
             kind: ItemKind::FuncItem(Box::new(FuncItem {
                 exported,
-                ident: ident.map(Into::into),
+                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
                 params,
                 ret_type,
                 block,
@@ -698,7 +698,7 @@ impl<F: File> Parser<'_, F> {
             StatementKind::LetStatement(Box::new(LetStatement {
                 expr,
                 ty,
-                ident: ident.map(Into::into),
+                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
             })),
             self.prepare_node(span),
         ))
@@ -956,7 +956,12 @@ impl<F: File> Parser<'_, F> {
             ident.map_or_else(|| self.loc(), |tok| tok.span.end),
         );
         Expression::new(
-            ExpressionKind::Member(Box::new(lhs), ident.map(Into::into).map(Box::new)),
+            ExpressionKind::Member(
+                Box::new(lhs),
+                ident
+                    .map(|ident| Symbol::new(ident, self.file.id()))
+                    .map(Box::new),
+            ),
             self.prepare_node(span),
         )
     }
@@ -1033,7 +1038,7 @@ impl<F: File> Parser<'_, F> {
                 .map_or_else(|| self.loc(), |ident| ident.span.end),
         );
         Ok(Expression::new(
-            ExpressionKind::GlobalIdent(ident.map(Into::into)),
+            ExpressionKind::GlobalIdent(ident.map(|ident| Symbol::new(ident, self.file.id()))),
             self.prepare_node(span),
         ))
     }

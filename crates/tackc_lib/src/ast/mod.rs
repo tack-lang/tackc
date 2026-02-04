@@ -21,7 +21,7 @@ pub mod prog;
 pub use prog::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Symbol(pub Interned<str>, pub Span);
+pub struct Symbol(pub Interned<str>, pub Span, pub NonZeroU32);
 
 impl Symbol {
     pub fn display<'a>(&self, global: &'a Global) -> &'a str {
@@ -29,9 +29,9 @@ impl Symbol {
     }
 }
 
-impl From<Token> for Symbol {
-    fn from(value: Token) -> Self {
-        Self(value.lexeme, value.span)
+impl Symbol {
+    pub const fn new(tok: Token, file: NonZeroU32) -> Self {
+        Self(tok.lexeme, tok.span, file)
     }
 }
 
