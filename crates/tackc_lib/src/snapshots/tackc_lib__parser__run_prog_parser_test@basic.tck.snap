@@ -38,7 +38,10 @@ input_file: crates/tackc_lib/src/parser/tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(17520576164301135459, PhantomData)),
+                    kind: Ident(Symbol(Interned(17520576164301135459, PhantomData), Span(
+                      start: 30,
+                      end: 37,
+                    ), 2083824584)),
                     id: NodeId(
                       id: 3,
                       file: 2083824584,
