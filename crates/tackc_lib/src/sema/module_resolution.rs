@@ -1,12 +1,42 @@
-use crate::{ast::AstModule, global::Interned, hash::IdentityHashMap, sema::LogicalModule};
+use std::ops::Deref;
+
+use crate::{
+    ast::AstModule,
+    global::{Global, Interned},
+    hash::IdentityHashMap,
+    sema::{LogicalModule, LogicalPath},
+};
+
+#[derive(Debug)]
+pub struct ModuleTree {
+    pub mods: IdentityHashMap<Interned<str>, LogicalModule>,
+}
+
+impl ModuleTree {
+    pub fn display(&self, global: &Global) -> String {
+        self.mods
+            .values()
+            .map(|module| module.display(global))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+}
+
+impl Deref for ModuleTree {
+    type Target = IdentityHashMap<Interned<str>, LogicalModule>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.mods
+    }
+}
 
 #[derive(Default)]
-struct Analyzer {
+struct Resolver {
     logical_mods: IdentityHashMap<Interned<str>, LogicalModule>,
 }
 
-impl Analyzer {
-    pub fn analyze_module(&mut self, module: AstModule) {
+impl Resolver {
+    fn analyze_module(&mut self, module: AstModule) {
         let Some(mod_stmt) = module.mod_stmt else {
             return;
         };
@@ -19,14 +49,23 @@ impl Analyzer {
             return;
         };
 
-        let mut current = self.logical_mods.entry(first.0).or_default();
+        let mut path = LogicalPath::from([first.0]);
+        let mut current = self
+            .logical_mods
+            .entry(first.0)
+            .or_insert_with(|| LogicalModule::new(path.clone()));
 
         for next in comps {
             let Some(next) = next else {
                 return;
             };
 
-            current = current.submodules.entry(next.0).or_default();
+            path.push(next.0);
+
+            current = current
+                .submodules
+                .entry(next.0)
+                .or_insert_with(|| LogicalModule::new(path.clone()));
         }
 
         current.items = module.items;
@@ -35,12 +74,14 @@ impl Analyzer {
     }
 }
 
-pub fn resolve_mods(mods: Vec<AstModule>) -> IdentityHashMap<Interned<str>, LogicalModule> {
-    let mut analyzer = Analyzer::default();
+pub fn resolve_mods(mods: Vec<AstModule>) -> ModuleTree {
+    let mut analyzer = Resolver::default();
 
     for module in mods {
         analyzer.analyze_module(module);
     }
 
-    analyzer.logical_mods
+    ModuleTree {
+        mods: analyzer.logical_mods,
+    }
 }
