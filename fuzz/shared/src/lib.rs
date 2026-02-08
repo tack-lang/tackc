@@ -1,11 +1,12 @@
 use std::path::Path;
 
 // Bring in the compiler pieces we want to fuzz
-use tackc_lib::error::prelude::*;
-use tackc_lib::file::BasicFile;
-use tackc_lib::global::Global;
-use tackc_lib::lexer::Lexer;
-use tackc_lib::parser::Parser;
+use tackc_lib::prelude::*;
+
+use tackc_file::BasicFile;
+use tackc_global::Global;
+use tackc_lexer::Lexer;
+use tackc_parser::Parser;
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
