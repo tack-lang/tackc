@@ -1,4 +1,6 @@
-use crate::global::Global;
+use std::borrow::Cow;
+
+use crate::{global::Global, utils::tree::TreeItem};
 use serde::{Deserialize, Serialize};
 
 use crate::ast::{AstPath, Block, Expression, NodeId, Symbol};
@@ -69,6 +71,55 @@ impl Item {
                 format!("{exp}imp {path};")
             }
         }
+    }
+
+    pub fn display_ident(&self, global: &Global) -> String {
+        match &self.kind {
+            ItemKind::ConstItem(item) => {
+                (if item.exported {
+                    String::from("exp ")
+                } else {
+                    String::new()
+                }) + "const "
+                    + item
+                        .ident
+                        .as_ref()
+                        .map_or("<ERROR>", |sym| sym.display(global))
+            }
+            ItemKind::FuncItem(item) => {
+                (if item.exported {
+                    String::from("exp ")
+                } else {
+                    String::new()
+                }) + "func "
+                    + item
+                        .ident
+                        .as_ref()
+                        .map_or("<ERROR>", |sym| sym.display(global))
+            }
+            ItemKind::ImpItem(item) => {
+                (if item.exported {
+                    String::from("exp ")
+                } else {
+                    String::new()
+                }) + "imp "
+                    + item
+                        .path
+                        .as_ref()
+                        .map_or_else(|| String::from("<ERROR>"), |sym| sym.display(global))
+                        .as_str()
+            }
+        }
+    }
+}
+
+impl TreeItem for Item {
+    fn children(&self) -> Vec<&'_ dyn TreeItem> {
+        vec![]
+    }
+
+    fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str> {
+        self.display_ident(global).into()
     }
 }
 
