@@ -1,29 +1,46 @@
-use std::ops::Deref;
+use std::{collections::HashMap, fmt::Write, ops::Deref};
 
 use crate::{
     ast::AstModule,
-    global::{Global, Interned},
-    hash::IdentityHashMap,
+    global::Global,
     sema::{LogicalModule, LogicalPath},
 };
 
 #[derive(Debug)]
-pub struct ModuleTree {
-    pub mods: IdentityHashMap<Interned<str>, LogicalModule>,
+pub struct ModuleList {
+    pub mods: HashMap<LogicalPath, LogicalModule>,
 }
 
-impl ModuleTree {
+impl ModuleList {
     pub fn display(&self, global: &Global) -> String {
-        self.mods
-            .values()
-            .map(|module| module.display(global))
-            .collect::<Vec<_>>()
-            .join("\n")
+        let mut str = String::new();
+
+        let mut vec = self.mods.iter().collect::<Vec<_>>();
+        vec.sort_by_key(|tuple| tuple.0);
+        for (path, module) in vec {
+            _ = writeln!(
+                str,
+                "{}mod {}:\n{}\n",
+                if module.exported { "exp " } else { "" },
+                path.display(global),
+                module
+                    .items
+                    .iter()
+                    .filter_map(Option::as_ref)
+                    .map(|comp| comp.display(global))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+        }
+
+        str.truncate(str.len().saturating_sub(2));
+
+        str
     }
 }
 
-impl Deref for ModuleTree {
-    type Target = IdentityHashMap<Interned<str>, LogicalModule>;
+impl Deref for ModuleList {
+    type Target = HashMap<LogicalPath, LogicalModule>;
 
     fn deref(&self) -> &Self::Target {
         &self.mods
@@ -32,7 +49,7 @@ impl Deref for ModuleTree {
 
 #[derive(Default)]
 struct Resolver {
-    logical_mods: IdentityHashMap<Interned<str>, LogicalModule>,
+    logical_mods: HashMap<LogicalPath, LogicalModule>,
 }
 
 impl Resolver {
@@ -52,7 +69,7 @@ impl Resolver {
         let mut path = LogicalPath::from([first.0]);
         let mut current = self
             .logical_mods
-            .entry(first.0)
+            .entry(path.clone())
             .or_insert_with(|| LogicalModule::new(path.clone()));
 
         for next in comps {
@@ -62,9 +79,9 @@ impl Resolver {
 
             path.push(next.0);
 
-            current = current
-                .submodules
-                .entry(next.0)
+            current = self
+                .logical_mods
+                .entry(path.clone())
                 .or_insert_with(|| LogicalModule::new(path.clone()));
         }
 
@@ -74,14 +91,14 @@ impl Resolver {
     }
 }
 
-pub fn resolve_mods(mods: Vec<AstModule>) -> ModuleTree {
+pub fn resolve_mods(mods: Vec<AstModule>) -> ModuleList {
     let mut analyzer = Resolver::default();
 
     for module in mods {
         analyzer.analyze_module(module);
     }
 
-    ModuleTree {
+    ModuleList {
         mods: analyzer.logical_mods,
     }
 }
