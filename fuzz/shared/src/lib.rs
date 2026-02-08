@@ -7,6 +7,7 @@ use tackc_file::BasicFile;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::Parser;
+use tackc_sema::resolve_mods;
 
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
@@ -40,4 +41,7 @@ pub fn run(data: &[u8]) {
         e.display(&file, &global);
     }
     prog.display(&global);
+
+    let mods = resolve_mods(vec![prog]);
+    mods.display(&global);
 }

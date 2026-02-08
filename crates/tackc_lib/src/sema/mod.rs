@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub mod module_resolution;
+pub use module_resolution::resolve_mods;
 pub mod name_resolution;
 
 #[derive(Debug)]
