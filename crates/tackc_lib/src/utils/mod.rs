@@ -5,3 +5,5 @@ pub mod prelude {
 }
 
 pub mod iter;
+
+pub mod tree;
