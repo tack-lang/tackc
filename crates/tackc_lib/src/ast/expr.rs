@@ -19,11 +19,12 @@ impl Expression {
 
     pub fn display(&self, global: &Global) -> String {
         match &self.kind {
-            ExpressionKind::IntLit(sym)
-            | ExpressionKind::FloatLit(sym)
-            | ExpressionKind::Ident(sym) => sym.display(global).to_string(),
+            ExpressionKind::IntLit(sym) | ExpressionKind::FloatLit(sym) => {
+                sym.display(global).to_string()
+            }
+            ExpressionKind::Ident(sym) => sym.display(global).to_string(),
             ExpressionKind::GlobalIdent(sym) => {
-                let sym = sym.as_ref().map_or("<ERROR>", |sym| sym.display(global));
+                let sym = sym.as_ref().map_or(".<ERROR>", |sym| sym.display(global));
                 format!(".{sym}")
             }
             ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
@@ -76,7 +77,7 @@ pub enum ExpressionKind {
     IntLit(Interned<str>),
     FloatLit(Interned<str>),
     StringLit(Interned<str>),
-    Ident(Interned<str>),
+    Ident(Symbol),
     GlobalIdent(Option<Symbol>),
     Grouping(Option<Box<Expression>>),
     Member(Box<Expression>, Option<Box<Symbol>>),

@@ -1055,7 +1055,7 @@ impl<F: File> Parser<'_, F> {
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
-            TokenKind::Ident => ExpressionKind::Ident(tok.lexeme),
+            TokenKind::Ident => ExpressionKind::Ident(Symbol::new(tok, self.file.id())),
             TokenKind::StringLit => ExpressionKind::StringLit(tok.lexeme),
             _ => unreachable!(),
         };
