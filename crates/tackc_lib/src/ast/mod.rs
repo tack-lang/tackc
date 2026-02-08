@@ -54,12 +54,12 @@ impl Ord for NodeId {
 }
 
 pub trait AstVisitor {
-    fn visit_program(&mut self, prog: &AstModule) {
-        if let Some(stmt) = &prog.mod_stmt {
+    fn visit_module(&mut self, module: &AstModule) {
+        if let Some(stmt) = &module.mod_stmt {
             self.visit_mod_statement(stmt);
         }
 
-        for item in prog.items.iter().flatten() {
+        for item in module.items.iter().flatten() {
             self.visit_item(item);
         }
     }
@@ -98,6 +98,9 @@ pub trait AstVisitor {
         }
         if let Some(Some(ty)) = &item.ret_type {
             self.visit_expression(ty);
+        }
+        if let Some(block) = &item.block {
+            self.visit_block(block);
         }
     }
 
