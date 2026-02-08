@@ -73,9 +73,7 @@ fn main() {
         .collect::<Vec<_>>();
 
     let mods = resolve_mods(mods);
-    println!("{mods:#?}");
-
-    println!("{global:#?}");
+    println!("{}", mods.display(global));
 
     //run_resolver(&mut asts, &files_map, global, &debug_modes);
 }
@@ -134,31 +132,3 @@ fn run_parser(
 
     module
 }
-
-/*fn run_resolver(
-    programs: &mut [Program],
-    files: &FxHashMap<u64, BasicFile>,
-    global: &Global,
-    debug_modes: &DebugModes,
-) -> bool {
-    let (errors, global_scope) = resolve(programs, global);
-    if debug_modes.debug.contains(&Stage::BindingResolution) {
-        for prog in programs.iter_mut() {
-            eprintln!("{prog:#?}");
-        }
-        eprintln!("{global_scope:#?}");
-    }
-    if debug_modes.show.contains(&Stage::BindingResolution) {
-        for prog in programs.iter_mut() {
-            eprintln!("{}", prog.display(global));
-        }
-    }
-    if !errors.is_empty() {
-        for e in errors {
-            eprintln!("{}", e.display(files.get(&e.node.file).unwrap(), global));
-        }
-        false
-    } else {
-        true
-    }
-}*/
