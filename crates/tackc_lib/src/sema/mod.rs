@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub mod module_resolution;
+pub mod name_resolution;
 
 #[derive(Debug)]
 pub struct LogicalModule {
