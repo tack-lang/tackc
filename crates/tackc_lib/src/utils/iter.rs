@@ -5,7 +5,7 @@ pub struct Peekable<I: Iterator, const K: usize> {
     iter: I,
     // None represents "iterator not checked," Some(None) represents "iterator returned None," and Some(Some(T)) represents "iterator returned Some(T)."
     // All Some values will be at beginning, since there can't be holes in the iterator.
-    #[allow(clippy::option_option)]
+    #[allow(clippy::option_option)] // CHECKED(Chloe)
     next: [Option<Option<I::Item>>; K],
 }
 
@@ -17,15 +17,23 @@ impl<I: Iterator, const K: usize> Peekable<I, K> {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)]
-    pub fn peek(&mut self, count: usize) -> Option<&I::Item> {
-        assert!(count < K);
+    /// Get the `n`th element of the iterator.
+    ///
+    /// `peek(0)` returns the first element,
+    /// `peek(1)` returns the second element, etc.
+    ///
+    /// # Panics
+    /// This function will panic if `n` is greater than or equal `K`.
+    pub fn peek(&mut self, n: usize) -> Option<&I::Item> {
+        assert!(n < K);
+
         self.next
             .iter_mut()
-            .take(count + 1)
+            .take(n + 1)
             .skip_while(|opt| opt.is_some())
             .for_each(|opt| *opt = Some(self.iter.next()));
-        self.next[count].as_ref().unwrap().as_ref()
+
+        self.next[n].as_ref().unwrap().as_ref()
     }
 }
 

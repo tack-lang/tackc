@@ -8,8 +8,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::hash::NonZeroHasherBuilder;
 use crate::span::SpanValue;
+use crate::{hash::NonZeroFxHasherBuilder, utils::UnwrapExt};
 use serde::{Deserialize, Serialize};
 
 /// The main trait of `tackc_file`.
@@ -66,8 +66,10 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
             }
             _ => continue,
         }
-        #[allow(clippy::cast_possible_truncation)]
-        out.push((i + 1) as SpanValue);
+
+        // Since `str.len() <= SpanValue::MAX`, and `i` will only ever be as large as `str.len() - 1`,
+        // i will only ever be as large as `str.len()`, which `try_into()` won't return `Err` on.
+        out.push((i + 1).try_into().expect_unreachable()); // CHECKED(Chloe)
     }
 
     out
@@ -84,15 +86,11 @@ pub struct BasicFile<'a> {
 
 impl<'a> BasicFile<'a> {
     /// Create a new [`BasicFile`] from a source and a path. To open a file at a path, use [`BasicFile::try_from`].
-    #[allow(clippy::missing_panics_doc)]
     pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
-        #[allow(clippy::cast_possible_truncation)]
-        let id =
-            NonZeroU32::new(NonZeroHasherBuilder.hash_one_non_zero((&src, &path)).get() as u32)
-                .unwrap();
+        let id = NonZeroFxHasherBuilder.hash_one_non_zero_truncated((&src, &path));
         BasicFile {
             src,
             path,

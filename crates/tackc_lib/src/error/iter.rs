@@ -117,7 +117,6 @@ where
     }
 }
 
-#[allow(missing_docs)]
 pub trait IteratorExt: Iterator {
     /// Wrap the `self` iterator with a reporter iterator, using report mode `mode`.
     fn reporter<M, T, E, F: FnMut(E)>(self, callback: F, mode: M) -> Reporter<Self, F, M>

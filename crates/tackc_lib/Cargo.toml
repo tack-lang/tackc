@@ -11,6 +11,7 @@ bumpalo = { workspace = true, features = ["std"] }
 dashmap = { workspace = true }
 proptest = { workspace = true }
 thiserror = { workspace = true }
+nonzero = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,41 +1,56 @@
 use std::{
     collections::HashMap,
     hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
-    num::NonZeroU64,
+    num::{NonZeroU32, NonZeroU64},
 };
 
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 
-pub struct NonZeroHasher {
-    inner: FxHasher,
+use crate::utils::UnwrapExt;
+
+pub type NonZeroFxHasher = NonZeroHasher<FxHasher>;
+
+pub struct NonZeroHasher<H> {
+    inner: H,
 }
 
-impl NonZeroHasher {
-    #[allow(clippy::missing_panics_doc)]
+impl<H: Hasher> NonZeroHasher<H> {
     pub fn finish_non_zero(&self) -> NonZeroU64 {
-        NonZeroU64::new(self.finish()).unwrap()
+        // self.finish() is guaranteed to return a non-zero value.
+        NonZeroU64::new(self.finish()).expect_unreachable() // CHECKED(Chloe)
     }
 
-    pub const fn default() -> Self {
-        Self {
-            inner: FxHasher::default(),
-        }
+    pub fn finish_non_zero_truncated(&self) -> NonZeroU32 {
+        let value = self.finish();
+        // We are trying to truncate this.
+        #[allow(clippy::cast_possible_truncation)] // CHECKED(Chloe)
+        let low = value as u32;
+        // `low` could be zero at this point, so ` | u32::from(low == 0)` ensures that it won't be zero.
+        NonZeroU32::new(low | u32::from(low == 0)).expect_unreachable() // CHECKED(Chloe)
+    }
+
+    pub const fn new(hasher: H) -> Self {
+        Self { inner: hasher }
     }
 }
 
-impl Default for NonZeroHasher {
+impl<H: Hasher + Default> Default for NonZeroHasher<H> {
     fn default() -> Self {
-        Self::default()
+        Self::new(H::default())
     }
 }
 
-impl Hasher for NonZeroHasher {
+impl<H: Hasher> Hasher for NonZeroHasher<H> {
     #[inline]
     fn write(&mut self, bytes: &[u8]) {
         self.inner.write(bytes);
     }
 
+    /// Return the current value of the hasher.
+    ///
+    /// This function will ALWAYS return a non-zero number.
+    /// To get the value as a [`NonZeroU64`], see [`NonZeroHasher::finish_non_zero`].
     fn finish(&self) -> u64 {
         let hash = self.inner.finish();
         // Map a result of 0 to 1
@@ -43,21 +58,29 @@ impl Hasher for NonZeroHasher {
     }
 }
 
-pub struct NonZeroHasherBuilder;
+pub struct NonZeroFxHasherBuilder;
 
-impl NonZeroHasherBuilder {
+impl NonZeroFxHasherBuilder {
+    /// Return the hash of `T`, as a non-zero value.
     pub fn hash_one_non_zero<T: Hash>(&self, val: T) -> NonZeroU64 {
         let mut hasher = self.build_hasher();
         val.hash(&mut hasher);
         hasher.finish_non_zero()
     }
+
+    /// Return the hash of `T`, truncated to a `u32`, as a non-zero value.
+    pub fn hash_one_non_zero_truncated<T: Hash>(&self, val: T) -> NonZeroU32 {
+        let mut hasher = self.build_hasher();
+        val.hash(&mut hasher);
+        hasher.finish_non_zero_truncated()
+    }
 }
 
-impl BuildHasher for NonZeroHasherBuilder {
-    type Hasher = NonZeroHasher;
+impl BuildHasher for NonZeroFxHasherBuilder {
+    type Hasher = NonZeroFxHasher;
 
     fn build_hasher(&self) -> Self::Hasher {
-        NonZeroHasher::default()
+        NonZeroFxHasher::default()
     }
 }
 

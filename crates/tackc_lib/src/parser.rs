@@ -4,6 +4,7 @@ use std::{collections::HashMap, num::NonZeroU32};
 const RECURSION_LIMIT: u32 = 300;
 
 use error::{ParseError, Result};
+use nonzero::nonzero;
 
 use crate::ast::NodeId;
 use crate::file::File;
@@ -42,7 +43,6 @@ struct ParserSnapshot {
 
 pub struct Parser<'src, F> {
     file: &'src F,
-    _global: &'src Global,
     tokens: &'src [Token],
     ptr: usize,
     errors: Vec<ParseError>,
@@ -56,11 +56,12 @@ pub struct Parser<'src, F> {
 }
 
 impl<'src, F: File> Parser<'src, F> {
-    #[allow(clippy::missing_panics_doc)]
     pub fn new(tokens: &'src [Token], file: &'src F, global: &'src Global) -> Self {
+        // Still require global to be passed, just in case future use cases need it.
+        _ = global;
+
         Parser {
             file,
-            _global: global,
             tokens,
             ptr: 0,
             errors: Vec::new(),
@@ -69,7 +70,7 @@ impl<'src, F: File> Parser<'src, F> {
             failed_recursion: false,
             failed_error: false,
 
-            open: NonZeroU32::new(1).unwrap(),
+            open: nonzero!(1u32),
             spans: HashMap::new(),
         }
     }
@@ -247,7 +248,6 @@ impl<'src, F: File> Parser<'src, F> {
     }
 
     fn span(&self, id: NodeId) -> Span {
-        #[allow(clippy::cast_possible_truncation)]
         *self.spans.get(&id).unwrap()
     }
 

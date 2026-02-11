@@ -1,9 +1,0 @@
-[package]
-name = "tackc_honggfuzz"
-version = "0.0.0"
-publish = false
-edition = "2024"
-
-[dependencies]
-honggfuzz = { workspace = true }
-tackc_fuzz = { workspace = true }

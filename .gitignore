@@ -1,7 +1,5 @@
 target
 .DS_Store
 
-hfuzz_target
 corpus
 artifacts
-coverage

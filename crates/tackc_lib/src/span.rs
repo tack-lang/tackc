@@ -4,6 +4,8 @@ use std::{cmp::Ordering, ops::Range};
 
 use serde::{Deserialize, Serialize};
 
+use crate::utils::UnwrapExt;
+
 /// The value used as an index in the [`Span`] type.
 pub type SpanValue = u32;
 
@@ -42,10 +44,10 @@ impl Span {
             "Length of `Span::eof` input must be less than `SpanValue::MAX!`"
         );
 
-        #[allow(clippy::cast_possible_truncation)]
         Self {
-            start: string.len() as SpanValue,
-            end: string.len() as SpanValue,
+            // Since `string.len() < SpanValue::MAX`, try_into() will return `Ok`.
+            start: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
+            end: string.len().try_into().expect_unreachable(),   // CHECKED(Chloe)
         }
     }
 
@@ -59,10 +61,10 @@ impl Span {
             "Length of `Span::full` input must be less than `SpanValue::MAX!`"
         );
 
-        #[allow(clippy::cast_possible_truncation)]
         Self {
             start: 0,
-            end: string.len() as SpanValue,
+            // Since `string.len() < SpanValue::MAX`, try_into() will return `Ok`.
+            end: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
         }
     }
 

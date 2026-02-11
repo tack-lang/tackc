@@ -41,7 +41,6 @@ impl Display for Token {
     }
 }
 
-#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum TokenKind {
@@ -251,7 +250,6 @@ impl LexError {
     }
 }
 
-#[allow(missing_docs)]
 #[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
     #[error("unknown character {0}")]

@@ -15,9 +15,11 @@ libfuzzer-sys = "0.4"
 rustc-hash = "2.1"
 sha2 = "0.10.9"
 honggfuzz = "0.5.58"
-insta = "1.45"
-proptest = "1.9"
+insta = "1.46"
+proptest = "1.10"
 thin-vec = "0.2.14"
+ignore = "0.4.25"
+nonzero = "0.2.0"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }

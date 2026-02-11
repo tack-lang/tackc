@@ -8,7 +8,7 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::hash::{IdentityDashMap, NonZeroHasher};
+use crate::hash::{IdentityDashMap, NonZeroFxHasher};
 use bumpalo::Bump;
 use serde::{Deserialize, Serialize};
 
@@ -110,8 +110,8 @@ pub struct Global {
 }
 
 impl Global {
-    pub const fn get_hasher() -> NonZeroHasher {
-        NonZeroHasher::default()
+    pub fn get_hasher() -> NonZeroFxHasher {
+        NonZeroFxHasher::default()
     }
 
     /// Creates a new 'static `Global` by leaking it. Recomended for applications that compile entire files, and should hold one `Global` the entire time.
@@ -151,8 +151,11 @@ impl Global {
         hash: NonZeroU64,
         map: &IdentityDashMap<NonZeroU64, &'static T>,
     ) {
-        // SAFETY: The value is allocated in the arena and lives as long as `self`.
-        #[allow(unsafe_code)]
+        // SAFETY:
+        // The value is allocated in the arena and lives as long as `self`.
+        // This is safe as long as the 'static reference is only returned to callers
+        // if &self is 'static.
+        #[allow(unsafe_code)] // CHECKED(Chloe)
         let static_ref: &'static T = unsafe { &*val };
 
         map.insert(hash, static_ref);

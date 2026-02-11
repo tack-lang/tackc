@@ -1,6 +1,5 @@
 //! A crate for error constructs in tackc.
 
-#[allow(missing_docs)]
 pub mod prelude {
     pub use super::iter::IteratorExt as _;
 }

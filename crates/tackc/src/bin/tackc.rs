@@ -72,10 +72,8 @@ fn main() {
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
         .collect::<Vec<_>>();
 
-    let mods = resolve_mods(mods);
-    println!("{}", mods.display(global));
-
-    //run_resolver(&mut asts, &files_map, global, &debug_modes);
+    let _mod_list = resolve_mods(mods);
+    //println!("{}", mods.display(global));
 }
 
 fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {

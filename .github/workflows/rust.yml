@@ -7,138 +7,148 @@ concurrency:
 on: [push, pull_request]
 
 jobs:
-    main:
-        strategy:
-            fail-fast: false
-            matrix:
-                target: [ubuntu-latest, macos-latest, windows-latest, ubuntu-24.04-arm, macos-15-intel, windows-11-arm]
-                toolchain: [stable, beta, nightly]
-        runs-on: ${{ matrix.target }}
-        name: Main CI Job
-        steps:
-            - name: Set BIN_EXT
-              shell: bash
-              run: |
-                if [[ "${RUNNER_OS}" == "Windows" ]]; then
-                  echo "BIN_EXT=.exe" >> "$GITHUB_ENV"
-                else
-                  echo "BIN_EXT=" >> "$GITHUB_ENV"
-                fi
-            - name: Checkout Repository
-              uses: actions/checkout@v5
-            
-            - name: Compute Cargo.lock hash
-              id: cargo-hash
-              shell: bash
-              run: |
-                if [ "$RUNNER_OS" = "Windows" ]; then
-                  HASH=$(powershell -Command "(Get-FileHash Cargo.lock -Algorithm SHA256).Hash.ToLower()")
-                else
-                  HASH=$(sha256sum Cargo.lock | awk '{print $1}')
-                fi
-                echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-            - uses: actions/cache@v4
-              with:
-                path: |
-                  ~/.cargo/bin/
-                  ~/.cargo/registry/index/
-                  ~/.cargo/registry/cache/
-                  ~/.cargo/git/db/
-                  target/
-                key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ steps.cargo-hash.outputs.hash }}
-            - name: Install ${{ matrix.toolchain }}
-              id: install
-              uses: dtolnay/rust-toolchain@master
-              with: 
-                components: clippy
-                toolchain: ${{ matrix.toolchain }}
-            - name: Build Project
-              run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
-            - id: comphash
-              name: Calculate compiler hash
-              shell: bash
-              run: |
-                HASH=$(cargo +${{ steps.install.outputs.name }} hash)
-                echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-            - name: Upload tackc Binary
-              uses: actions/upload-artifact@v4
-              with:
-                name: ${{ matrix.target }}-${{ matrix.toolchain }}-tackc-${{ steps.comphash.outputs.hash }}
-                path: target/release/tackc${{ env.BIN_EXT }}
-              env:
-                BIN_EXT: ${{ env.BIN_EXT }}
-            - name: Run Clippy
-              run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
-              env:
-                RUSTFLAGS: "-D warnings"
-            - name: Run Tests
-              run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
-              env:
-                CI: true
-    once:
-        name: One-time Job
-        runs-on: ubuntu-slim
-        steps:
-          - name: Checkout Repository
-            uses: actions/checkout@v5
-          
-          - name: Compute Cargo.lock hash
-            id: cargo-hash
-            run: |
-              HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
-              echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-          - uses: actions/cache@v4
-            with:
-              path: |
-                ~/.cargo/bin/
-                ~/.cargo/registry/index/
-                ~/.cargo/registry/cache/
-                ~/.cargo/git/db/
-                target/
-              key: ubuntu-latest-nightly-cargo-${{ steps.cargo-hash.outputs.hash }}
-          - name: Install Nightly
-            id: install
-            uses: dtolnay/rust-toolchain@master
-            with: 
-              components: rustfmt
-              toolchain: nightly
-          - name: Check Formatting
-            run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
-    cleanup-caches:
-      name: Cleanup Old Caches
-      runs-on: ubuntu-slim
-      permissions:
-        actions: write
-      steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v5
-        - name: Compute Cargo.lock hash
-          id: cargo-hash
-          run: |
-            HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
-            echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+  main:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          [
+            ubuntu-latest,
+            macos-latest,
+            windows-latest,
+            ubuntu-24.04-arm,
+            macos-15-intel,
+            windows-11-arm,
+          ]
+        toolchain: [stable, beta, nightly]
+    runs-on: ${{ matrix.target }}
+    name: Main CI Job
+    steps:
+      - name: Set BIN_EXT
+        shell: bash
+        run: |
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            echo "BIN_EXT=.exe" >> "$GITHUB_ENV"
+          else
+            echo "BIN_EXT=" >> "$GITHUB_ENV"
+          fi
+      - name: Checkout Repository
+        uses: actions/checkout@v5
 
-        - name: List caches
-          id: list
-          env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            gh cache list --limit 1000 --json id,key > caches.json
+      - name: Compute Cargo.lock hash
+        id: cargo-hash
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            HASH=$(powershell -Command "(Get-FileHash Cargo.lock -Algorithm SHA256).Hash.ToLower()")
+          else
+            HASH=$(sha256sum Cargo.lock | awk '{print $1}')
+          fi
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ matrix.target }}-${{ matrix.toolchain }}-cargo-${{ steps.cargo-hash.outputs.hash }}
+      - name: Install ${{ matrix.toolchain }}
+        id: install
+        uses: dtolnay/rust-toolchain@master
+        with:
+          components: clippy
+          toolchain: ${{ matrix.toolchain }}
+      - name: Build Project
+        run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+      - id: comphash
+        name: Calculate compiler hash
+        shell: bash
+        run: |
+          HASH=$(cargo +${{ steps.install.outputs.name }} hash)
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+      - name: Upload tackc Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-${{ matrix.toolchain }}-tackc-${{ steps.comphash.outputs.hash }}
+          path: target/release/tackc${{ env.BIN_EXT }}
+        env:
+          BIN_EXT: ${{ env.BIN_EXT }}
+      - name: Run Clippy
+        run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+        env:
+          RUSTFLAGS: "-D warnings"
+      - name: Run Tests
+        run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+        env:
+          CI: true
+  once:
+    name: One-time Job
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
 
-        - name: Delete old caches
-          env:
-            HASH: ${{ steps.cargo-hash.outputs.hash }}
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            echo "Keeping caches ending with: $HASH"
-            jq -c '.[]' caches.json | while read cache; do
-              id=$(echo "$cache" | jq -r '.id')
-              key=$(echo "$cache" | jq -r '.key')
+      - name: Compute Cargo.lock hash
+        id: cargo-hash
+        run: |
+          HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ubuntu-latest-nightly-cargo-${{ steps.cargo-hash.outputs.hash }}
+      - name: Install Nightly
+        id: install
+        uses: dtolnay/rust-toolchain@master
+        with:
+          components: rustfmt
+          toolchain: nightly
+      - name: Check Formatting
+        run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
+      - name: Check Code Audit
+        run: cargo +${{ steps.install.outputs.name }} audit
+  cleanup-caches:
+    name: Cleanup Old Caches
+    runs-on: ubuntu-slim
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Compute Cargo.lock hash
+        id: cargo-hash
+        run: |
+          HASH=$(shasum -a 256 Cargo.lock | awk '{print $1}')
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
-              if [[ "$key" == *"$HASH" ]]; then
-                echo "KEEP: $key"
-              else
-                echo "DELETE: $key (id=$id)"
-                gh cache delete "$id"
-              fi
-            done
+      - name: List caches
+        id: list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh cache list --limit 1000 --json id,key > caches.json
+
+      - name: Delete old caches
+        env:
+          HASH: ${{ steps.cargo-hash.outputs.hash }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Keeping caches ending with: $HASH"
+          jq -c '.[]' caches.json | while read cache; do
+            id=$(echo "$cache" | jq -r '.id')
+            key=$(echo "$cache" | jq -r '.key')
+
+            if [[ "$key" == *"$HASH" ]]; then
+              echo "KEEP: $key"
+            else
+              echo "DELETE: $key (id=$id)"
+              gh cache delete "$id"
+            fi
+          done
