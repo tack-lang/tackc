@@ -2,7 +2,7 @@
 tackc = "run -p tackc --bin tackc --"
 tackc-release = "run -p tackc --bin tackc --release --"
 hash = "run -p tackc_meta --bin hash --quiet"
-audit = "run -p tackc_meta --bin audit --quiet --"
+audit = "run -p tackc_meta --bin audit --release --quiet --"
 
 [build]
 rustflags = ["--force-warn=clippy::todo"]
