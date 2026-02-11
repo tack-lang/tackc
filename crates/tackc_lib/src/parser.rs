@@ -2,6 +2,7 @@ pub mod error;
 use std::{collections::HashMap, num::NonZeroU32};
 
 const RECURSION_LIMIT: u32 = 300;
+const PATH_COMPONENTS_LIMIT: usize = 32;
 
 use error::{ParseError, Result};
 use nonzero::nonzero;
@@ -384,6 +385,12 @@ impl<F: File> Parser<'_, F> {
         while self.eat(&[TokenKind::Dot]).is_some() {
             let ident = self.expect_report(&[TokenKind::Ident], "identifier");
             components.push(ident.map(|ident| Symbol::new(ident, self.file.id())));
+
+            if components.len() > PATH_COMPONENTS_LIMIT {
+                self.push_err(ParseError::path_components_limit());
+                self.failed = true;
+                self.check_failed(recursion)?;
+            }
         }
         let span = Span::new_from(
             ident.span.start,
