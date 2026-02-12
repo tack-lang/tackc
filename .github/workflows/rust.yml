@@ -112,8 +112,8 @@ jobs:
           toolchain: nightly
       - name: Check Formatting
         run: cargo +${{ steps.install.outputs.name }} fmt --verbose --check --all
-      - name: Check Code Audit
-        run: cargo +${{ steps.install.outputs.name }} audit
+      - name: Check `cargo verify`
+        run: cargo +${{ steps.install.outputs.name }} verify
   cleanup-caches:
     name: Cleanup Old Caches
     runs-on: ubuntu-slim
