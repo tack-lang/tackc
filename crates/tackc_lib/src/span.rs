@@ -166,7 +166,7 @@ impl Span {
     }
 
     pub const fn fits(&self, string: &str) -> bool {
-        (self.end as usize) < string.len()
+        (self.end as usize) <= string.len()
     }
 
     /// Applies the span to `string`, with `start` and `end` corresponding to byte indexes.
