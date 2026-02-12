@@ -24,7 +24,7 @@ impl<H: Hasher> NonZeroHasher<H> {
     pub fn finish_non_zero_truncated(&self) -> NonZeroU32 {
         let value = self.finish();
         // We are trying to truncate this.
-        #[allow(clippy::cast_possible_truncation)] // CHECKED(Chloe)
+        #[expect(clippy::cast_possible_truncation)] // CHECKED(Chloe)
         let low = value as u32;
         // `low` could be zero at this point, so ` | u32::from(low == 0)` ensures that it won't be zero.
         NonZeroU32::new(low | u32::from(low == 0)).expect_unreachable() // CHECKED(Chloe)
@@ -98,7 +98,9 @@ impl Hasher for IdentityHasher {
             8,
             "IdentityHasher can only be used for u64-sized types!"
         );
-        self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
+
+        // try_into() will always return `Ok`, since `bytes.len() == 8`.
+        self.hash = u64::from_ne_bytes(bytes.try_into().expect_unreachable()); // CHECKED(Chloe)
     }
 
     fn write_u64(&mut self, i: u64) {

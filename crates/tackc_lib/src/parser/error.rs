@@ -18,6 +18,7 @@ pub enum ParseError {
     RecursionLimit,
     Failure,
     PathComponentsLimit,
+    NodeIdLimit,
 }
 
 impl ParseError {
@@ -61,7 +62,11 @@ impl ParseError {
         Self::PathComponentsLimit
     }
 
-    pub fn display<F: File>(&self, file: &F, global: &Global) -> String {
+    pub const fn node_id_limit() -> Self {
+        Self::NodeIdLimit
+    }
+
+    pub fn display(&self, file: &File, global: &Global) -> String {
         match self {
             Self::Expected(expected, tok) => Diag::with_span(
                 format!(
@@ -88,6 +93,7 @@ impl ParseError {
             Self::PathComponentsLimit => {
                 String::from("path components limit reached. What are you doing?")
             }
+            Self::NodeIdLimit => String::from("node id limit reached. What are you doing?"),
             Self::Failure => {
                 String::from("generic failure. Shouldn't be displayed under normal circumstances.")
             }

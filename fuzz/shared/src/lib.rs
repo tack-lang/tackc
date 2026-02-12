@@ -3,7 +3,7 @@ use std::path::Path;
 // Bring in the compiler pieces we want to fuzz
 use tackc_lib::prelude::*;
 
-use tackc_file::BasicFile;
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::Parser;
@@ -15,7 +15,7 @@ pub fn run(data: &[u8]) {
     };
 
     // Create a borrowed file (no on-disk IO, avoids growing global intern tables).
-    let file = BasicFile::new(&src_owned, Path::new("fuzz_input.tck"));
+    let file = File::new(&src_owned, Path::new("fuzz_input.tck"));
 
     // Use a heap-allocated Global for each iteration to avoid the single-call
     // restriction of `Global::new()` in debug builds.

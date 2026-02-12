@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aho-corasick = "1.1.4"
 ignore = { workspace = true }
 sha2 = { workspace = true }
 walkdir = { workspace = true }

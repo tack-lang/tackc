@@ -890,6 +890,7 @@ dependencies = [
 name = "tackc_meta"
 version = "0.1.0"
 dependencies = [
+ "aho-corasick",
  "ignore",
  "sha2",
  "walkdir",

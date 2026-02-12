@@ -4,9 +4,9 @@ pub mod prelude {
     pub use super::iter::IteratorExt as _;
 }
 
-/// Iterator adapters for errors
+/// Iterator adapters for errors.
 pub mod iter;
 
-/// Diagnostic error messages
+/// Diagnostic error messages.
 pub mod diag;
 pub use diag::Diag;

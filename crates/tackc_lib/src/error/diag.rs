@@ -5,7 +5,7 @@ use crate::file::File;
 use crate::span::Span;
 use serde::{Deserialize, Serialize};
 
-/// Diagnostic error struct
+/// Diagnostic error struct.
 #[derive(Serialize, Deserialize)]
 pub struct Diag {
     span: Option<(Vec<Span>, Option<Cow<'static, str>>)>,
@@ -13,7 +13,7 @@ pub struct Diag {
 }
 
 impl Diag {
-    /// Create a [`Diag`] without a span
+    /// Create a [`Diag`] without a span.
     pub fn without_span<S>(msg: S) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -24,7 +24,7 @@ impl Diag {
         }
     }
 
-    /// Create a [`Diag`] with a span, but without a local message
+    /// Create a [`Diag`] with a span, but without a local message.
     pub fn with_span<S>(msg: S, span: Span) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -35,7 +35,7 @@ impl Diag {
         }
     }
 
-    /// Create a [`Diag`] with multiple spans, but without a local message
+    /// Create a [`Diag`] with multiple spans, but without a local message.
     ///
     /// # Panics
     /// This function will panic if `spans` is empty.
@@ -43,15 +43,15 @@ impl Diag {
     where
         S: Into<Cow<'static, str>>,
     {
-        let spans: Vec<Span> = spans.into_iter().collect();
-        assert!(!spans.is_empty(), "`spans` cannot be empty!");
+        let spans_vec: Vec<Span> = spans.into_iter().collect();
+        assert!(!spans_vec.is_empty(), "`spans` cannot be empty!");
         Self {
-            span: Some((spans, None)),
+            span: Some((spans_vec, None)),
             msg: msg.into(),
         }
     }
 
-    /// Create a [`Diag`] with a span, and a local message
+    /// Create a [`Diag`] with a span, and a local message.
     pub fn with_local_msg<S1, S2>(msg: S1, span: Span, local_msg: S2) -> Self
     where
         S1: Into<Cow<'static, str>>,
@@ -67,14 +67,16 @@ impl Diag {
     ///
     /// # Panics
     /// This function panics if the file given is too short for the span inside of this `Diag`.
-    pub fn display<F: File>(&self, file: &F) -> String {
+    pub fn display(&self, file: &File) -> String {
         let mut f = String::new();
         _ = write!(f, "{}", self.msg);
         _ = write!(f, "\n  --> {}", file.path().display());
         if let Some((span, _local_msg)) = &self.span {
+            assert!(span[0].fits(file.src()), "given file is too short!");
+
             let (line, column) = file
                 .line_and_column(span[0].start)
-                .expect("file is too short");
+                .expect("file is too short"); // CHECKED(Chloe)
             _ = write!(f, ":{line}:{column}");
         }
 

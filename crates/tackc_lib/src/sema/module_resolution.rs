@@ -62,27 +62,27 @@ impl Resolver {
         };
 
         let mut comps = path.components.iter();
-        let Some(first) = comps.next().unwrap() else {
+        let Some(Some(first)) = comps.next() else {
             return;
         };
 
-        let mut path = LogicalPath::from([first.0]);
+        let mut logical_path = LogicalPath::from([first.0]);
         let mut current = self
             .logical_mods
-            .entry(path.clone())
-            .or_insert_with(|| LogicalModule::new(path.clone()));
+            .entry(logical_path.clone())
+            .or_insert_with(|| LogicalModule::new(logical_path.clone()));
 
         for next in comps {
             let Some(next) = next else {
                 return;
             };
 
-            path.push(next.0);
+            logical_path.push(next.0);
 
             current = self
                 .logical_mods
-                .entry(path.clone())
-                .or_insert_with(|| LogicalModule::new(path.clone()));
+                .entry(logical_path.clone())
+                .or_insert_with(|| LogicalModule::new(logical_path.clone()));
         }
 
         current.items = module.items;

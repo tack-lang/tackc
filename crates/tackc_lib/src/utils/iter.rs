@@ -1,11 +1,13 @@
 use std::array;
 
+use crate::utils::UnwrapExt;
+
 #[derive(Debug, Clone)]
 pub struct Peekable<I: Iterator, const K: usize> {
     iter: I,
     // None represents "iterator not checked," Some(None) represents "iterator returned None," and Some(Some(T)) represents "iterator returned Some(T)."
     // All Some values will be at beginning, since there can't be holes in the iterator.
-    #[allow(clippy::option_option)] // CHECKED(Chloe)
+    #[expect(clippy::option_option)] // CHECKED(Chloe)
     next: [Option<Option<I::Item>>; K],
 }
 
@@ -25,7 +27,7 @@ impl<I: Iterator, const K: usize> Peekable<I, K> {
     /// # Panics
     /// This function will panic if `n` is greater than or equal `K`.
     pub fn peek(&mut self, n: usize) -> Option<&I::Item> {
-        assert!(n < K);
+        assert!(n < K, "n is greater than K!");
 
         self.next
             .iter_mut()
@@ -33,7 +35,11 @@ impl<I: Iterator, const K: usize> Peekable<I, K> {
             .skip_while(|opt| opt.is_some())
             .for_each(|opt| *opt = Some(self.iter.next()));
 
-        self.next[n].as_ref().unwrap().as_ref()
+        self.next[n]
+            .as_ref()
+            // The previous statement will ensure that all items `n + 1` are `Some`.
+            .expect_unreachable() // CHECKED(Chloe)
+            .as_ref()
     }
 }
 

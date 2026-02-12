@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use crate::error::Diag;
 use crate::span::Span;
+use crate::utils::UnwrapExt;
 use proptest::prelude::*;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -43,19 +44,21 @@ impl Display for Token {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
+// Docs shouldn't have punctuation for non-sentences.
+#[expect(clippy::doc_paragraphs_missing_punctuation)] // CHECKED(Chloe)
 pub enum TokenKind {
-    /// Identifiers
+    /// Identifier.
     Ident,
 
     // Literals
-    /// String literals
+    /// String literal.
     StringLit,
-    /// Integer literals
+    /// Integer literal.
     IntLit,
-    /// Float literals
+    /// Float literal.
     FloatLit,
 
-    /// End of file
+    /// End of file marker.
     Eof,
 
     // Keywords
@@ -238,14 +241,14 @@ impl Display for TokenKind {
 /// An error in the lexer.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LexError {
-    /// The span of the file that caused the error
+    /// The span of the file that caused the error.
     pub span: Span,
     /// This kind of error this error is.
     pub kind: ErrorKind,
 }
 
 impl LexError {
-    pub fn display<F: File>(&self, file: &F) -> String {
+    pub fn display(&self, file: &File) -> String {
         Diag::with_span(self.kind.to_string(), self.span).display(file)
     }
 }
@@ -264,16 +267,16 @@ pub enum ErrorKind {
     MissingExponentDigits,
 }
 
-/// Different integer bases representable by this lexer
+/// Different integer bases representable by this lexer.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum IntegerBase {
-    /// No prefix
+    /// No prefix.
     Decimal = 10,
-    /// `0b` prefix
+    /// `0b` prefix.
     Binary = 2,
-    /// `0o` prefix
+    /// `0o` prefix.
     Octal = 8,
-    /// `0x` prefix
+    /// `0x` prefix.
     Hex = 16,
 }
 
@@ -292,15 +295,15 @@ impl Display for IntegerBase {
 ///
 /// `Lexer`'s `Iterator` implementation returns `None` when `next_token` returns `Ok` with a token kind of [`TokenKind::Eof`].
 /// `Lexer` should be easily cloneable.
-pub struct Lexer<'src, F: File> {
-    src: &'src F,
+pub struct Lexer<'src> {
+    src: &'src File<'src>,
     span: Span,
     global: &'src Global,
 }
 
-impl<'src, F: File> Lexer<'src, F> {
-    /// Create a new lexer
-    pub fn new(src: &'src F, global: &'src Global) -> Self {
+impl<'src> Lexer<'src> {
+    /// Create a new lexer.
+    pub fn new(src: &'src File, global: &'src Global) -> Self {
         Lexer {
             src,
             span: Span::new(),
@@ -452,10 +455,11 @@ impl<'src, F: File> Lexer<'src, F> {
 
         let lexeme = self.current_lexeme();
         let char_len = extra_bytes + 1;
+
         lexeme[lexeme.len() - char_len..]
             .chars()
             .next()
-            .expect("This is a bug. Please submit a bug report.")
+            .expect_unreachable() // CHECKED(Chloe)
     }
 
     fn handle_string_lit(&mut self) -> Result<Token, LexError> {
@@ -479,11 +483,11 @@ impl<'src, F: File> Lexer<'src, F> {
 
     fn handle_digits(&mut self, radix: u32) -> bool {
         #[inline]
-        fn current_is_digit<F: File>(lexer: &Lexer<'_, F>, radix: u32) -> bool {
+        fn current_is_digit(lexer: &Lexer<'_>, radix: u32) -> bool {
             matches!(lexer.current_byte(), Some(c) if (c as char).is_digit(radix))
         }
         #[inline]
-        fn current_is_underscore<F: File>(lexer: &Lexer<'_, F>) -> bool {
+        fn current_is_underscore(lexer: &Lexer<'_>) -> bool {
             lexer.current_byte() == Some(b'_')
         }
 
@@ -631,7 +635,7 @@ impl<'src, F: File> Lexer<'src, F> {
     }
 }
 
-impl<F: File> Iterator for Lexer<'_, F> {
+impl Iterator for Lexer<'_> {
     type Item = Result<Token, LexError>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -646,7 +650,7 @@ impl<F: File> Iterator for Lexer<'_, F> {
     }
 }
 
-impl<F: File> Clone for Lexer<'_, F> {
+impl Clone for Lexer<'_> {
     fn clone(&self) -> Self {
         Lexer {
             src: self.src,
@@ -659,9 +663,9 @@ impl<F: File> Clone for Lexer<'_, F> {
 proptest! {
     #[test]
     fn lexer(s in ".{1,4096}") {
-        use crate::file::BasicFile;
+        use crate::file::File;
 
-        let file = BasicFile::new(&s, Path::new("proptest.tck"));
+        let file = File::new(&s, Path::new("proptest.tck"));
         let global = Global::create_heap();
         let lexer = Lexer::new(&file, &global);
         for i in lexer {
@@ -682,11 +686,11 @@ use std::path::Path;
 
 #[cfg(test)]
 fn run_lexer_test(path: &Path) {
-    use crate::file::BasicFile;
+    use crate::file::File;
 
-    let src = std::fs::read_to_string(path).unwrap();
-    let path = Path::new(path.file_name().unwrap());
-    let file = BasicFile::new(src, path);
+    let src = std::fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
+    let path = Path::new(path.file_name().unwrap()); // CHECKED(Chloe)
+    let file = File::new(src, path);
 
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);

@@ -26,9 +26,34 @@ pedantic = { level = "warn", priority = 0 }
 style = { level = "warn", priority = 0 }
 nursery = { level = "warn", priority = 0 }
 
+# Lints to error against to force fixes without allowing #[expect]
+missing_assert_message = { level = "forbid", priority = 1 }
+multiple_unsafe_ops_per_block = { level = "forbid", priority = 1 }
+allow_attributes = { level = "forbid", priority = 1 }
+doc_include_without_cfg = { level = "forbid", priority = 1 }
+precedence_bits = { level = "forbid", priority = 1 }
+same_name_method = { level = "forbid", priority = 1 }
+semicolon_inside_block = { level = "forbid", priority = 1 }
+try_err = { level = "forbid", priority = 1 }
+undocumented_unsafe_blocks = { level = "forbid", priority = 1 }
+unused_result_ok = { level = "forbid", priority = 1 }
+#indexing_slicing = { level = "forbid", priority = 1 }
+
+# Lints to error against in order to force fixes while still allowing #[expect].
+doc_paragraphs_missing_punctuation = { level = "deny", priority = 1 }
+
+# Lints to warn against in order to require CHECKED.
+mem_forget = { level = "warn", priority = 1 }
+
+# Lints to warn against to be pedantic
+rest_pat_in_fully_bound_structs = { level = "warn", priority = 1 }
+
+# Lints to allow.
 must-use-candidate = { level = "allow", priority = 1 }
+
 # Passed by .cargo/config.toml
 #todo = { level = "force-warn", priority = 1 }
+#dbg_macro = { level = "force-warn", priority = 1 }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

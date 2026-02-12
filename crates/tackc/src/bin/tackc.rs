@@ -6,7 +6,7 @@ use clap::{Parser as ClapParser, ValueEnum};
 use rustc_hash::FxHashMap;
 
 use tackc_ast::AstModule;
-use tackc_file::{BasicFile, File};
+use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
@@ -48,11 +48,11 @@ fn main() {
     };
     let global = Global::new();
     let mut error = false;
-    let files: Vec<BasicFile> = args
+    let files: Vec<File> = args
         .files
         .iter()
         .map(PathBuf::as_ref)
-        .map(|path| BasicFile::try_from(path).map_err(|x| (x, path)))
+        .map(|path| File::try_from(path).map_err(|x| (x, path)))
         .consume_reporter(|(e, path)| {
             error = true;
             println!("failed to open file {}: {e:?}", path.display());
@@ -64,7 +64,7 @@ fn main() {
     let files_map = files
         .into_iter()
         .map(|file| (file.id(), file))
-        .collect::<FxHashMap<NonZeroU32, BasicFile>>();
+        .collect::<FxHashMap<NonZeroU32, File>>();
 
     let mods = files_map
         .values()
@@ -76,7 +76,7 @@ fn main() {
     //println!("{}", mods.display(global));
 }
 
-fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
+fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
     let lexer = Lexer::new(file, global);
     let tokens = lexer.collect::<Vec<_>>();
 
@@ -111,7 +111,7 @@ fn run_lexer(file: &BasicFile, global: &Global, debug_modes: &DebugModes) -> Vec
 
 fn run_parser(
     tokens: &[Token],
-    file: &BasicFile,
+    file: &File,
     global: &Global,
     debug_modes: &DebugModes,
 ) -> AstModule {

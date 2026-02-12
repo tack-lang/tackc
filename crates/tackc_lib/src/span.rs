@@ -1,4 +1,4 @@
-//! Span library based heavily off [`text-span`](https://crates.io/crates/text-span)
+//! Span library based heavily off [`text-span`](https://crates.io/crates/text-span).
 
 use std::{cmp::Ordering, ops::Range};
 
@@ -12,9 +12,9 @@ pub type SpanValue = u32;
 /// The `Span` type represents an area of a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct Span {
-    /// The start of the `Span` (Inclusive)
+    /// The start of the `Span` (Inclusive).
     pub start: SpanValue,
-    /// The end of the `Span` (Exclusive)
+    /// The end of the `Span` (Exclusive).
     pub end: SpanValue,
 }
 
@@ -84,7 +84,7 @@ impl Span {
     /// Grows the span from the back. This moves the start value back by `amount`.
     ///
     /// # Panics
-    /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value,
+    /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value.
     pub fn grow_back(&mut self, amount: SpanValue) {
         assert!(
             self.start >= amount,
@@ -96,7 +96,7 @@ impl Span {
     /// Returns a span that is grown from the back. This moves the start value back by `amount`.
     ///
     /// # Panics
-    /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value,
+    /// Panics if the start of the span is less than `amount`, since spans can't have a negative start value.
     #[must_use]
     pub fn with_grow_back(&self, amount: SpanValue) -> Self {
         assert!(
@@ -165,6 +165,10 @@ impl Span {
         self.start = self.end;
     }
 
+    pub const fn fits(&self, string: &str) -> bool {
+        (self.end as usize) < string.len()
+    }
+
     /// Applies the span to `string`, with `start` and `end` corresponding to byte indexes.
     ///
     /// # Panics
@@ -201,6 +205,11 @@ fn dual_order(x: Ordering, y: Ordering) -> Option<Ordering> {
         (x, y) if x == y => Some(x),
         (Ordering::Greater, Ordering::Less) | (Ordering::Less, Ordering::Greater) => None,
         (x, Ordering::Equal) | (Ordering::Equal, x) => Some(x),
-        _ => unreachable!(),
+        // The arms are exhaustive.
+        // If each ordering is equal, first arm.
+        // If one is Ordering::Less and the other is Ordering::Greater, second arm.
+        // If one ordering is Ordering::Equal, third arm.
+        // These are exhaustive.
+        _ => unreachable!(), // CHECKED(Chloe)
     }
 }

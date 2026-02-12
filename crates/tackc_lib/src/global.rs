@@ -8,7 +8,10 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::hash::{IdentityDashMap, NonZeroFxHasher};
+use crate::{
+    hash::{IdentityDashMap, NonZeroFxHasher},
+    utils::UnwrapExt,
+};
 use bumpalo::Bump;
 use serde::{Deserialize, Serialize};
 
@@ -34,7 +37,6 @@ impl<T: Any + Hash + PartialEq + Debug> Internable for T {
     }
 }
 
-/// A token type used for
 #[derive(Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct Interned<T: ?Sized>(NonZeroU64, PhantomData<fn() -> T>);
@@ -151,11 +153,11 @@ impl Global {
         hash: NonZeroU64,
         map: &IdentityDashMap<NonZeroU64, &'static T>,
     ) {
+        #[expect(unsafe_code)] // CHECKED(Chloe)
         // SAFETY:
         // The value is allocated in the arena and lives as long as `self`.
         // This is safe as long as the 'static reference is only returned to callers
         // if &self is 'static.
-        #[allow(unsafe_code)] // CHECKED(Chloe)
         let static_ref: &'static T = unsafe { &*val };
 
         map.insert(hash, static_ref);
@@ -187,8 +189,18 @@ impl Global {
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`, or in the event of a hash collision.
     pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
-        <dyn Any>::downcast_ref::<T>(&**self.interned.get(&interned.0).expect("Wrong Global used!"))
-            .expect("Hash collision!")
+        assert!(self.interned.contains_key(&interned.0), "wrong Global!");
+
+        // Assertion made ensures `get` returns `Some`.
+        let val = self.interned.get(&interned.0).expect_unreachable(); // CHECKED(Chloe)
+        let Some(res) = <dyn Any>::downcast_ref::<T>(&**val) else {
+            Self::report_collision();
+        };
+
+        // Satisfy clippy
+        drop(val);
+
+        res
     }
 
     /// Interns a string value into the global map.
@@ -220,7 +232,8 @@ impl Global {
     #[inline(never)]
     #[cold]
     fn report_collision() -> ! {
-        panic!("Hash collision!");
+        // Hash collisions should be treated as impossible.
+        panic!("Hash collision!"); // CHECKED(Chloe)
     }
 
     /// Gets a reference to the interned string value represented by `interned`.
@@ -228,10 +241,13 @@ impl Global {
     /// # Panics
     /// This function will panic if the `interned` given is from a different `Global`.
     pub fn get_interned_str(&self, interned: Interned<str>) -> &str {
-        *self
-            .interned_strs
-            .get(&interned.0)
-            .expect("Wrong Global used!")
+        assert!(
+            self.interned_strs.contains_key(&interned.0),
+            "wrong Global!"
+        );
+
+        // We asserted that the map contains the key.
+        *self.interned_strs.get(&interned.0).expect_unreachable() // CHECKED(Chloe)
     }
 
     /// Allocates a value within the arena of this [`Global`] without interning it.

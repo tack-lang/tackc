@@ -12,41 +12,6 @@ use crate::span::SpanValue;
 use crate::{hash::NonZeroFxHasherBuilder, utils::UnwrapExt};
 use serde::{Deserialize, Serialize};
 
-/// The main trait of `tackc_file`.
-/// To implement this trait, a source, path, and line starts must be provided. Line starts can be calculated by the [`line_starts`] function.
-pub trait File: Deref<Target = str> {
-    /// Get the file's source.
-    fn src(&self) -> &str;
-    /// Get the file's path.
-    fn path(&self) -> &Path;
-    /// Get the file's line starts.
-    fn line_starts(&self) -> &[SpanValue];
-    /// Get the file's ID. Should be unique to any other files.
-    fn id(&self) -> NonZeroU32;
-
-    /// Find the line and column numbers of an index using the given line starts.
-    fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
-        let starts = self.line_starts();
-        if starts.is_empty() {
-            return None;
-        }
-
-        let src_len = self.len();
-        // reject out-of-range indexes
-        if (index as usize) > src_len {
-            return None;
-        }
-
-        // find the last line start that is <= index
-        let line_idx = starts.iter().rposition(|&s| s <= index)?;
-
-        let line_num: SpanValue = (line_idx + 1).try_into().ok()?;
-        let col: SpanValue = index - (starts[line_idx] as SpanValue) + 1;
-
-        Some((line_num, col))
-    }
-}
-
 /// Returns a vector corresponding to the byte indexes of the start of each line.
 ///
 /// # Panics
@@ -75,23 +40,23 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
-/// A simple implementation of file that uses a [`Cow`] to store either a borrowed or owned path/source, and the hash of the source and path as the ID.
+/// A file in tackc.
 #[derive(Serialize, Deserialize, Hash, PartialEq, Eq)]
-pub struct BasicFile<'a> {
+pub struct File<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
     line_starts: Vec<SpanValue>,
     id: NonZeroU32,
 }
 
-impl<'a> BasicFile<'a> {
+impl<'a> File<'a> {
     /// Create a new [`BasicFile`] from a source and a path. To open a file at a path, use [`BasicFile::try_from`].
     pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
         let id = NonZeroFxHasherBuilder.hash_one_non_zero_truncated((&src, &path));
-        BasicFile {
+        File {
             src,
             path,
             line_starts,
@@ -100,25 +65,46 @@ impl<'a> BasicFile<'a> {
     }
 }
 
-impl File for BasicFile<'_> {
-    fn src(&self) -> &str {
+impl File<'_> {
+    /// Get the file's source.
+    pub fn src(&self) -> &str {
         &self.src
     }
 
-    fn path(&self) -> &Path {
+    /// Get the file's path.
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
-    fn line_starts(&self) -> &[SpanValue] {
-        &self.line_starts
+    /// Get the file's ID. Should be unique to any other files.
+    pub const fn id(&self) -> NonZeroU32 {
+        self.id
     }
 
-    fn id(&self) -> NonZeroU32 {
-        self.id
+    /// Find the line and column numbers of an index using the given line starts.
+    pub fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
+        let starts = &self.line_starts;
+        if starts.is_empty() {
+            return None;
+        }
+
+        let src_len = self.len();
+        // reject out-of-range indexes
+        if (index as usize) > src_len {
+            return None;
+        }
+
+        // find the last line start that is <= index
+        let line_idx = starts.iter().rposition(|&s| s <= index)?;
+
+        let line_num: SpanValue = (line_idx + 1).try_into().ok()?;
+        let col: SpanValue = index - (starts[line_idx] as SpanValue) + 1;
+
+        Some((line_num, col))
     }
 }
 
-impl Deref for BasicFile<'_> {
+impl Deref for File<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -126,7 +112,7 @@ impl Deref for BasicFile<'_> {
     }
 }
 
-impl TryFrom<PathBuf> for BasicFile<'_> {
+impl TryFrom<PathBuf> for File<'_> {
     type Error = io::Error;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
@@ -135,7 +121,7 @@ impl TryFrom<PathBuf> for BasicFile<'_> {
     }
 }
 
-impl<'a> TryFrom<&'a Path> for BasicFile<'a> {
+impl<'a> TryFrom<&'a Path> for File<'a> {
     type Error = io::Error;
 
     fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
