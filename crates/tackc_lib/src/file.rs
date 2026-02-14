@@ -98,7 +98,12 @@ impl File<'_> {
         let line_idx = starts.iter().rposition(|&s| s <= index)?;
 
         let line_num: SpanValue = (line_idx + 1).try_into().ok()?;
-        let col: SpanValue = index - (starts[line_idx] as SpanValue) + 1;
+        // `line_idx` is only as large as `starts.len()`
+        // because `rposition`'s return value is only as
+        // long as it's iterator, which in this case,
+        // is only as long as `starts`.
+        let col_index = *starts.get(line_idx).expect_unreachable() as SpanValue; // CHECKED(Chloe)
+        let col: SpanValue = index - (col_index) + 1;
 
         Some((line_num, col))
     }

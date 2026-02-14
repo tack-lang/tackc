@@ -12,11 +12,13 @@ use std::{
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use ignore::{DirEntry, WalkBuilder, WalkState};
 
-const DANGEROUS_PATTERNS: [(&str, &str); 7] = [
+const DANGEROUS_PATTERNS: [(&str, &str); 9] = [
     (".expect_unreachable()", "expect_unreachable()"),
     ("[expect", "#[expect]"),
-    (".expect(", "expect()"),
     (".unwrap(", "unwrap()"),
+    (".unwrap_err(", "unwrap_err()"),
+    (".expect(", "expect()"),
+    (".expect_err(", "expect_err()"),
     ("panic!", "panic!()"),
     ("unreachable!", "unreachable!()"),
     ("unimplemented!", "unimplemented!()"),

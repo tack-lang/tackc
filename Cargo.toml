@@ -23,7 +23,6 @@ nonzero = "0.2.0"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = 0 }
-style = { level = "warn", priority = 0 }
 nursery = { level = "warn", priority = 0 }
 
 # Lints to error against to force fixes without allowing #[expect]
@@ -37,10 +36,10 @@ semicolon_inside_block = { level = "forbid", priority = 1 }
 try_err = { level = "forbid", priority = 1 }
 undocumented_unsafe_blocks = { level = "forbid", priority = 1 }
 unused_result_ok = { level = "forbid", priority = 1 }
-#indexing_slicing = { level = "forbid", priority = 1 }
 
 # Lints to error against in order to force fixes while still allowing #[expect].
 doc_paragraphs_missing_punctuation = { level = "deny", priority = 1 }
+indexing_slicing = { level = "deny", priority = 1 }
 
 # Lints to warn against in order to require CHECKED.
 mem_forget = { level = "warn", priority = 1 }

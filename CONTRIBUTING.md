@@ -29,4 +29,19 @@ cargo verify # Custom-made tool for code verification
 
 ## `cargo verify`
 
-The previous section mentioned a tool called `cargo verify`. This is a tool that will scan the source code to ensure that special attention is payed to any code snippets deemed "dangerous." Currently, the only two snippets deemed
+The previous section mentioned a tool called `cargo verify`. This is a tool that will scan the source code to ensure that special attention is payed to any code snippets deemed "dangerous." Currently, the dangerous snippets are as follows:
+
+- Using `#[expect]`
+  - In `tackc` usage of `#[allow]` is banned, and `#[expect]` may be used instead. `#[expect]` works similar to `#[allow]`, but emits a lint if the lint being expected stops being emitted.
+- Anything that can possibly panic:
+  - `unwrap()`
+  - `unwrap_err()`
+  - `expect()`
+  - `expect_err()`
+  - `panic!()`
+  - `unreachable!()`
+  - `unimplemented!()`
+
+## Clippy
+
+`tackc` uses extremely aggressive clippy lints. If you have any questions about these, feel free to open an issue.

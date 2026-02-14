@@ -3,11 +3,13 @@ use std::fmt::Write;
 
 use crate::file::File;
 use crate::span::Span;
+use crate::utils::UnwrapExt;
 use serde::{Deserialize, Serialize};
 
 /// Diagnostic error struct.
 #[derive(Serialize, Deserialize)]
 pub struct Diag {
+    // If `span` is `Some`, `span.0.is_empty()` should be `false`.
     span: Option<(Vec<Span>, Option<Cow<'static, str>>)>,
     msg: Cow<'static, str>,
 }
@@ -63,6 +65,15 @@ impl Diag {
         }
     }
 
+    pub fn first_span(&self) -> Option<Span> {
+        debug_assert!(!self.span.as_ref()?.0.is_empty(), "invariant violated!");
+
+        Some(
+            // `self.span.0` being non-empty is an invariant.
+            *self.span.as_ref()?.0.first().expect_unreachable(), // CHECKED(Chloe)
+        )
+    }
+
     /// Returns the string representation of this `Diag`.
     ///
     /// # Panics
@@ -71,12 +82,10 @@ impl Diag {
         let mut f = String::new();
         _ = write!(f, "{}", self.msg);
         _ = write!(f, "\n  --> {}", file.path().display());
-        if let Some((span, _local_msg)) = &self.span {
-            assert!(span[0].fits(file.src()), "given file is too short!");
+        if let Some(span) = self.first_span() {
+            assert!(span.fits(file.src()), "given file is too short!");
 
-            let (line, column) = file
-                .line_and_column(span[0].start)
-                .expect("file is too short"); // CHECKED(Chloe)
+            let (line, column) = file.line_and_column(span.start).expect_unreachable(); // CHECKED(Chloe)
             _ = write!(f, ":{line}:{column}");
         }
 

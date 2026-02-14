@@ -1101,6 +1101,7 @@ fn parser_test_glob() {
 use std::path::Path;
 
 #[cfg(test)]
+// No `unwrap`s in this function are documented, because all of them sidestep errors.
 fn run_prog_parser_test(path: &Path) {
     use std::fs;
 

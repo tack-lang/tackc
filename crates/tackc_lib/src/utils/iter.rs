@@ -1,6 +1,5 @@
-use std::array;
-
 use crate::utils::UnwrapExt;
+use std::array;
 
 #[derive(Debug, Clone)]
 pub struct Peekable<I: Iterator, const K: usize> {
@@ -35,7 +34,10 @@ impl<I: Iterator, const K: usize> Peekable<I, K> {
             .skip_while(|opt| opt.is_some())
             .for_each(|opt| *opt = Some(self.iter.next()));
 
-        self.next[n]
+        self.next
+            .get(n)
+            // This is completely fine since `n < K`, and `self.next.len() == K`.
+            .expect_unreachable() // CHECKED(Chloe)
             .as_ref()
             // The previous statement will ensure that all items `n + 1` are `Some`.
             .expect_unreachable() // CHECKED(Chloe)
@@ -49,10 +51,21 @@ impl<I: Iterator, const K: usize> Iterator for Peekable<I, K> {
     fn next(&mut self) -> Option<Self::Item> {
         let temp = self.next[0].take();
         for i in 0..(K - 1) {
-            if self.next[i + 1].is_none() {
+            if self
+                .next
+                .get(i + 1)
+                // `i < K - 1`, so `i + 1 < K`.
+                .expect_unreachable() // CHECKED(Chloe)
+                .is_none()
+            {
                 break;
             }
-            self.next[i] = self.next[i + 1].take();
+
+            // `i < K - 1`, so `i + 1 < K` and `i < K`.
+            #[expect(clippy::indexing_slicing)] // CHECKED(Chloe)
+            {
+                self.next[i] = self.next[i + 1].take();
+            }
         }
         temp.unwrap_or_else(|| self.iter.next())
     }
