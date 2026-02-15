@@ -309,12 +309,12 @@ impl<'src> Parser<'src> {
         tokens: &'src [Token],
         file: &'src File,
         global: &'src Global,
-    ) -> (AstModule, Vec<ParseError>) {
+    ) -> (AstModule, Vec<ParseError>, bool) {
         let mut p = Parser::new(tokens, file, global);
         let mut module = p.module(0);
         // Override default spans
         module.spans = p.spans;
-        (module, p.errors)
+        (module, p.errors, p.failed)
     }
 }
 
@@ -1117,6 +1117,6 @@ fn run_prog_parser_test(path: &Path) {
             |res| res.unwrap(), // CHECKED(Chloe)
         )
         .collect::<Vec<_>>();
-    let (prog, err) = Parser::parse(&tokens, &file, &global);
+    let (prog, err, _) = Parser::parse(&tokens, &file, &global);
     insta::assert_ron_snapshot!((prog, err));
 }

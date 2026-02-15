@@ -66,11 +66,23 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<NonZeroU32, File>>();
 
+    let mut failed = false;
+
     let mods = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
+        .map(|(module, failed_parse)| {
+            if failed_parse {
+                failed = true;
+            }
+            module
+        })
         .collect::<Vec<_>>();
+
+    if failed {
+        return;
+    }
 
     let _mod_list = resolve_mods(mods);
     //println!("{}", mods.display(global));
@@ -114,8 +126,8 @@ fn run_parser(
     file: &File,
     global: &Global,
     debug_modes: &DebugModes,
-) -> AstModule {
-    let (module, errs) = Parser::parse(tokens, file, global);
+) -> (AstModule, bool) {
+    let (module, errs, failed) = Parser::parse(tokens, file, global);
 
     if debug_modes.debug.contains(&Stage::Parser) {
         eprintln!("{module:#?}");
@@ -128,5 +140,5 @@ fn run_parser(
         eprintln!("{}\n", err.display(file, global));
     }
 
-    module
+    (module, failed)
 }

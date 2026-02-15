@@ -36,11 +36,16 @@ pub fn run(data: &[u8]) {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let (prog, errors) = Parser::parse(&tokens, &file, &global);
+    let (prog, errors, failed) = Parser::parse(&tokens, &file, &global);
     for e in errors {
         e.display(&file, &global);
     }
     prog.display(&global);
+
+    // If the parser utterly fails, we probably shouldn't continue.
+    if failed {
+        return;
+    }
 
     let mods = resolve_mods(vec![prog]);
     mods.display(&global);
