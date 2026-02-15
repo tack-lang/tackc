@@ -45,3 +45,9 @@ The previous section mentioned a tool called `cargo verify`. This is a tool that
 ## Clippy
 
 `tackc` uses extremely aggressive clippy lints. If you have any questions about these, feel free to open an issue.
+
+## Rules on Generative AI
+
+For usage of Generative AI, use it minimally. If AI wrote more than a quarter of the content you claim to be contributing, it's probably too much. If you're not sure whether you asked AI to write too much, feel free to open an issue.
+
+Just to be clear, asking AI to read your code and get suggestions on it is 100% fine, as long as it is **YOU** that is implementing those suggestions.
