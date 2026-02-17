@@ -119,7 +119,8 @@ impl ExpressionKind {
 /// Binary operations.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
-#[expect(clippy::doc_paragraphs_missing_punctuation)]
+// Docs shouldn't have punctuation for non-sentences.
+#[expect(clippy::doc_paragraphs_missing_punctuation)] // CHECKED(Chloe)
 pub enum BinOp {
     /// `+`
     Add,
@@ -164,7 +165,8 @@ impl Display for BinOp {
 /// Unary operator.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
-#[expect(clippy::doc_paragraphs_missing_punctuation)]
+// Docs shouldn't have punctuation for non-sentences.
+#[expect(clippy::doc_paragraphs_missing_punctuation)] // CHECKED(Chloe)
 pub enum UnOp {
     /// `-`
     Neg,
