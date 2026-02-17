@@ -8,9 +8,9 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::{
+use crate::utils::{
+    UnwrapExt,
     hash::{IdentityDashMap, NonZeroFxHasher},
-    utils::UnwrapExt,
 };
 use bumpalo::Bump;
 use serde::{Deserialize, Serialize};
@@ -37,11 +37,13 @@ impl<T: Any + Hash + PartialEq + Debug> Internable for T {
     }
 }
 
+/// A type that represents interned values.
 #[derive(Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct Interned<T: ?Sized>(NonZeroU64, PhantomData<fn() -> T>);
 
 impl<T: ?Sized> Interned<T> {
+    /// Gets the inner representation of this interned value.
     pub const fn inner(self) -> NonZeroU64 {
         self.0
     }
@@ -112,7 +114,10 @@ pub struct Global {
 }
 
 impl Global {
-    pub fn get_hasher() -> NonZeroFxHasher {
+    /// Gets the hasher for this global context.
+    ///
+    /// This will always be a default [`NonZeroFxHasher`].
+    pub const fn get_hasher() -> NonZeroFxHasher {
         NonZeroFxHasher::default()
     }
 

@@ -1,3 +1,5 @@
+//! Module for semantic analysis.
+
 use std::{cmp::Ordering, collections::HashMap};
 
 use thin_vec::ThinVec;
@@ -12,11 +14,16 @@ pub mod module_resolution;
 pub use module_resolution::resolve_mods;
 pub mod name_resolution;
 
+/// A struct for modules, represented in a logical form, instead of a raw AST form.
 #[derive(Debug)]
 pub struct LogicalModule {
+    /// The items in this module.
     pub items: ThinVec<Option<Item>>,
+    /// The spans for each node in this module.
     pub spans: HashMap<NodeId, Span>,
+    /// Whether or not this module is exported.
     pub exported: bool,
+    /// The path of this module.
     pub path: LogicalPath,
 }
 
@@ -31,16 +38,19 @@ impl LogicalModule {
     }
 }
 
+/// A struct representing a path in Tack.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct LogicalPath {
     comps: ThinVec<Interned<str>>,
 }
 
 impl LogicalPath {
+    /// Pushes a symbol to the path.
     pub fn push(&mut self, symbol: Interned<str>) {
         self.comps.push(symbol);
     }
 
+    /// Displays the path.
     pub fn display(&self, global: &Global) -> String {
         self.comps
             .iter()

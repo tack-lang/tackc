@@ -1,3 +1,5 @@
+//! Custom verification tool.
+
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},

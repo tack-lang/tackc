@@ -1,3 +1,5 @@
+//! Expressions in tackc.
+
 use std::fmt::Display;
 
 use crate::global::{Global, Interned};
@@ -6,17 +8,22 @@ use thin_vec::ThinVec;
 
 use super::{Block, NodeId, Symbol};
 
+/// An expression in parsed form.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Expression {
+    /// The kind of expression this expression is.
     pub kind: ExpressionKind,
+    /// The ID of this node.
     pub id: NodeId,
 }
 
 impl Expression {
+    /// Creates a new expression.
     pub const fn new(kind: ExpressionKind, id: NodeId) -> Self {
         Self { kind, id }
     }
 
+    /// Displays an expression.
     pub fn display(&self, global: &Global) -> String {
         match &self.kind {
             ExpressionKind::IntLit(sym) | ExpressionKind::FloatLit(sym) => {
@@ -72,41 +79,68 @@ impl Expression {
     }
 }
 
+/// Different kinds of expressions.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExpressionKind {
+    /// Integer literal.
     IntLit(Interned<str>),
+    /// Float literal.
     FloatLit(Interned<str>),
+    /// String literal.
     StringLit(Interned<str>),
+    /// Identifier.
     Ident(Symbol),
+    /// Global identifier (starting with `.`, and referencing global scope.)
     GlobalIdent(Option<Symbol>),
+    /// Grouped expression.
     Grouping(Option<Box<Expression>>),
+    /// Member access of an expression.
     Member(Box<Expression>, Option<Box<Symbol>>),
+    /// Call expression.
     Call(Box<Expression>, ThinVec<Option<Expression>>),
+    /// Indexing of an expression.
     Index(Box<Expression>, Option<Box<Expression>>),
+    /// Block expression.
     Block(Box<Block>),
 
+    /// Binary expression.
     Binary(BinOp, Box<Expression>, Box<Expression>),
+    /// Unary expression.
     Unary(UnOp, Box<Expression>),
 }
 
 impl ExpressionKind {
+    /// Returns whether this expression kind ends with a block.
     pub const fn is_block(&self) -> bool {
         matches!(self, Self::Block(_))
     }
 }
 
+/// Binary operations.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[repr(u8)]
+#[expect(clippy::doc_paragraphs_missing_punctuation)]
 pub enum BinOp {
+    /// `+`
     Add,
+    /// `-`
     Sub,
+    /// `*`
     Mul,
+    /// `/`
     Div,
 
+    /// `>`
     Gt,
+    /// `<`
     Lt,
+    /// `>=`
     GtEq,
+    /// `<=`
     LtEq,
+    /// `==`
     Eq,
+    /// `!=`
     NotEq,
 }
 
@@ -127,9 +161,14 @@ impl Display for BinOp {
     }
 }
 
+/// Unary operator.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[repr(u8)]
+#[expect(clippy::doc_paragraphs_missing_punctuation)]
 pub enum UnOp {
+    /// `-`
     Neg,
+    /// `!`
     Not,
 }
 

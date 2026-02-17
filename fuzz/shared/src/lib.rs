@@ -1,3 +1,7 @@
+//! Shared code for fuzzing.
+
+#![allow(missing_docs)]
+
 use std::path::Path;
 
 // Bring in the compiler pieces we want to fuzz
@@ -9,6 +13,7 @@ use tackc_lexer::Lexer;
 use tackc_parser::Parser;
 use tackc_sema::resolve_mods;
 
+/// Run the main fuzzing loop.
 pub fn run(data: &[u8]) {
     let Ok(src_owned) = String::from_utf8(data.to_vec()) else {
         return;

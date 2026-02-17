@@ -42,6 +42,7 @@ impl Display for Token {
     }
 }
 
+/// Kinds of tokens.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
 // Docs shouldn't have punctuation for non-sentences.
@@ -248,21 +249,25 @@ pub struct LexError {
 }
 
 impl LexError {
+    /// Displays this diagnostic.
     pub fn display(&self, file: &File) -> String {
         Diag::with_span(self.kind.to_string(), self.span).display(file)
     }
 }
 
+/// Error kinds for the lexer.
 #[derive(Debug, Error, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
+    /// An error for unknown characters.
     #[error("unknown character {0}")]
     UnknownChar(char),
+    /// An error for unterminated strings.
     #[error("unterminated string")]
     UnterminatedString,
-    #[error("unexpected character {0}")]
-    UnexpectedCharacter(char),
+    /// An error for when a prefix isn't followed by digits.
     #[error("expected digits after integer prefix")]
     MissingIntegerPrefixDigits,
+    /// An error for when an exponent isn't followed by digits.
     #[error("expected at least one digit in exponent")]
     MissingExponentDigits,
 }
@@ -684,8 +689,8 @@ fn lexer_test_glob() {
 #[cfg(test)]
 use std::path::Path;
 
-#[cfg(test)]
 // No `unwrap`s in this function are documented, because all of them sidestep errors.
+#[cfg(test)]
 fn run_lexer_test(path: &Path) {
     use crate::file::File;
 

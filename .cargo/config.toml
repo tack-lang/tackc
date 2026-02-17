@@ -3,6 +3,3 @@ tackc = "run -p tackc --bin tackc --"
 tackc-release = "run -p tackc --bin tackc --release --"
 hash = "run -p tackc_meta --bin hash --quiet"
 verify = "run -p tackc_meta --bin verify --release --quiet --"
-
-[build]
-rustflags = ["--force-warn=clippy::todo", "--force-warn=clippy::dbg_macro"]

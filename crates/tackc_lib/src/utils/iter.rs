@@ -1,6 +1,11 @@
+//! Various iterators and iterator adapters.
+
 use crate::utils::UnwrapExt;
 use std::array;
 
+/// A iterator adapter with limited, variable, peeking functionality.
+///
+/// `K` is the limit to how far the iterator can be peeked, so the farthest element that can be peeked is the `K`th element.
 #[derive(Debug, Clone)]
 pub struct Peekable<I: Iterator, const K: usize> {
     iter: I,
@@ -11,6 +16,7 @@ pub struct Peekable<I: Iterator, const K: usize> {
 }
 
 impl<I: Iterator, const K: usize> Peekable<I, K> {
+    /// Creates a new [`Peekable`] iterator from an existing iterator.
     pub fn new(iter: I) -> Self {
         Self {
             iter,
@@ -71,7 +77,9 @@ impl<I: Iterator, const K: usize> Iterator for Peekable<I, K> {
     }
 }
 
+/// An extension trait for iterators.
 pub trait IteratorExt: Sized + Iterator {
+    /// Creates a [`Peekable`] iterator using `self`. Equivilent to `Peekable::new(self)`.
     fn peekable_tackc<const K: usize>(self) -> Peekable<Self, K> {
         Peekable::new(self)
     }

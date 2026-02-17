@@ -1,3 +1,5 @@
+//! Binary for tackc.
+
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 

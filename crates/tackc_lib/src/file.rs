@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::span::SpanValue;
-use crate::{hash::NonZeroFxHasherBuilder, utils::UnwrapExt};
+use crate::utils::{UnwrapExt, hash::NonZeroFxHasherBuilder};
 use serde::{Deserialize, Serialize};
 
 /// Returns a vector corresponding to the byte indexes of the start of each line.

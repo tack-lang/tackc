@@ -1,16 +1,23 @@
+//! Blocks in tackc.
+
 use crate::global::Global;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::{Expression, NodeId, Statement};
 
+/// Code blocks.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Block {
+    /// The statements in this block.
     pub stmts: Vec<Option<Statement>>,
+    /// The optional tail expression of this block.
     pub expr: Option<Option<Expression>>,
+    /// The ID of this node.
     pub id: NodeId,
 }
 
 impl Block {
+    /// Displays this block.
     pub fn display(&self, global: &Global) -> String {
         let stmts = self
             .stmts

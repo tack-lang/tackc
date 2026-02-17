@@ -1,3 +1,5 @@
+//! Parsing in tackc.
+
 pub mod error;
 use std::{collections::HashMap, num::NonZeroU32};
 
@@ -24,13 +26,17 @@ use crate::{
     parser::error::ErrorExt,
 };
 
+/// The ways to parse, in respect to blocks.
 #[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
 pub enum BlockMode {
+    /// Parsing without blocks.
     NoBlocks,
+    /// Parsing with blocks.
     Normal,
 }
 
 impl BlockMode {
+    /// Returns `true` if this block mode is [`Normal`](Self::Normal).
     pub fn normal(self) -> bool {
         self == Self::Normal
     }
@@ -43,6 +49,7 @@ struct ParserSnapshot {
     failed: bool,
 }
 
+/// The state of a parser.
 pub struct Parser<'src> {
     file: &'src File<'src>,
     tokens: &'src [Token],
@@ -58,6 +65,7 @@ pub struct Parser<'src> {
 }
 
 impl<'src> Parser<'src> {
+    /// Creates a new parser.
     pub fn new(tokens: &'src [Token], file: &'src File, global: &'src Global) -> Self {
         // Still require global to be passed, just in case future use cases need it.
         _ = global;

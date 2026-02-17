@@ -65,6 +65,7 @@ impl Diag {
         }
     }
 
+    /// Returns the first span of this diagnostic.
     pub fn first_span(&self) -> Option<Span> {
         debug_assert!(!self.span.as_ref()?.0.is_empty(), "invariant violated!");
 

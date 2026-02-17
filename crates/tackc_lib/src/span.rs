@@ -165,6 +165,7 @@ impl Span {
         self.start = self.end;
     }
 
+    /// Returns whether the span can be applied to the string.
     pub const fn fits(&self, string: &str) -> bool {
         (self.end as usize) <= string.len()
     }
@@ -175,7 +176,7 @@ impl Span {
     /// Panics if `string` is shorter than the end of the span.
     pub fn apply_bytes<'a>(&self, string: &'a str) -> &'a str {
         assert!(
-            string.len() >= self.end as usize,
+            self.fits(string),
             "string is too short to have the span applied"
         );
         &string[(self.start as usize)..(self.end as usize)]

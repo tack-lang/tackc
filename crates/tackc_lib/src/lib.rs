@@ -1,3 +1,5 @@
+//! The main library for tackc's code.
+
 #[cfg(test)]
 macro_rules! setup_insta_test {
     () => {
@@ -14,13 +16,13 @@ pub mod ast;
 pub mod error;
 pub mod file;
 pub mod global;
-pub mod hash;
 pub mod lexer;
 pub mod parser;
 pub mod sema;
 pub mod span;
 pub mod utils;
 
+/// Combines the preludes of all the other modules, along with some re-exports.
 pub mod prelude {
     pub use super::error::prelude::*;
     pub use super::utils::prelude::*;
@@ -29,7 +31,6 @@ pub mod prelude {
     pub use super::error as tackc_error;
     pub use super::file as tackc_file;
     pub use super::global as tackc_global;
-    pub use super::hash as tackc_hash;
     pub use super::lexer as tackc_lexer;
     pub use super::parser as tackc_parser;
     pub use super::sema as tackc_sema;

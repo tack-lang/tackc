@@ -1,3 +1,5 @@
+//! Various code for meta tackc binaries.
+
 use std::{
     env, fs, io,
     path::{Path, PathBuf},

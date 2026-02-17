@@ -1,5 +1,6 @@
 //! A crate for error constructs in tackc.
 
+/// The prelude for this module.
 pub mod prelude {
     pub use super::iter::IteratorExt as _;
 }

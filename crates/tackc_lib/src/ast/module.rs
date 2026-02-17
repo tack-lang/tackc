@@ -1,3 +1,5 @@
+//! Modules in tackc.
+
 use std::collections::HashMap;
 
 use crate::global::Global;
@@ -7,14 +9,19 @@ use thin_vec::ThinVec;
 
 use crate::ast::{Item, NodeId, Symbol};
 
+/// A module represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstModule {
+    /// The module statement of this module.
     pub mod_stmt: Option<ModStatement>,
+    /// The items of this module.
     pub items: ThinVec<Option<Item>>,
+    /// The spans of this module.
     pub spans: HashMap<NodeId, Span>,
 }
 
 impl AstModule {
+    /// Displays this module.
     pub fn display(&self, global: &Global) -> String {
         let mod_stmt = self.mod_stmt.as_ref().map_or_else(
             || String::from("<ERROR>;"),
@@ -33,14 +40,19 @@ impl AstModule {
     }
 }
 
+/// A module statement, belonging at the start of a module.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ModStatement {
+    /// Whether this module is expected.
     pub exported: bool,
+    /// The path of this module.
     pub path: Option<AstPath>,
+    /// The ID of this module statement.
     pub id: NodeId,
 }
 
 impl ModStatement {
+    /// Displays this mod statement.
     pub fn display(&self, global: &Global) -> String {
         let exported = if self.exported { "exp " } else { "" };
         let path = self
@@ -51,13 +63,17 @@ impl ModStatement {
     }
 }
 
+/// A path represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstPath {
+    /// The components of the path.
     pub components: ThinVec<Option<Symbol>>,
+    /// The ID of this AST node.
     pub id: NodeId,
 }
 
 impl AstPath {
+    /// Displays this path.
     pub fn display(&self, global: &Global) -> String {
         self.components
             .iter()

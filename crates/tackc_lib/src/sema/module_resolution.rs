@@ -1,3 +1,5 @@
+//! Module resolution, or turning a list of [`AstModule`]s into a map of [`LogicalPath`]s to [`LogicalModule`].
+
 use std::{collections::HashMap, fmt::Write, ops::Deref};
 
 use crate::{
@@ -6,12 +8,15 @@ use crate::{
     sema::{LogicalModule, LogicalPath},
 };
 
+/// A list of modules, indexed by path.
 #[derive(Debug)]
 pub struct ModuleList {
+    /// The inner module list.
     pub mods: HashMap<LogicalPath, LogicalModule>,
 }
 
 impl ModuleList {
+    /// Displays the module list.
     pub fn display(&self, global: &Global) -> String {
         let mut str = String::new();
 
@@ -91,6 +96,7 @@ impl Resolver {
     }
 }
 
+/// Transforms a list of [`AstModule`]s into a [`ModuleList`].
 pub fn resolve_mods(mods: Vec<AstModule>) -> ModuleList {
     let mut analyzer = Resolver::default();
 
