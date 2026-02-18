@@ -10,12 +10,12 @@ use crate::{
 
 /// A list of modules, indexed by path.
 #[derive(Debug)]
-pub struct ModuleList {
+pub struct ModuleList<'src> {
     /// The inner module list.
-    pub mods: HashMap<LogicalPath, LogicalModule>,
+    pub mods: HashMap<LogicalPath, LogicalModule<'src>>,
 }
 
-impl ModuleList {
+impl ModuleList<'_> {
     /// Displays the module list.
     pub fn display(&self, global: &Global) -> String {
         let mut str = String::new();
@@ -44,8 +44,8 @@ impl ModuleList {
     }
 }
 
-impl Deref for ModuleList {
-    type Target = HashMap<LogicalPath, LogicalModule>;
+impl<'src> Deref for ModuleList<'src> {
+    type Target = HashMap<LogicalPath, LogicalModule<'src>>;
 
     fn deref(&self) -> &Self::Target {
         &self.mods
@@ -53,16 +53,16 @@ impl Deref for ModuleList {
 }
 
 #[derive(Default)]
-struct Resolver {
-    logical_mods: HashMap<LogicalPath, LogicalModule>,
+struct Resolver<'src> {
+    logical_mods: HashMap<LogicalPath, LogicalModule<'src>>,
 }
 
-impl Resolver {
-    fn analyze_module(&mut self, module: AstModule) {
+impl<'src> Resolver<'src> {
+    fn analyze_module(&mut self, module: AstModule<'src>) {
         let Some(mod_stmt) = module.mod_stmt else {
             return;
         };
-        let Some(path) = mod_stmt.path else {
+        let Some(ref path) = mod_stmt.path else {
             return;
         };
 

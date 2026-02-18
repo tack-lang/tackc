@@ -3,22 +3,23 @@
 use std::borrow::Cow;
 
 use crate::{global::Global, utils::tree::TreeItem};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use thin_vec::ThinVec;
 
 use crate::ast::{AstPath, Block, Expression, NodeId, Symbol};
 
 /// An item.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Item {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct Item<'src> {
     /// The kind of item this is.
-    pub kind: ItemKind,
+    pub kind: &'src ItemKind<'src>,
     /// The ID of this item.
     pub id: NodeId,
 }
 
-impl Item {
+impl<'src> Item<'src> {
     /// Create a new item using an item kind, and an ID.
-    pub const fn new(kind: ItemKind, id: NodeId) -> Self {
+    pub const fn new(kind: &'src ItemKind<'src>, id: NodeId) -> Self {
         Self { kind, id }
     }
 
@@ -121,7 +122,7 @@ impl Item {
     }
 }
 
-impl TreeItem for Item {
+impl TreeItem for Item<'_> {
     fn children(&self) -> Vec<&'_ dyn TreeItem> {
         vec![]
     }
@@ -132,49 +133,49 @@ impl TreeItem for Item {
 }
 
 /// Different kinds of items.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ItemKind {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub enum ItemKind<'src> {
     /// Constant definition.
-    ConstItem(Box<ConstItem>),
+    ConstItem(&'src ConstItem<'src>),
     /// Function definition.
-    FuncItem(Box<FuncItem>),
+    FuncItem(&'src FuncItem<'src>),
     /// Import declaration.
-    ImpItem(Box<ImpItem>),
+    ImpItem(&'src ImpItem<'src>),
 }
 
 /// Constant definition.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ConstItem {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct ConstItem<'src> {
     /// Whether this item is exported.
     pub exported: bool,
     /// The optional type annotation of this definition.
-    pub ty: Option<Option<Expression>>,
+    pub ty: Option<Option<&'src Expression<'src>>>,
     /// The expression of this definition.
-    pub expr: Option<Expression>,
+    pub expr: Option<&'src Expression<'src>>,
     /// The identifier used for this definition.
     pub ident: Option<Symbol>,
 }
 
 /// Function definition.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct FuncItem {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct FuncItem<'src> {
     /// Whether this item is exported.
     pub exported: bool,
     /// The identifier of this function.
     pub ident: Option<Symbol>,
     /// The parameters for this function.
-    pub params: Vec<(Option<Symbol>, Option<Expression>)>,
+    pub params: ThinVec<(Option<Symbol>, Option<&'src Expression<'src>>)>,
     /// The return type of this function.
-    pub ret_type: Option<Option<Expression>>,
+    pub ret_type: Option<Option<&'src Expression<'src>>>,
     /// The block for this function.
-    pub block: Option<Block>,
+    pub block: Option<&'src Block<'src>>,
 }
 
 /// Import declaration.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ImpItem {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct ImpItem<'src> {
     /// Whether this item is exported.
     pub exported: bool,
     /// The path to be imported.
-    pub path: Option<AstPath>,
+    pub path: Option<&'src AstPath>,
 }

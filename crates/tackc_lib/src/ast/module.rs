@@ -10,17 +10,17 @@ use thin_vec::ThinVec;
 use crate::ast::{Item, NodeId, Symbol};
 
 /// A module represented in the AST.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AstModule {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct AstModule<'src> {
     /// The module statement of this module.
-    pub mod_stmt: Option<ModStatement>,
+    pub mod_stmt: Option<&'src ModStatement>,
     /// The items of this module.
-    pub items: ThinVec<Option<Item>>,
+    pub items: ThinVec<Option<&'src Item<'src>>>,
     /// The spans of this module.
     pub spans: HashMap<NodeId, Span>,
 }
 
-impl AstModule {
+impl AstModule<'_> {
     /// Displays this module.
     pub fn display(&self, global: &Global) -> String {
         let mod_stmt = self.mod_stmt.as_ref().map_or_else(

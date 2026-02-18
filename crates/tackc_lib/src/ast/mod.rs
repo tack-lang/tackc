@@ -192,7 +192,7 @@ pub trait AstVisitor {
 
     /// The function called when visiting an assignment statement.
     fn visit_assignment_statement(&mut self, stmt: &AssignmentStatement) {
-        self.visit_expression(&stmt.lhs);
+        self.visit_expression(stmt.lhs);
         if let Some(expr) = &stmt.rhs {
             self.visit_expression(expr);
         }
@@ -200,6 +200,6 @@ pub trait AstVisitor {
 
     /// The function called when visiting an expression statement.
     fn visit_expression_statement(&mut self, stmt: &ExpressionStatement) {
-        self.visit_expression(&stmt.expr);
+        self.visit_expression(stmt.expr);
     }
 }

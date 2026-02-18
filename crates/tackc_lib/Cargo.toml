@@ -12,6 +12,7 @@ dashmap = { workspace = true }
 proptest = { workspace = true }
 thiserror = { workspace = true }
 nonzero = { workspace = true }
+parking_lot = "0.12.5"
 
 [lints]
 workspace = true

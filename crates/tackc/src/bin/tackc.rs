@@ -123,12 +123,12 @@ fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Toke
     tokens
 }
 
-fn run_parser(
+fn run_parser<'src>(
     tokens: &[Token],
-    file: &File,
-    global: &Global,
+    file: &'src File,
+    global: &'src Global,
     debug_modes: &DebugModes,
-) -> (AstModule, bool) {
+) -> (AstModule<'src>, bool) {
     let (module, errs, failed) = Parser::parse(tokens, file, global);
 
     if debug_modes.debug.contains(&Stage::Parser) {

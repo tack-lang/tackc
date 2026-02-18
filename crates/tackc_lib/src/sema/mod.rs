@@ -16,9 +16,9 @@ pub mod name_resolution;
 
 /// A struct for modules, represented in a logical form, instead of a raw AST form.
 #[derive(Debug)]
-pub struct LogicalModule {
+pub struct LogicalModule<'src> {
     /// The items in this module.
-    pub items: ThinVec<Option<Item>>,
+    pub items: ThinVec<Option<&'src Item<'src>>>,
     /// The spans for each node in this module.
     pub spans: HashMap<NodeId, Span>,
     /// Whether or not this module is exported.
@@ -27,7 +27,7 @@ pub struct LogicalModule {
     pub path: LogicalPath,
 }
 
-impl LogicalModule {
+impl LogicalModule<'_> {
     fn new(path: LogicalPath) -> Self {
         Self {
             items: ThinVec::new(),

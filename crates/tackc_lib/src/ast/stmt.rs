@@ -2,22 +2,22 @@
 
 use crate::global::Global;
 use crate::lexer::Token;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::ast::{Expression, Item, NodeId, Symbol};
 
 /// A statement.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Statement {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct Statement<'src> {
     /// The kind of statement this is.
-    pub kind: StatementKind,
+    pub kind: &'src StatementKind<'src>,
     /// The ID of this AST node.
     pub id: NodeId,
 }
 
-impl Statement {
+impl<'src> Statement<'src> {
     /// Creates a new statement.
-    pub const fn new(kind: StatementKind, id: NodeId) -> Self {
+    pub const fn new(kind: &'src StatementKind<'src>, id: NodeId) -> Self {
         Self { kind, id }
     }
 
@@ -59,43 +59,43 @@ impl Statement {
 }
 
 /// Different kinds of statements.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum StatementKind {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub enum StatementKind<'src> {
     /// Let statement.
-    LetStatement(Box<LetStatement>),
+    LetStatement(&'src LetStatement<'src>),
     /// Assignment statement.
-    AssignmentStatement(Box<AssignmentStatement>),
+    AssignmentStatement(&'src AssignmentStatement<'src>),
     /// Item, in the place of a statement.
-    Item(Item),
+    Item(&'src Item<'src>),
     /// Expression statement.
-    ExpressionStatement(Box<ExpressionStatement>),
+    ExpressionStatement(&'src ExpressionStatement<'src>),
 }
 
 /// Let statement.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct LetStatement {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct LetStatement<'src> {
     /// Type annotation for this let statement.
-    pub ty: Option<Option<Expression>>,
+    pub ty: Option<Option<&'src Expression<'src>>>,
     /// The default expression of this let statement.
-    pub expr: Option<Option<Expression>>,
+    pub expr: Option<Option<&'src Expression<'src>>>,
     /// The identifier of this let statement.
     pub ident: Option<Symbol>,
 }
 
 /// Assignment statement.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AssignmentStatement {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct AssignmentStatement<'src> {
     /// The left hand side.
-    pub lhs: Expression,
+    pub lhs: &'src Expression<'src>,
     /// The right hand side.
-    pub rhs: Option<Expression>,
+    pub rhs: Option<&'src Expression<'src>>,
 }
 
 /// Expression statement.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ExpressionStatement {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct ExpressionStatement<'src> {
     /// The inner expression.
-    pub expr: Expression,
+    pub expr: &'src Expression<'src>,
     /// The optional semicolon.
     pub semi: Option<Option<Token>>,
 }

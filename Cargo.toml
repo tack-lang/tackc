@@ -57,3 +57,4 @@ must-use-candidate = { level = "allow", priority = 1 }
 [workspace.lints.rust]
 unsafe_code = "deny"
 missing_docs = { level = "warn", priority = 1 }
+unsafe_op_in_unsafe_fn = { level = "forbid", priority = 1 }

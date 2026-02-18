@@ -1,22 +1,23 @@
 //! Blocks in tackc.
 
 use crate::global::Global;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use thin_vec::ThinVec;
 
 use crate::ast::{Expression, NodeId, Statement};
 
 /// Code blocks.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Block {
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct Block<'src> {
     /// The statements in this block.
-    pub stmts: Vec<Option<Statement>>,
+    pub stmts: ThinVec<Option<&'src Statement<'src>>>,
     /// The optional tail expression of this block.
-    pub expr: Option<Option<Expression>>,
+    pub expr: Option<Option<&'src Expression<'src>>>,
     /// The ID of this node.
     pub id: NodeId,
 }
 
-impl Block {
+impl Block<'_> {
     /// Displays this block.
     pub fn display(&self, global: &Global) -> String {
         let stmts = self

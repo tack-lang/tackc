@@ -108,12 +108,19 @@ impl Interned<str> {
 /// tackc's global context.
 #[derive(Debug)]
 pub struct Global {
+    current_arena: Bump,
+
     arena: Bump,
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
     interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
 }
 
 impl Global {
+    /// Allocates a new value using the inner arena.
+    pub fn alloc_arena<T>(&self, val: T) -> &mut T {
+        self.current_arena.alloc(val)
+    }
+
     /// Gets the hasher for this global context.
     ///
     /// This will always be a default [`NonZeroFxHasher`].
@@ -146,6 +153,7 @@ impl Global {
     /// If your program will only use one `Global`, and for the entire lifetime, use [`Global::new`].
     pub fn create_heap() -> Box<Self> {
         Box::new(Self {
+            current_arena: Bump::new(),
             arena: Bump::new(),
             interned: IdentityDashMap::default(),
             interned_strs: IdentityDashMap::default(),
