@@ -108,7 +108,8 @@ impl Interned<str> {
 /// tackc's global context.
 #[derive(Debug)]
 pub struct Global {
-    current_arena: Bump,
+    /// The arena used in [`Global::alloc_arena`]. Public to allow resetting.
+    pub current_arena: Bump,
 
     arena: Bump,
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
@@ -134,7 +135,7 @@ impl Global {
     /// # Panics
     /// If `debug_assertions` is enabled, an extra check will be added.
     /// If this function is called more than once, that function will panic.
-    pub fn new() -> &'static Self {
+    pub fn new() -> &'static mut Self {
         #[cfg(debug_assertions)]
         {
             use std::sync::atomic::{AtomicBool, Ordering};
