@@ -50,7 +50,7 @@ pub struct File<'a> {
 }
 
 impl<'a> File<'a> {
-    /// Create a new [`BasicFile`] from a source and a path. To open a file at a path, use [`BasicFile::try_from`].
+    /// Create a new [`File`] from a source and a path. To open a file at a path, use [`File::try_from`].
     pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
