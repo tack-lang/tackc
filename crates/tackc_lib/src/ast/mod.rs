@@ -1,5 +1,6 @@
 //! The module for AST nodes.
 
+use std::hash::Hash;
 use std::num::NonZeroU32;
 
 use crate::global::{Global, Interned};
@@ -23,8 +24,16 @@ pub mod module;
 pub use module::*;
 
 /// A symbol, consisting of a interned string, a span, and a file ID.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol(pub Interned<str>, pub Span, pub NonZeroU32);
+
+impl Hash for Symbol {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+        self.1.hash(state);
+        self.2.hash(state);
+    }
+}
 
 impl Symbol {
     /// Displays the string of this symbol.
