@@ -1180,5 +1180,6 @@ fn run_prog_parser_test(path: &Path) {
         )
         .collect::<Vec<_>>();
     let (prog, err, _) = Parser::parse(&tokens, &file, &global);
+    println!("{global:?}");
     insta::assert_ron_snapshot!((prog, err));
 }
