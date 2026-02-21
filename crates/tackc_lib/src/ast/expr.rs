@@ -29,9 +29,11 @@ impl<'src> Expression<'src> {
             ExpressionKind::IntLit(sym) | ExpressionKind::FloatLit(sym) => {
                 sym.display(global).to_string()
             }
-            ExpressionKind::Ident(sym) => sym.display(global).to_string(),
+            ExpressionKind::Ident(sym) => sym.get(global).display(global).to_string(),
             ExpressionKind::GlobalIdent(sym) => {
-                let sym = sym.as_ref().map_or(".<ERROR>", |sym| sym.display(global));
+                let sym = sym
+                    .as_ref()
+                    .map_or(".<ERROR>", |sym| sym.get(global).display(global));
                 format!(".{sym}")
             }
             ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
@@ -42,7 +44,8 @@ impl<'src> Expression<'src> {
             ExpressionKind::Member(lhs, sym) => format!(
                 "(. {} {})",
                 lhs.display(global),
-                sym.as_ref().map_or("<ERROR>", |sym| sym.display(global))
+                sym.as_ref()
+                    .map_or("<ERROR>", |sym| sym.get(global).display(global))
             ),
             ExpressionKind::Call(lhs, args) => {
                 let arg_list = args
@@ -89,13 +92,13 @@ pub enum ExpressionKind<'src> {
     /// String literal.
     StringLit(Interned<str>),
     /// Identifier.
-    Ident(Symbol),
+    Ident(Interned<Symbol>),
     /// Global identifier (starting with `.`, and referencing global scope.)
-    GlobalIdent(Option<Symbol>),
+    GlobalIdent(Option<Interned<Symbol>>),
     /// Grouped expression.
     Grouping(Option<&'src Expression<'src>>),
     /// Member access of an expression.
-    Member(&'src Expression<'src>, Option<&'src Symbol>),
+    Member(&'src Expression<'src>, Option<Interned<Symbol>>),
     /// Call expression.
     Call(
         &'src Expression<'src>,

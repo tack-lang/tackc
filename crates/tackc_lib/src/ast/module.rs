@@ -1,6 +1,6 @@
 //! Modules in tackc.
 
-use crate::global::Global;
+use crate::global::{Global, Interned};
 use crate::span::Span;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,7 @@ impl ModStatement {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstPath {
     /// The components of the path.
-    pub components: ThinVec<Option<Symbol>>,
+    pub components: ThinVec<Option<Interned<Symbol>>>,
     /// The ID of this AST node.
     pub id: NodeId,
 }
@@ -76,7 +76,7 @@ impl AstPath {
     pub fn display(&self, global: &Global) -> String {
         self.components
             .iter()
-            .map(|opt| opt.map_or("<ERROR>", |sym| sym.display(global)))
+            .map(|opt| opt.map_or("<ERROR>", |sym| sym.get(global).display(global)))
             .collect::<Vec<_>>()
             .join(".")
     }

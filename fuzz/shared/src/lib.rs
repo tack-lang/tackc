@@ -52,6 +52,6 @@ pub fn run(data: &[u8]) {
         return;
     }
 
-    let mods = resolve_mods(vec![prog]);
+    let mods = resolve_mods(vec![prog], &global);
     mods.display(&global);
 }

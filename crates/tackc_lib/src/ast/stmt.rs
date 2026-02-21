@@ -1,6 +1,6 @@
 //! Statements in tackc.
 
-use crate::global::Global;
+use crate::global::{Global, Interned};
 use crate::lexer::Token;
 use serde::Serialize;
 
@@ -27,7 +27,7 @@ impl<'src> Statement<'src> {
             StatementKind::LetStatement(stmt) => {
                 let ident = stmt
                     .ident
-                    .map_or_else(|| "<ERROR>", |ident| ident.display(global));
+                    .map_or_else(|| "<ERROR>", |ident| ident.get(global).display(global));
                 let ty = match &stmt.ty {
                     Some(Some(ty)) => format!(": {}", ty.display(global)),
                     Some(None) => String::from(": <ERROR>"),
@@ -79,7 +79,7 @@ pub struct LetStatement<'src> {
     /// The default expression of this let statement.
     pub expr: Option<Option<&'src Expression<'src>>>,
     /// The identifier of this let statement.
-    pub ident: Option<Symbol>,
+    pub ident: Option<Interned<Symbol>>,
 }
 
 /// Assignment statement.

@@ -54,9 +54,9 @@ impl<'src> Deref for ModuleList<'src> {
     }
 }
 
-#[derive(Default)]
 struct Resolver<'src> {
     logical_mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
+    global: &'src Global,
 }
 
 impl<'src> Resolver<'src> {
@@ -73,7 +73,7 @@ impl<'src> Resolver<'src> {
             return;
         };
 
-        let mut logical_path = LogicalPath::from([first.0]);
+        let mut logical_path = LogicalPath::from([first.get(self.global).0]);
         let mut current = self
             .logical_mods
             .entry(logical_path.clone())
@@ -84,7 +84,7 @@ impl<'src> Resolver<'src> {
                 return;
             };
 
-            logical_path.push(next.0);
+            logical_path.push(next.get(self.global).0);
 
             current = self
                 .logical_mods
@@ -99,8 +99,11 @@ impl<'src> Resolver<'src> {
 }
 
 /// Transforms a list of [`AstModule`]s into a [`ModuleList`].
-pub fn resolve_mods(mods: Vec<AstModule>) -> ModuleList {
-    let mut analyzer = Resolver::default();
+pub fn resolve_mods<'src>(mods: Vec<AstModule<'src>>, global: &'src Global) -> ModuleList<'src> {
+    let mut analyzer = Resolver {
+        logical_mods: FxHashMap::default(),
+        global,
+    };
 
     for module in mods {
         analyzer.analyze_module(module);

@@ -2,7 +2,10 @@
 
 use std::borrow::Cow;
 
-use crate::{global::Global, utils::tree::TreeItem};
+use crate::{
+    global::{Global, Interned},
+    utils::tree::TreeItem,
+};
 use serde::Serialize;
 use thin_vec::ThinVec;
 
@@ -29,7 +32,7 @@ impl<'src> Item<'src> {
             ItemKind::ConstItem(item) => {
                 let ident = item
                     .ident
-                    .map_or_else(|| "<ERROR>", |ident| ident.display(global));
+                    .map_or_else(|| "<ERROR>", |ident| ident.get(global).display(global));
                 let ty = match &item.ty {
                     Some(Some(ty)) => format!(": {}", ty.display(global)),
                     Some(None) => String::from(": <ERROR>"),
@@ -46,14 +49,16 @@ impl<'src> Item<'src> {
             }
             ItemKind::FuncItem(item) => {
                 let exp = if item.exported { "exp " } else { "" };
-                let ident = item.ident.map_or("<ERROR>", |ident| ident.display(global));
+                let ident = item
+                    .ident
+                    .map_or("<ERROR>", |ident| ident.get(global).display(global));
                 let params = item
                     .params
                     .iter()
                     .map(|(ident, ty)| {
                         format!(
                             "{}: {}",
-                            ident.map_or("<ERROR>", |ident| ident.display(global)),
+                            ident.map_or("<ERROR>", |ident| ident.get(global).display(global)),
                             ty.as_ref().map_or_else(
                                 || String::from("<ERROR>"),
                                 |expr| expr.display(global)
@@ -93,7 +98,7 @@ impl<'src> Item<'src> {
                     + item
                         .ident
                         .as_ref()
-                        .map_or("<ERROR>", |sym| sym.display(global))
+                        .map_or("<ERROR>", |sym| sym.get(global).display(global))
             }
             ItemKind::FuncItem(item) => {
                 (if item.exported {
@@ -104,7 +109,7 @@ impl<'src> Item<'src> {
                     + item
                         .ident
                         .as_ref()
-                        .map_or("<ERROR>", |sym| sym.display(global))
+                        .map_or("<ERROR>", |sym| sym.get(global).display(global))
             }
             ItemKind::ImpItem(item) => {
                 (if item.exported {
@@ -153,7 +158,7 @@ pub struct ConstItem<'src> {
     /// The expression of this definition.
     pub expr: Option<&'src Expression<'src>>,
     /// The identifier used for this definition.
-    pub ident: Option<Symbol>,
+    pub ident: Option<Interned<Symbol>>,
 }
 
 /// Function definition.
@@ -162,9 +167,9 @@ pub struct FuncItem<'src> {
     /// Whether this item is exported.
     pub exported: bool,
     /// The identifier of this function.
-    pub ident: Option<Symbol>,
+    pub ident: Option<Interned<Symbol>>,
     /// The parameters for this function.
-    pub params: ThinVec<(Option<Symbol>, Option<&'src Expression<'src>>)>,
+    pub params: ThinVec<(Option<Interned<Symbol>>, Option<&'src Expression<'src>>)>,
     /// The return type of this function.
     pub ret_type: Option<Option<&'src Expression<'src>>>,
     /// The block for this function.

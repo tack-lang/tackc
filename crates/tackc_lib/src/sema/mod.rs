@@ -97,15 +97,14 @@ impl<const N: usize> From<[Interned<str>; N]> for LogicalPath {
     }
 }
 
-impl TryFrom<AstPath> for LogicalPath {
-    type Error = ();
-
-    fn try_from(value: AstPath) -> Result<Self, Self::Error> {
+impl LogicalPath {
+    /// Falliably converts an [`AstPath`] to a [`LogicalPath`].
+    pub fn try_from(value: AstPath, global: &Global) -> Option<Self> {
         let mut path = Self::default();
         for comp in value.components {
-            path.push(comp.ok_or(())?.0);
+            path.push(comp?.get(global).0);
         }
 
-        Ok(path)
+        Some(path)
     }
 }

@@ -419,10 +419,12 @@ impl<'src, 'a> Parser<'src, 'a> {
 
         let mut components = ThinVec::new();
         let ident = self.expect_kinds(&[TokenKind::Ident])?;
-        components.push(Some(Symbol::new(ident, self.file.id())));
+        components.push(Some(self.global.intern(Symbol::new(ident, self.file.id()))));
+
         while self.eat(&[TokenKind::Dot]).is_some() {
-            let ident = self.expect_report(&[TokenKind::Ident], "identifier");
-            components.push(ident.map(|ident| Symbol::new(ident, self.file.id())));
+            let tok = self.expect_report(&[TokenKind::Ident], "identifier");
+            let ident = tok.map(|ident| self.global.intern(Symbol::new(ident, self.file.id())));
+            components.push(ident);
 
             if components.len() > PATH_COMPONENTS_LIMIT {
                 self.push_err(ParseError::path_components_limit());
@@ -430,13 +432,14 @@ impl<'src, 'a> Parser<'src, 'a> {
                 self.check_failed(recursion)?;
             }
         }
+
         let span = Span::new_from(
             ident.span.start,
             components
                 .last()
                 // One component was already pushed, so there has to be at least one.
                 .expect_unreachable() // CHECKED(Chloe)
-                .map_or_else(|| self.loc(), |sym: Symbol| sym.1.end),
+                .map_or_else(|| self.loc(), |sym| sym.get(self.global).1.end),
         );
         Ok(AstPath {
             components,
@@ -498,7 +501,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                 exported,
                 expr: self.alloc_option(expr),
                 ty: self.alloc_option_option(ty),
-                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
+                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
             }))),
             self.prepare_node(span)?,
         ))
@@ -529,7 +532,10 @@ impl<'src, 'a> Parser<'src, 'a> {
                 recursion + 1,
             );
             let expr = self.alloc_option(expr);
-            params.push((ident.map(|ident| Symbol::new(ident, self.file.id())), expr));
+            params.push((
+                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                expr,
+            ));
             if self.eat(&[TokenKind::Comma]).is_none() {
                 break;
             }
@@ -559,7 +565,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Item {
             kind: self.alloc(ItemKind::FuncItem(self.alloc(FuncItem {
                 exported,
-                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
+                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
                 params,
                 ret_type: self.alloc_option_option(ret_type),
                 block: self.alloc_option(block),
@@ -753,7 +759,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             self.alloc(StatementKind::LetStatement(self.alloc(LetStatement {
                 expr: self.alloc_option_option(expr),
                 ty: self.alloc_option_option(ty),
-                ident: ident.map(|ident| Symbol::new(ident, self.file.id())),
+                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
             }))),
             self.prepare_node(span)?,
         ))
@@ -1036,7 +1042,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Expression::new(
             self.alloc(ExpressionKind::Member(
                 self.alloc(lhs),
-                self.alloc_option(ident.map(|ident| Symbol::new(ident, self.file.id()))),
+                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
             )),
             self.prepare_node(span)?,
         ))
@@ -1114,9 +1120,9 @@ impl<'src, 'a> Parser<'src, 'a> {
                 .map_or_else(|| self.loc(), |ident| ident.span.end),
         );
         Ok(Expression::new(
-            self.alloc(ExpressionKind::GlobalIdent(
-                ident.map(|ident| Symbol::new(ident, self.file.id())),
-            )),
+            self.alloc(ExpressionKind::GlobalIdent(ident.map(|ident| {
+                self.global.intern(Symbol::new(ident, self.file.id()))
+            }))),
             self.prepare_node(span)?,
         ))
     }
@@ -1133,7 +1139,9 @@ impl<'src, 'a> Parser<'src, 'a> {
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
-            TokenKind::Ident => ExpressionKind::Ident(Symbol::new(tok, self.file.id())),
+            TokenKind::Ident => {
+                ExpressionKind::Ident(self.global.intern(Symbol::new(tok, self.file.id())))
+            }
             TokenKind::StringLit => ExpressionKind::StringLit(tok.lexeme),
             // `expect` will only return token kinds of the inputs, and all the inputs are arms.
             _ => unreachable!(), // CHECKED(Chloe)

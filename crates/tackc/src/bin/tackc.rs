@@ -86,7 +86,7 @@ fn main() {
         return;
     }
 
-    let _mod_list = resolve_mods(mods);
+    let _mod_list = resolve_mods(mods, global);
     //println!("{}", mods.display(global));
 }
 
