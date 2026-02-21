@@ -7,8 +7,8 @@ input_file: crates/tackc_lib/src/parser/tests/oop.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(2886801739569788445, PhantomData)),
-        Some(Interned(17139103342599073872, PhantomData)),
+        Some(Interned(6754365714538987880, PhantomData)),
+        Some(Interned(2559923243858721692, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -24,7 +24,7 @@ input_file: crates/tackc_lib/src/parser/tests/oop.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(4620838327846595883, PhantomData)),
+        ident: Some(Interned(8488402302748686454, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -33,7 +33,7 @@ input_file: crates/tackc_lib/src/parser/tests/oop.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(7408299835140158109, PhantomData)),
+                    kind: Ident(Interned(11275863810042248680, PhantomData)),
                     id: NodeId(
                       id: 3,
                       file: 1888024003,

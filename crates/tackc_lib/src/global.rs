@@ -1,7 +1,7 @@
 //! The crate containing [`Global`], tackc's global context.
 
 use std::{
-    any::Any,
+    any::{Any, type_name},
     fmt::Debug,
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -183,7 +183,7 @@ impl Global {
     /// This function will only panic in the event of a hash collision.
     pub fn intern<T: Internable>(&self, val: T) -> Interned<T> {
         let mut hasher = Self::get_hasher();
-        val.type_id().hash(&mut hasher);
+        type_name::<T>().hash(&mut hasher);
         val.dyn_hash(&mut hasher);
         let hash = hasher.finish_non_zero();
 
