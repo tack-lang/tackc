@@ -5,6 +5,8 @@ use std::num::NonZeroU32;
 
 use crate::global::{Global, Interned};
 use crate::lexer::Token;
+use crate::sema::LogicalModule;
+use crate::sema::module_resolution::ModuleList;
 use crate::span::Span;
 use serde::{Deserialize, Serialize};
 
@@ -72,6 +74,20 @@ impl Ord for NodeId {
 
 /// Visitor for the AST.
 pub trait AstVisitor {
+    /// The function called when visiting a module list.
+    fn visit_module_list(&mut self, list: &ModuleList) {
+        for module in list.values() {
+            self.visit_logical_module(module);
+        }
+    }
+
+    /// The function called when visiting a logical module.
+    fn visit_logical_module(&mut self, module: &LogicalModule) {
+        for item in module.items.iter().flatten() {
+            self.visit_item(item);
+        }
+    }
+
     /// The function called when visiting a module.
     fn visit_module(&mut self, module: &AstModule) {
         if let Some(stmt) = &module.mod_stmt {
