@@ -61,7 +61,7 @@ jobs:
           components: clippy
           toolchain: ${{ matrix.toolchain }}
       - name: Build Project
-        run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+        run: cargo +${{ steps.install.outputs.name }} build --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_fuzz
       - id: comphash
         name: Calculate compiler hash
         shell: bash
@@ -76,11 +76,11 @@ jobs:
         env:
           BIN_EXT: ${{ env.BIN_EXT }}
       - name: Run Clippy
-        run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+        run: cargo +${{ steps.install.outputs.name }} clippy --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_fuzz
         env:
           RUSTFLAGS: "-D warnings"
       - name: Run Tests
-        run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_honggfuzz --exclude tackc_fuzz
+        run: cargo +${{ steps.install.outputs.name }} test --verbose --release --workspace --exclude tackc_libfuzzer --exclude tackc_fuzz
         env:
           CI: true
   once:
