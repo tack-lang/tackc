@@ -1,7 +1,10 @@
 //! The module for hashing utilities.
 
+// We're using HashMap not as hashing, but as the template for putting in a new hasher.
+#[expect(clippy::disallowed_types)] // CHECKED(Chloe)
+use std::collections::HashMap;
+
 use std::{
-    collections::HashMap,
     hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
     num::{NonZeroU32, NonZeroU64},
 };
@@ -135,6 +138,8 @@ impl Hasher for IdentityHasher {
 }
 
 /// An alias for a [`HashMap`] that uses [`IdentityHasher`].
+// We're using HashMap not as hashing, but as the template for putting in a new hasher.
+#[expect(clippy::disallowed_types)] // CHECKED(Chloe)
 pub type IdentityHashMap<K, V> = HashMap<K, V, BuildHasherDefault<IdentityHasher>>;
 /// An alias for a [`DashMap`] that uses [`IdentityHasher`].
 pub type IdentityDashMap<K, V> = DashMap<K, V, BuildHasherDefault<IdentityHasher>>;

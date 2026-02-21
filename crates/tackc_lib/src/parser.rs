@@ -1,13 +1,14 @@
 //! Parsing in tackc.
 
 pub mod error;
-use std::{collections::HashMap, num::NonZeroU32};
+use std::num::NonZeroU32;
 
 const RECURSION_LIMIT: u32 = 300;
 const PATH_COMPONENTS_LIMIT: usize = 32;
 
 use error::{ParseError, Result};
 use nonzero::nonzero;
+use rustc_hash::FxHashMap;
 
 use crate::ast::NodeId;
 use crate::file::File;
@@ -61,7 +62,7 @@ pub struct Parser<'src, 'a> {
     failed_error: bool,
 
     next_open: NonZeroU32,
-    spans: HashMap<NodeId, Span>,
+    spans: Box<FxHashMap<NodeId, Span>>,
 
     global: &'src Global,
 }
@@ -80,7 +81,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             failed_error: false,
 
             next_open: nonzero!(1u32),
-            spans: HashMap::new(),
+            spans: Box::new(FxHashMap::default()),
 
             global,
         }
@@ -392,7 +393,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         AstModule {
             mod_stmt: self.alloc_option(mod_stmt),
             items,
-            spans: HashMap::new(),
+            spans: Box::new(FxHashMap::default()),
         }
     }
 

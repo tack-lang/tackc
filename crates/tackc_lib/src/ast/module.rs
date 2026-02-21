@@ -1,9 +1,8 @@
 //! Modules in tackc.
 
-use std::collections::HashMap;
-
 use crate::global::Global;
 use crate::span::Span;
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -17,7 +16,7 @@ pub struct AstModule<'src> {
     /// The items of this module.
     pub items: ThinVec<Option<&'src Item<'src>>>,
     /// The spans of this module.
-    pub spans: HashMap<NodeId, Span>,
+    pub spans: Box<FxHashMap<NodeId, Span>>,
 }
 
 impl AstModule<'_> {

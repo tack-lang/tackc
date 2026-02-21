@@ -1,7 +1,8 @@
 //! Module for semantic analysis.
 
-use std::{cmp::Ordering, collections::HashMap};
+use std::cmp::Ordering;
 
+use rustc_hash::FxHashMap;
 use thin_vec::ThinVec;
 
 use crate::{
@@ -20,7 +21,7 @@ pub struct LogicalModule<'src> {
     /// The items in this module.
     pub items: ThinVec<Option<&'src Item<'src>>>,
     /// The spans for each node in this module.
-    pub spans: HashMap<NodeId, Span>,
+    pub spans: Box<FxHashMap<NodeId, Span>>,
     /// Whether or not this module is exported.
     pub exported: bool,
     /// The path of this module.
@@ -31,7 +32,7 @@ impl LogicalModule<'_> {
     fn new(path: LogicalPath) -> Self {
         Self {
             items: ThinVec::new(),
-            spans: HashMap::new(),
+            spans: Box::new(FxHashMap::default()),
             exported: true,
             path,
         }

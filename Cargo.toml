@@ -40,6 +40,7 @@ unused_result_ok = { level = "forbid", priority = 1 }
 # Lints to error against in order to force fixes while still allowing #[expect].
 doc_paragraphs_missing_punctuation = { level = "deny", priority = 1 }
 indexing_slicing = { level = "deny", priority = 1 }
+disallowed_types = { level = "deny", priority = 1 }
 
 # Lints to warn against in order to require CHECKED.
 mem_forget = { level = "warn", priority = 1 }

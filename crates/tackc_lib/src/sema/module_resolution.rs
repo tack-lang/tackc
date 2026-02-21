@@ -1,6 +1,8 @@
 //! Module resolution, or turning a list of [`AstModule`]s into a map of [`LogicalPath`]s to [`LogicalModule`].
 
-use std::{collections::HashMap, fmt::Write, ops::Deref};
+use std::{fmt::Write, ops::Deref};
+
+use rustc_hash::FxHashMap;
 
 use crate::{
     ast::AstModule,
@@ -12,7 +14,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ModuleList<'src> {
     /// The inner module list.
-    pub mods: HashMap<LogicalPath, LogicalModule<'src>>,
+    pub mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
 }
 
 impl ModuleList<'_> {
@@ -45,7 +47,7 @@ impl ModuleList<'_> {
 }
 
 impl<'src> Deref for ModuleList<'src> {
-    type Target = HashMap<LogicalPath, LogicalModule<'src>>;
+    type Target = FxHashMap<LogicalPath, LogicalModule<'src>>;
 
     fn deref(&self) -> &Self::Target {
         &self.mods
@@ -54,7 +56,7 @@ impl<'src> Deref for ModuleList<'src> {
 
 #[derive(Default)]
 struct Resolver<'src> {
-    logical_mods: HashMap<LogicalPath, LogicalModule<'src>>,
+    logical_mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
 }
 
 impl<'src> Resolver<'src> {
