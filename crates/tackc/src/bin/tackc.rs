@@ -7,14 +7,15 @@ use clap::{Parser as ClapParser, ValueEnum};
 
 use rustc_hash::FxHashMap;
 
+use tackc_lib::prelude::*;
+
 use tackc_ast::AstModule;
 use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
-use tackc_lib::prelude::*;
 use tackc_parser::Parser;
-use tackc_sema::module_resolution::resolve_mods;
+use tackc_sema::resolve_mods;
 
 #[derive(ClapParser)]
 struct Args {
