@@ -13,7 +13,6 @@ use crate::{
 
 pub mod module_resolution;
 pub use module_resolution::resolve_mods;
-pub mod name_resolution;
 
 /// A struct for modules, represented in a logical form, instead of a raw AST form.
 #[derive(Debug)]
@@ -150,5 +149,39 @@ impl<'src> Deref for ModuleList<'src> {
 
     fn deref(&self) -> &Self::Target {
         &self.mods
+    }
+}
+
+/// A binding to a variable in tackc.
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct Binding {
+    /// The kind of binding this is.
+    pub kind: BindingKind,
+    /// The name of this binding.
+    pub name: Interned<str>,
+    /// Whether this binding is exported or not.
+    pub exported: bool,
+}
+
+/// The kind of binding this is.
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum BindingKind {
+    /// An `imp` binding.
+    Import(LogicalPath),
+    /// A `const` binding.
+    Const,
+    /// A `func` binding.
+    Func,
+}
+
+impl Binding {
+    /// Displays this binding.
+    pub fn display(&self, global: &Global) -> String {
+        (if self.exported { "exp " } else { "" }).to_string()
+            + &match &self.kind {
+                BindingKind::Const => "const".to_string(),
+                BindingKind::Func => "func".to_string(),
+                BindingKind::Import(path) => format!("imp {}", path.display(global)),
+            }
     }
 }
