@@ -66,7 +66,9 @@ impl<'src> AstVisitor<'src> for Resolver<'src> {
         let Some(imp_path) = LogicalPath::try_from(ast_path, self.global) else {
             return;
         };
-        let name = *imp_path.comps.last().unwrap();
+        let Some(name) = imp_path.comps.last().copied() else {
+            return;
+        };
         let Some(path) = self.path else { return };
         let mut path = path.clone();
         path.push(name);
