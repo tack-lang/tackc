@@ -1,7 +1,7 @@
 //! Various code for meta tackc binaries.
 
 use std::{
-    env, fs, io,
+    env, io,
     path::{Path, PathBuf},
 };
 
@@ -29,21 +29,7 @@ pub fn chdir_to_tack_root() -> io::Result<PathBuf> {
 }
 
 fn is_tack_root(dir: &Path) -> bool {
-    let crates = dir.join("crates");
-    if !crates.is_dir() {
-        return false;
-    }
+    let tackc_lib = dir.join("tackc_lib");
 
-    // Look for something like crates/tackc_*
-    if let Ok(entries) = fs::read_dir(crates) {
-        for entry in entries.flatten() {
-            if let Some(name) = entry.file_name().to_str()
-                && name.starts_with("tackc_")
-            {
-                return true;
-            }
-        }
-    }
-
-    false
+    tackc_lib.is_dir()
 }

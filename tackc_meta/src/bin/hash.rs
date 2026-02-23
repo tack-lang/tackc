@@ -1,7 +1,7 @@
 //! Written by AI, verified by human.
 
 use sha2::{Digest, Sha256};
-use std::{fs, path::Path};
+use std::fs;
 use tackc_meta::chdir_to_tack_root;
 use walkdir::WalkDir;
 
@@ -10,15 +10,13 @@ fn main() {
 
     let mut hasher = Sha256::new();
 
-    let mut files: Vec<_> = WalkDir::new("crates")
+    let mut files: Vec<_> = WalkDir::new("tackc")
         .into_iter()
+        .chain(WalkDir::new("tackc_lib"))
         .filter_map(Result::ok)
         .filter(|e| {
             let p = e.path();
-            p.is_file()
-                && p.extension().map(|x| x == "rs").unwrap_or(false)
-                && p.components()
-                    .any(|c| c.as_os_str().to_string_lossy().starts_with("tackc_"))
+            p.is_file() && p.extension().map(|x| x == "rs").unwrap_or(false)
         })
         .map(|e| e.path().to_owned())
         .collect();
@@ -34,11 +32,8 @@ fn main() {
         }
     }
 
-    // --- Hash Cargo.lock if it exists ---
-    if Path::new("Cargo.lock").exists() {
-        let lock = fs::read("Cargo.lock").expect("Failed to read Cargo.lock");
-        hasher.update(&lock);
-    }
+    let lock = fs::read("Cargo.lock").expect("Failed to read Cargo.lock");
+    hasher.update(&lock);
 
     // --- Compute final hash ---
     let hash = format!("{:x}", hasher.finalize());

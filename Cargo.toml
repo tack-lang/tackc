@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/*", "fuzz/*"]
+members = ["tackc", "tackc_lib", "tackc_meta", "fuzz/*"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -8,7 +8,7 @@ thiserror = "2.0"
 dashmap = "6.1"
 clap = "4.5"
 walkdir = "2.5"
-tackc_lib = { version = "0.1.0", path = "crates/tackc_lib" }
+tackc_lib = { version = "0.1.0", path = "tackc_lib" }
 tackc_fuzz = { version = "0.0.0", path = "fuzz/shared" }
 bumpalo = "3.19"
 libfuzzer-sys = "0.4"
