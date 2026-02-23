@@ -73,23 +73,23 @@ impl Ord for NodeId {
 }
 
 /// Visitor for the AST.
-pub trait AstVisitor {
+pub trait AstVisitor<'src> {
     /// The function called when visiting a module list.
-    fn visit_module_list(&mut self, list: &ModuleList) {
+    fn visit_module_list(&mut self, list: &'src ModuleList<'src>) {
         for module in list.values() {
             self.visit_logical_module(module);
         }
     }
 
     /// The function called when visiting a logical module.
-    fn visit_logical_module(&mut self, module: &LogicalModule) {
+    fn visit_logical_module(&mut self, module: &'src LogicalModule<'src>) {
         for item in module.items.iter().flatten() {
             self.visit_item(item);
         }
     }
 
     /// The function called when visiting a module.
-    fn visit_module(&mut self, module: &AstModule) {
+    fn visit_module(&mut self, module: &'src AstModule<'src>) {
         if let Some(stmt) = &module.mod_stmt {
             self.visit_mod_statement(stmt);
         }
@@ -100,19 +100,19 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a module statement.
-    fn visit_mod_statement(&mut self, stmt: &ModStatement) {
+    fn visit_mod_statement(&mut self, stmt: &'src ModStatement) {
         if let Some(path) = &stmt.path {
             self.visit_path(path);
         }
     }
 
     /// The function called when visiting a path.
-    fn visit_path(&mut self, path: &AstPath) {
+    fn visit_path(&mut self, path: &'src AstPath) {
         _ = path;
     }
 
     /// The function called when visiting an item.
-    fn visit_item(&mut self, item: &Item) {
+    fn visit_item(&mut self, item: &'src Item<'src>) {
         match &item.kind {
             ItemKind::ConstItem(item) => self.visit_const_item(item),
             ItemKind::FuncItem(item) => self.visit_func_item(item),
@@ -121,7 +121,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a constant.
-    fn visit_const_item(&mut self, item: &ConstItem) {
+    fn visit_const_item(&mut self, item: &'src ConstItem<'src>) {
         if let Some(Some(ty)) = &item.ty {
             self.visit_expression(ty);
         }
@@ -132,7 +132,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a function.
-    fn visit_func_item(&mut self, item: &FuncItem) {
+    fn visit_func_item(&mut self, item: &'src FuncItem<'src>) {
         for i in item.params.iter().flat_map(|tuple| &tuple.1) {
             self.visit_expression(i);
         }
@@ -145,14 +145,14 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a import.
-    fn visit_imp_item(&mut self, item: &ImpItem) {
+    fn visit_imp_item(&mut self, item: &'src ImpItem<'src>) {
         if let Some(path) = &item.path {
             self.visit_path(path);
         }
     }
 
     /// The function called when visiting an expression.
-    fn visit_expression(&mut self, expression: &Expression) {
+    fn visit_expression(&mut self, expression: &'src Expression<'src>) {
         match &expression.kind {
             ExpressionKind::IntLit(_)
             | ExpressionKind::FloatLit(_)
@@ -186,7 +186,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a block.
-    fn visit_block(&mut self, block: &Block) {
+    fn visit_block(&mut self, block: &'src Block<'src>) {
         for stmt in block.stmts.iter().flatten() {
             self.visit_statement(stmt);
         }
@@ -196,7 +196,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a statement.
-    fn visit_statement(&mut self, stmt: &Statement) {
+    fn visit_statement(&mut self, stmt: &'src Statement<'src>) {
         match &stmt.kind {
             StatementKind::LetStatement(stmt) => self.visit_let_statement(stmt),
             StatementKind::AssignmentStatement(stmt) => self.visit_assignment_statement(stmt),
@@ -206,7 +206,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting a let statement.
-    fn visit_let_statement(&mut self, stmt: &LetStatement) {
+    fn visit_let_statement(&mut self, stmt: &'src LetStatement<'src>) {
         if let Some(Some(ty)) = &stmt.ty {
             self.visit_expression(ty);
         }
@@ -216,7 +216,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting an assignment statement.
-    fn visit_assignment_statement(&mut self, stmt: &AssignmentStatement) {
+    fn visit_assignment_statement(&mut self, stmt: &'src AssignmentStatement<'src>) {
         self.visit_expression(stmt.lhs);
         if let Some(expr) = &stmt.rhs {
             self.visit_expression(expr);
@@ -224,7 +224,7 @@ pub trait AstVisitor {
     }
 
     /// The function called when visiting an expression statement.
-    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement) {
+    fn visit_expression_statement(&mut self, stmt: &'src ExpressionStatement<'src>) {
         self.visit_expression(stmt.expr);
     }
 }
