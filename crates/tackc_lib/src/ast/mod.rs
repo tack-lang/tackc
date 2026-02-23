@@ -6,7 +6,7 @@ use std::num::NonZeroU32;
 use crate::global::{Global, Interned};
 use crate::lexer::Token;
 use crate::sema::LogicalModule;
-use crate::sema::module_resolution::ModuleList;
+use crate::sema::ModuleList;
 use crate::span::Span;
 use serde::{Deserialize, Serialize};
 

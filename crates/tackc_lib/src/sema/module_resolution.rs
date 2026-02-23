@@ -1,58 +1,12 @@
 //! Module resolution, or turning a list of [`AstModule`]s into a map of [`LogicalPath`]s to [`LogicalModule`].
 
-use std::{fmt::Write, ops::Deref};
-
 use rustc_hash::FxHashMap;
 
 use crate::{
     ast::AstModule,
     global::Global,
-    sema::{LogicalModule, LogicalPath},
+    sema::{LogicalModule, LogicalPath, ModuleList},
 };
-
-/// A list of modules, indexed by path.
-#[derive(Debug)]
-pub struct ModuleList<'src> {
-    /// The inner module list.
-    pub mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
-}
-
-impl ModuleList<'_> {
-    /// Displays the module list.
-    pub fn display(&self, global: &Global) -> String {
-        let mut str = String::new();
-
-        let mut vec = self.mods.iter().collect::<Vec<_>>();
-        vec.sort_by_key(|tuple| tuple.0);
-        for (path, module) in vec {
-            _ = writeln!(
-                str,
-                "{}mod {}:\n{}\n",
-                if module.exported { "exp " } else { "" },
-                path.display(global),
-                module
-                    .items
-                    .iter()
-                    .filter_map(Option::as_ref)
-                    .map(|comp| comp.display(global))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            );
-        }
-
-        str.truncate(str.len().saturating_sub(2));
-
-        str
-    }
-}
-
-impl<'src> Deref for ModuleList<'src> {
-    type Target = FxHashMap<LogicalPath, LogicalModule<'src>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.mods
-    }
-}
 
 struct Resolver<'src> {
     logical_mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
