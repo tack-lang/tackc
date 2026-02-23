@@ -1,5 +1,7 @@
 mod statement;
 
+exp imp tack.stdlib.T;
+
 func main() {
     {
         let s = 5;

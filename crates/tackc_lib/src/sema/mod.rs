@@ -13,6 +13,8 @@ use crate::{
 
 pub mod module_resolution;
 pub use module_resolution::resolve_mods;
+pub mod global_resolution;
+pub use global_resolution::resolve_globals;
 
 /// A struct for modules, represented in a logical form, instead of a raw AST form.
 #[derive(Debug)]
@@ -48,6 +50,21 @@ impl LogicalPath {
     /// Pushes a symbol to the path.
     pub fn push(&mut self, symbol: Interned<str>) {
         self.comps.push(symbol);
+    }
+
+    /// Takes the last symbol off of the path.
+    pub fn pop(&mut self) -> Option<Interned<str>> {
+        self.comps.pop()
+    }
+
+    /// Returns the length of the path.
+    pub fn len(&self) -> usize {
+        self.comps.len()
+    }
+
+    /// Returns whether the path is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Displays the path.
@@ -98,10 +115,10 @@ impl<const N: usize> From<[Interned<str>; N]> for LogicalPath {
 
 impl LogicalPath {
     /// Falliably converts an [`AstPath`] to a [`LogicalPath`].
-    pub fn try_from(value: AstPath, global: &Global) -> Option<Self> {
+    pub fn try_from(value: &AstPath, global: &Global) -> Option<Self> {
         let mut path = Self::default();
-        for comp in value.components {
-            path.push(comp?.get(global).0);
+        for comp in &value.components {
+            path.push(comp.as_ref()?.get(global).0);
         }
 
         Some(path)
@@ -183,5 +200,29 @@ impl Binding {
                 BindingKind::Func => "func".to_string(),
                 BindingKind::Import(path) => format!("imp {}", path.display(global)),
             }
+    }
+}
+
+/// A list of globals, indexed by their paths.
+#[derive(Default)]
+pub struct BindingList {
+    /// The list of globals.
+    pub map: FxHashMap<LogicalPath, Interned<Binding>>,
+}
+
+impl BindingList {
+    /// Displays this binding list.
+    pub fn display(&self, global: &Global) -> String {
+        let mut str = String::new();
+        for (path, binding) in &self.map {
+            _ = writeln!(
+                str,
+                "{}: {}",
+                path.display(global),
+                binding.get(global).display(global)
+            );
+        }
+        str.truncate(str.len().saturating_sub(1));
+        str
     }
 }
