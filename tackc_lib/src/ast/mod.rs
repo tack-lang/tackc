@@ -1,3 +1,5 @@
+// A lot of code in this module makes more sense with match statements instead of `Option` methods.
+#![expect(clippy::option_if_let_else)] // CHECKED(Chloe)
 //! The module for AST nodes.
 
 use std::hash::Hash;

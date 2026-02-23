@@ -92,23 +92,22 @@ impl ParseError {
     /// Displays the given error as a string, using a file and global.
     pub fn display(&self, file: &File, global: &Global) -> String {
         match self {
-            Self::Expected(expected, tok) => Diag::with_span(
-                format!(
-                    "expected {}, found '{}'",
-                    expected.as_ref().map_or("<ERROR>", |v| v),
-                    tok.display(global)
-                ),
-                tok.span,
-            )
-            .display(file),
-            Self::Eof(expected) => Diag::with_span(
-                format!(
-                    "unexpected EOF, expected {}",
-                    expected.as_ref().map_or("<ERROR>", |v| v)
-                ),
-                Span::eof(file),
-            )
-            .display(file),
+            Self::Expected(expected, tok) => {
+                let expected = expected.as_ref().map_or("<ERROR>", |v| v);
+                Diag::with_span(
+                    format!("expected {expected}, found '{}'", tok.display(global)),
+                    tok.span,
+                )
+                .display(file)
+            }
+            Self::Eof(expected) => {
+                let expected = expected.as_ref().map_or("<ERROR>", |v| v);
+                Diag::with_span(
+                    format!("unexpected EOF, expected {expected}"),
+                    Span::eof(file),
+                )
+                .display(file)
+            }
             Self::Other(msg, spans) => {
                 Diag::with_spans(msg.to_string(), spans.clone()).display(file)
             }

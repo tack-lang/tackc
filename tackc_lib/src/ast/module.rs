@@ -1,5 +1,7 @@
 //! Modules in tackc.
 
+use std::fmt::Write;
+
 use crate::global::{Global, Interned};
 use crate::span::Span;
 use rustc_hash::FxHashMap;
@@ -22,19 +24,21 @@ pub struct AstModule<'src> {
 impl AstModule<'_> {
     /// Displays this module.
     pub fn display(&self, global: &Global) -> String {
-        let mod_stmt = self.mod_stmt.as_ref().map_or_else(
-            || String::from("<ERROR>;"),
-            |mod_stmt| mod_stmt.display(global),
-        );
-        let stmts = self
-            .items
-            .iter()
-            .map(|opt| {
-                opt.as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |sym| sym.display(global))
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
+        let mod_stmt = match self.mod_stmt {
+            Some(stmt) => stmt.display(global),
+            None => String::from("<ERROR>;"),
+        };
+
+        let mut stmts = String::new();
+        for item in &self.items {
+            let displayed = match item {
+                Some(item) => item.display(global),
+                None => String::from("<ERROR>"),
+            };
+            _ = writeln!(stmts, "{displayed}");
+        }
+        stmts.truncate(stmts.len().saturating_sub(1));
+
         format!("{mod_stmt}\n{stmts}")
     }
 }
@@ -53,12 +57,12 @@ pub struct ModStatement {
 impl ModStatement {
     /// Displays this mod statement.
     pub fn display(&self, global: &Global) -> String {
-        let exported = if self.exported { "exp " } else { "" };
-        let path = self
-            .path
-            .as_ref()
-            .map_or_else(|| String::from("<ERROR>"), |path| path.display(global));
-        format!("{exported}mod {path};")
+        let exp = if self.exported { "exp " } else { "" };
+        let path = match &self.path {
+            Some(path) => path.display(global),
+            None => String::from("<ERROR>"),
+        };
+        format!("{exp}mod {path};")
     }
 }
 
@@ -74,10 +78,17 @@ pub struct AstPath {
 impl AstPath {
     /// Displays this path.
     pub fn display(&self, global: &Global) -> String {
-        self.components
-            .iter()
-            .map(|opt| opt.map_or("<ERROR>", |sym| sym.get(global).display(global)))
-            .collect::<Vec<_>>()
-            .join(".")
+        let mut str = String::new();
+
+        for component in &self.components {
+            let comp = match component {
+                Some(comp) => comp.get(global).display(global),
+                None => "<ERROR>",
+            };
+            _ = write!(str, "{comp}.");
+        }
+
+        str.truncate(str.len().saturating_sub(1));
+        str
     }
 }

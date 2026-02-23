@@ -1,5 +1,7 @@
 //! Blocks in tackc.
 
+use std::fmt::Write;
+
 use crate::global::Global;
 use serde::Serialize;
 use thin_vec::ThinVec;
@@ -20,17 +22,15 @@ pub struct Block<'src> {
 impl Block<'_> {
     /// Displays this block.
     pub fn display(&self, global: &Global) -> String {
-        let stmts = self
-            .stmts
-            .iter()
-            .map(|stmt| {
-                stmt.as_ref().map_or_else(
-                    || String::from("<ERROR>;"),
-                    |s| s.display(global).replace('\n', "\n    "),
-                )
-            })
-            .collect::<Vec<_>>()
-            .join("\n    ");
+        let mut stmts = String::new();
+        for stmt in &self.stmts {
+            let stmt = match stmt {
+                Some(stmt) => stmt.display(global).replace('\n', "\n    "),
+                None => String::from("<ERROR>;"),
+            };
+            _ = write!(stmts, "{stmt}\n    ");
+        }
+        stmts.truncate(stmts.len().saturating_sub(5));
 
         let expr = match &self.expr {
             Some(Some(val)) => val.display(global).replace('\n', "\n    "),

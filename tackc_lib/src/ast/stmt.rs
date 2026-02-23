@@ -24,36 +24,10 @@ impl<'src> Statement<'src> {
     /// Displays this statement.
     pub fn display(&self, global: &Global) -> String {
         match &self.kind {
-            StatementKind::LetStatement(stmt) => {
-                let ident = stmt
-                    .ident
-                    .map_or_else(|| "<ERROR>", |ident| ident.get(global).display(global));
-                let ty = match &stmt.ty {
-                    Some(Some(ty)) => format!(": {}", ty.display(global)),
-                    Some(None) => String::from(": <ERROR>"),
-                    None => String::new(),
-                };
-                let expr = match &stmt.expr {
-                    Some(Some(expr)) => format!(" = {}", expr.display(global)),
-                    Some(None) => String::from(" = <ERROR>"),
-                    None => String::new(),
-                };
-                format!("let {ident}{ty}{expr};")
-            }
-            StatementKind::AssignmentStatement(stmt) => {
-                let lhs = stmt.lhs.display(global);
-                let rhs = stmt
-                    .rhs
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global));
-                format!("{lhs} = {rhs};")
-            }
+            StatementKind::LetStatement(stmt) => stmt.display(global),
+            StatementKind::AssignmentStatement(stmt) => stmt.display(global),
             StatementKind::Item(item) => item.display(global),
-            StatementKind::ExpressionStatement(stmt) => {
-                let stmt_str = stmt.expr.display(global);
-                let semi = stmt.semi.map_or("", |_| ";");
-                format!("{stmt_str}{semi}")
-            }
+            StatementKind::ExpressionStatement(stmt) => stmt.display(global),
         }
     }
 }
@@ -82,6 +56,26 @@ pub struct LetStatement<'src> {
     pub ident: Option<Interned<Symbol>>,
 }
 
+impl LetStatement<'_> {
+    fn display(&self, global: &Global) -> String {
+        let ident = match self.ident {
+            Some(ident) => ident.get(global).display(global),
+            None => "<ERROR>",
+        };
+        let ty = match &self.ty {
+            Some(Some(ty)) => format!(": {}", ty.display(global)),
+            Some(None) => String::from(": <ERROR>"),
+            None => String::new(),
+        };
+        let expr = match &self.expr {
+            Some(Some(expr)) => format!(" = {}", expr.display(global)),
+            Some(None) => String::from(" = <ERROR>"),
+            None => String::new(),
+        };
+        format!("let {ident}{ty}{expr};")
+    }
+}
+
 /// Assignment statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct AssignmentStatement<'src> {
@@ -91,6 +85,17 @@ pub struct AssignmentStatement<'src> {
     pub rhs: Option<&'src Expression<'src>>,
 }
 
+impl AssignmentStatement<'_> {
+    fn display(&self, global: &Global) -> String {
+        let lhs = self.lhs.display(global);
+        let rhs = match self.rhs {
+            Some(expr) => expr.display(global),
+            None => String::from("<ERROR>"),
+        };
+        format!("{lhs} = {rhs};")
+    }
+}
+
 /// Expression statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct ExpressionStatement<'src> {
@@ -98,4 +103,15 @@ pub struct ExpressionStatement<'src> {
     pub expr: &'src Expression<'src>,
     /// The optional semicolon.
     pub semi: Option<Option<Token>>,
+}
+
+impl ExpressionStatement<'_> {
+    fn display(&self, global: &Global) -> String {
+        let stmt_str = self.expr.display(global);
+        let semi = match self.semi {
+            Some(_) => ";",
+            None => "",
+        };
+        format!("{stmt_str}{semi}")
+    }
 }

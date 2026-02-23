@@ -38,6 +38,20 @@ impl LogicalModule<'_> {
             path,
         }
     }
+
+    fn display(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let path = self.path.display(global);
+        let mut items = String::new();
+
+        for item in &self.items {
+            let Some(item) = item else { continue };
+            _ = writeln!(items, "{}", item.display(global));
+        }
+        items.truncate(items.len().saturating_sub(1));
+
+        format!("{exp}mod {path}:\n{items}\n")
+    }
 }
 
 /// A struct representing a path in Tack.
@@ -69,11 +83,14 @@ impl LogicalPath {
 
     /// Displays the path.
     pub fn display(&self, global: &Global) -> String {
-        self.comps
-            .iter()
-            .map(|comp| comp.display(global))
-            .collect::<Vec<_>>()
-            .join(".")
+        let mut str = String::new();
+
+        for comp in &self.comps {
+            _ = write!(str, "{}.", comp.display(global));
+        }
+
+        str.truncate(str.len().saturating_sub(1)); // Remove final `.`
+        str
     }
 }
 
@@ -139,20 +156,8 @@ impl ModuleList<'_> {
 
         let mut vec = self.mods.iter().collect::<Vec<_>>();
         vec.sort_by_key(|tuple| tuple.0);
-        for (path, module) in vec {
-            _ = writeln!(
-                str,
-                "{}mod {}:\n{}\n",
-                if module.exported { "exp " } else { "" },
-                path.display(global),
-                module
-                    .items
-                    .iter()
-                    .filter_map(Option::as_ref)
-                    .map(|comp| comp.display(global))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            );
+        for (_, module) in vec {
+            str.push_str(&module.display(global));
         }
 
         str.truncate(str.len().saturating_sub(2));
@@ -194,12 +199,15 @@ pub enum BindingKind {
 impl Binding {
     /// Displays this binding.
     pub fn display(&self, global: &Global) -> String {
-        (if self.exported { "exp " } else { "" }).to_string()
-            + &match &self.kind {
-                BindingKind::Const => "const".to_string(),
-                BindingKind::Func => "func".to_string(),
-                BindingKind::Import(path) => format!("imp {}", path.display(global)),
-            }
+        let exp = if self.exported { "exp " } else { "" };
+
+        let binding = match &self.kind {
+            BindingKind::Const => "const".to_string(),
+            BindingKind::Func => "func".to_string(),
+            BindingKind::Import(path) => format!("imp {}", path.display(global)),
+        };
+
+        format!("{exp}{binding}")
     }
 }
 
@@ -215,13 +223,11 @@ impl BindingList {
     pub fn display(&self, global: &Global) -> String {
         let mut str = String::new();
         for (path, binding) in &self.map {
-            _ = writeln!(
-                str,
-                "{}: {}",
-                path.display(global),
-                binding.get(global).display(global)
-            );
+            let path = path.display(global);
+            let binding = binding.get(global).display(global);
+            _ = writeln!(str, "{path}: {binding}");
         }
+
         str.truncate(str.len().saturating_sub(1));
         str
     }

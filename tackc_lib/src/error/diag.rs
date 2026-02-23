@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::fmt::Write;
 
 use crate::file::File;
 use crate::span::Span;
@@ -80,16 +79,13 @@ impl Diag {
     /// # Panics
     /// This function panics if the file given is too short for the span inside of this `Diag`.
     pub fn display(&self, file: &File) -> String {
-        let mut f = String::new();
-        _ = write!(f, "{}", self.msg);
-        _ = write!(f, "\n  --> {}", file.path().display());
-        if let Some(span) = self.first_span() {
+        let location = self.first_span().map_or_else(String::new, |span| {
             assert!(span.fits(file.src()), "given file is too short!");
-
             let (line, column) = file.line_and_column(span.start).expect_unreachable(); // CHECKED(Chloe)
-            _ = write!(f, ":{line}:{column}");
-        }
 
-        f
+            format!(":{line}:{column}")
+        });
+
+        format!("{}\n  --> {}{location}", self.msg, file.path().display())
     }
 }

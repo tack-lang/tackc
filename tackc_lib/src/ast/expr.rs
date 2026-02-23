@@ -1,6 +1,6 @@
 //! Expressions in tackc.
 
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 
 use crate::global::{Global, Interned};
 use serde::{Deserialize, Serialize};
@@ -31,47 +31,50 @@ impl<'src> Expression<'src> {
             }
             ExpressionKind::Ident(sym) => sym.get(global).display(global).to_string(),
             ExpressionKind::GlobalIdent(sym) => {
-                let sym = sym
-                    .as_ref()
-                    .map_or(".<ERROR>", |sym| sym.get(global).display(global));
+                let sym = match sym {
+                    Some(sym) => sym.get(global).display(global),
+                    None => "<ERROR>",
+                };
                 format!(".{sym}")
             }
             ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
-            ExpressionKind::Grouping(inner) => inner.as_ref().map_or_else(
-                || String::from("(<ERROR>)"),
-                |expr| format!("({})", expr.display(global)),
-            ),
-            ExpressionKind::Member(lhs, sym) => format!(
-                "(. {} {})",
-                lhs.display(global),
-                sym.as_ref()
-                    .map_or("<ERROR>", |sym| sym.get(global).display(global))
-            ),
+            ExpressionKind::Grouping(inner) => match inner {
+                Some(expr) => format!("({})", expr.display(global)),
+                None => String::from("(<ERROR>)"),
+            },
+            ExpressionKind::Member(lhs, sym) => {
+                let sym = match sym {
+                    Some(sym) => sym.get(global).display(global),
+                    None => "<ERROR>",
+                };
+                format!("(. {} {sym})", lhs.display(global))
+            }
             ExpressionKind::Call(lhs, args) => {
-                let arg_list = args
-                    .iter()
-                    .map(|expr| {
-                        expr.as_ref()
-                            .map_or_else(|| "<ERROR>".to_string(), |e| e.display(global))
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let mut arg_list = String::new();
+                for expr in args {
+                    let expr = match expr {
+                        Some(e) => e.display(global),
+                        None => String::from("<ERROR>"),
+                    };
+                    _ = write!(arg_list, "{expr}, ");
+                }
+                arg_list.truncate(arg_list.len().saturating_sub(2));
 
                 let formatted_args = if arg_list.is_empty() {
-                    String::default()
+                    String::new()
                 } else {
                     format!(" {arg_list}")
                 };
 
                 format!("(call {}{})", lhs.display(global), formatted_args)
             }
-            ExpressionKind::Index(lhs, index) => format!(
-                "(index {} {})",
-                lhs.display(global),
-                index
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global))
-            ),
+            ExpressionKind::Index(lhs, index) => {
+                let index = match index {
+                    Some(expr) => expr.display(global),
+                    None => String::from("<ERROR>"),
+                };
+                format!("(index {} {index})", lhs.display(global))
+            }
             ExpressionKind::Block(block) => block.display(global),
 
             ExpressionKind::Binary(op, lhs, rhs) => {

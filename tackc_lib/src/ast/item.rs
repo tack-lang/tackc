@@ -1,6 +1,7 @@
 //! Items in tackc.
 
 use std::borrow::Cow;
+use std::fmt::Write;
 
 use crate::{
     global::{Global, Interned},
@@ -29,100 +30,18 @@ impl<'src> Item<'src> {
     /// Display the item.
     pub fn display(&self, global: &Global) -> String {
         match &self.kind {
-            ItemKind::ConstItem(item) => {
-                let ident = item
-                    .ident
-                    .map_or_else(|| "<ERROR>", |ident| ident.get(global).display(global));
-                let ty = match &item.ty {
-                    Some(Some(ty)) => format!(": {}", ty.display(global)),
-                    Some(None) => String::from(": <ERROR>"),
-                    None => String::new(),
-                };
-                let expr = item
-                    .expr
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |expr| expr.display(global));
-                format!(
-                    "{}const {ident}{ty} = {expr};",
-                    if item.exported { "exp " } else { "" }
-                )
-            }
-            ItemKind::FuncItem(item) => {
-                let exp = if item.exported { "exp " } else { "" };
-                let ident = item
-                    .ident
-                    .map_or("<ERROR>", |ident| ident.get(global).display(global));
-                let params = item
-                    .params
-                    .iter()
-                    .map(|(ident, ty)| {
-                        format!(
-                            "{}: {}",
-                            ident.map_or("<ERROR>", |ident| ident.get(global).display(global)),
-                            ty.as_ref().map_or_else(
-                                || String::from("<ERROR>"),
-                                |expr| expr.display(global)
-                            )
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                let block = item
-                    .block
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |block| block.display(global));
-
-                format!("{exp}func {ident}({params}) {block}")
-            }
-            ItemKind::ImpItem(item) => {
-                let exp = if item.exported { "exp " } else { "" };
-                let path = item
-                    .path
-                    .as_ref()
-                    .map_or_else(|| String::from("<ERROR>"), |path| path.display(global));
-
-                format!("{exp}imp {path};")
-            }
+            ItemKind::ConstItem(item) => item.display(global),
+            ItemKind::FuncItem(item) => item.display(global),
+            ItemKind::ImpItem(item) => item.display(global),
         }
     }
 
     /// Displays the 'identifier' version of this item. This includes whether the item is exported, the kind of item it is, and it's name or path.
     pub fn display_ident(&self, global: &Global) -> String {
         match &self.kind {
-            ItemKind::ConstItem(item) => {
-                (if item.exported {
-                    String::from("exp ")
-                } else {
-                    String::new()
-                }) + "const "
-                    + item
-                        .ident
-                        .as_ref()
-                        .map_or("<ERROR>", |sym| sym.get(global).display(global))
-            }
-            ItemKind::FuncItem(item) => {
-                (if item.exported {
-                    String::from("exp ")
-                } else {
-                    String::new()
-                }) + "func "
-                    + item
-                        .ident
-                        .as_ref()
-                        .map_or("<ERROR>", |sym| sym.get(global).display(global))
-            }
-            ItemKind::ImpItem(item) => {
-                (if item.exported {
-                    String::from("exp ")
-                } else {
-                    String::new()
-                }) + "imp "
-                    + item
-                        .path
-                        .as_ref()
-                        .map_or_else(|| String::from("<ERROR>"), |sym| sym.display(global))
-                        .as_str()
-            }
+            ItemKind::ConstItem(item) => item.display_ident(global),
+            ItemKind::FuncItem(item) => item.display_ident(global),
+            ItemKind::ImpItem(item) => item.display_ident(global),
         }
     }
 }
@@ -161,6 +80,36 @@ pub struct ConstItem<'src> {
     pub ident: Option<Interned<Symbol>>,
 }
 
+impl ConstItem<'_> {
+    fn display(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let ident = match self.ident {
+            Some(ident) => ident.get(global).display(global),
+            None => "<ERROR>",
+        };
+        let ty = match &self.ty {
+            Some(Some(ty)) => format!(": {}", ty.display(global)),
+            Some(None) => String::from(": <ERROR>"),
+            None => String::new(),
+        };
+        let expr = match self.expr {
+            Some(expr) => expr.display(global),
+            None => String::from("<ERROR>"),
+        };
+        format!("{exp}const {ident}{ty} = {expr};")
+    }
+
+    fn display_ident(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let ident = match self.ident {
+            Some(sym) => sym.get(global).display(global),
+            None => "<ERROR>",
+        };
+
+        format!("{exp}const {ident}")
+    }
+}
+
 /// Function definition.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct FuncItem<'src> {
@@ -176,6 +125,47 @@ pub struct FuncItem<'src> {
     pub block: Option<&'src Block<'src>>,
 }
 
+impl FuncItem<'_> {
+    fn display(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let ident = match self.ident {
+            Some(ident) => ident.get(global).display(global),
+            None => "<ERROR>",
+        };
+        let mut params = String::new();
+        for (ident, ty) in &self.params {
+            let ident = match ident {
+                Some(ident) => ident.get(global).display(global),
+                None => "<ERROR>",
+            };
+            let ty = match ty {
+                Some(expr) => expr.display(global),
+                None => String::from("<ERROR>"),
+            };
+            _ = write!(params, "{ident}: {ty}, ");
+        }
+
+        params.truncate(params.len().saturating_sub(2));
+
+        let block = match self.block {
+            Some(block) => block.display(global),
+            None => String::from("<ERROR>"),
+        };
+
+        format!("{exp}func {ident}({params}) {block}")
+    }
+
+    fn display_ident(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let ident = match self.ident {
+            Some(sym) => sym.get(global).display(global),
+            None => "<ERROR>",
+        };
+
+        format!("{exp}func {ident}")
+    }
+}
+
 /// Import declaration.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct ImpItem<'src> {
@@ -183,4 +173,26 @@ pub struct ImpItem<'src> {
     pub exported: bool,
     /// The path to be imported.
     pub path: Option<&'src AstPath>,
+}
+
+impl ImpItem<'_> {
+    fn display(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let path = match self.path {
+            Some(path) => path.display(global),
+            None => String::from("<ERROR>"),
+        };
+
+        format!("{exp}imp {path};")
+    }
+
+    fn display_ident(&self, global: &Global) -> String {
+        let exp = if self.exported { "exp " } else { "" };
+        let path = match self.path {
+            Some(sym) => sym.display(global),
+            None => String::from("<ERROR>"),
+        };
+
+        format!("{exp}imp {path}")
+    }
 }
