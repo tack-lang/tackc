@@ -85,7 +85,10 @@ fn main() {
         return;
     }
 
-    let mods = resolve_mods(mods, global);
+    let (mods, errors) = resolve_mods(mods, global);
+    for e in errors {
+        eprintln!("{} {}", "error:".bright_red(), e.display(global));
+    }
     println!("{}", mods.display(global));
     let globals = resolve_globals(&mods, global);
     println!("{}", globals.display(global));

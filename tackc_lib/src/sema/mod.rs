@@ -7,6 +7,7 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{AstPath, Item, NodeId},
+    file::File,
     global::{Global, Interned},
     span::Span,
 };
@@ -25,8 +26,12 @@ pub struct LogicalModule<'src> {
     pub spans: Box<FxHashMap<NodeId, Span>>,
     /// Whether or not this module is exported.
     pub exported: bool,
+    /// Whether or not a module duplication error occured.
+    pub duplicated: bool,
     /// The path of this module.
     pub path: LogicalPath,
+    /// The file that holds this module. In the case of a module duplication error, this is not 100% accurate.
+    pub file: Option<&'src File<'src>>,
 }
 
 impl LogicalModule<'_> {
@@ -36,6 +41,8 @@ impl LogicalModule<'_> {
             spans: Box::new(FxHashMap::default()),
             exported: true,
             path,
+            file: None,
+            duplicated: false,
         }
     }
 

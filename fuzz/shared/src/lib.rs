@@ -52,6 +52,9 @@ pub fn run(data: &[u8]) {
         return;
     }
 
-    let mods = resolve_mods(vec![prog], &global);
+    let (mods, errors) = resolve_mods(vec![prog], &global);
     mods.display(&global);
+    for e in errors {
+        e.display(&global);
+    }
 }
