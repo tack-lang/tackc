@@ -40,12 +40,12 @@ impl Span {
     /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
     pub fn eof(string: &str) -> Self {
         assert!(
-            string.len() < SpanValue::MAX as usize,
-            "Length of `Span::eof` input must be less than `SpanValue::MAX!`"
+            string.len() <= SpanValue::MAX as usize,
+            "Length of `Span::eof` input must be less than or equal to `SpanValue::MAX!`"
         );
 
         Self {
-            // Since `string.len() < SpanValue::MAX`, try_into() will return `Ok`.
+            // Since `string.len() <= SpanValue::MAX`, try_into() will return `Ok`.
             start: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
             end: string.len().try_into().expect_unreachable(),   // CHECKED(Chloe)
         }
@@ -57,13 +57,13 @@ impl Span {
     /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
     pub fn full(string: &str) -> Self {
         assert!(
-            string.len() < SpanValue::MAX as usize,
-            "Length of `Span::full` input must be less than `SpanValue::MAX!`"
+            string.len() <= SpanValue::MAX as usize,
+            "Length of `Span::full` input must be less than or equal to `SpanValue::MAX!`"
         );
 
         Self {
             start: 0,
-            // Since `string.len() < SpanValue::MAX`, try_into() will return `Ok`.
+            // Since `string.len() <= SpanValue::MAX`, try_into() will return `Ok`.
             end: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
         }
     }
