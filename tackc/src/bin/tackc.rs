@@ -40,7 +40,6 @@ struct DebugModes {
 enum Stage {
     Lexer,
     Parser,
-    BindingResolution,
 }
 
 fn main() {
@@ -50,18 +49,18 @@ fn main() {
         show: args.show,
     };
     let global = Global::new();
-    let mut error = false;
+    let mut failed = false;
     let files: Vec<File> = args
         .files
         .iter()
         .map(PathBuf::as_ref)
         .map(|path| File::try_from(path).map_err(|x| (x, path)))
         .consume_reporter(|(e, path)| {
-            error = true;
+            failed = true;
             println!("failed to open file {}: {e:?}", path.display());
         })
         .collect::<Vec<_>>();
-    if error {
+    if failed {
         return;
     }
     let files_map = files
@@ -69,14 +68,12 @@ fn main() {
         .map(|file| (file.id(), file))
         .collect::<FxHashMap<NonZeroU32, File>>();
 
-    let mut failed = false;
-
     let mods = files_map
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
-        .map(|(module, failed_parse)| {
-            if failed_parse {
+        .map(|(module, error)| {
+            if error {
                 failed = true;
             }
             module
