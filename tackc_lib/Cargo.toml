@@ -13,6 +13,7 @@ proptest = { workspace = true }
 thiserror = { workspace = true }
 nonzero = { workspace = true }
 parking_lot = "0.12.5"
+colored = "3.1.1"
 
 [lints]
 workspace = true

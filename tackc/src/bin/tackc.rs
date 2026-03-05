@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use clap::{Parser as ClapParser, ValueEnum};
 
+use colored::Colorize;
 use rustc_hash::FxHashMap;
 
 use tackc_lib::prelude::*;
@@ -117,7 +118,7 @@ fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Toke
         .collect();
 
     for e in errors {
-        eprintln!("{}\n", e.display(file));
+        eprintln!("{} {}\n", "error:".bright_red(), e.display(file));
     }
 
     tokens
@@ -139,7 +140,7 @@ fn run_parser<'src>(
     }
 
     for err in errs {
-        eprintln!("{}\n", err.display(file, global));
+        eprintln!("{} {}\n", "error:".bright_red(), err.display(file, global));
     }
 
     (module, failed)
