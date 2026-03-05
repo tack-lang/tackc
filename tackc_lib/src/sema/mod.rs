@@ -49,8 +49,9 @@ impl LogicalModule<'_> {
             _ = writeln!(items, "{}", item.display(global));
         }
         items.truncate(items.len().saturating_sub(1));
+        let newline = if items.is_empty() { "" } else { "\n" };
 
-        format!("{exp}mod {path}:\n{items}\n")
+        format!("{exp}mod {path}:{newline}{items}")
     }
 }
 
@@ -155,9 +156,9 @@ impl ModuleList<'_> {
         let mut str = String::new();
 
         let mut vec = self.mods.iter().collect::<Vec<_>>();
-        vec.sort_by_key(|tuple| tuple.0);
+        vec.sort_by_key(|(path, _)| *path);
         for (_, module) in vec {
-            str.push_str(&module.display(global));
+            _ = writeln!(str, "{}\n", module.display(global));
         }
 
         str.truncate(str.len().saturating_sub(2));
