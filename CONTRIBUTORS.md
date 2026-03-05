@@ -15,5 +15,5 @@ This document will **NOT** be updated for you, but feel free to update it whenev
 
 ---
 
-**Chloe** ([@akiramusic000](https://github.com/akiramusic000)) - Lead Developer
+**Chloe** ([@akiramusic000](https://github.com/akiramusic000)) - Lead Developer<br>
 **Yichi Zhang** ([@YichiZhang0613](https://github.com/YichiZhang0613))
