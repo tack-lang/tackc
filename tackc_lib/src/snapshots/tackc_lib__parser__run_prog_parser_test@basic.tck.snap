@@ -1,8 +1,21 @@
 ---
-source: crates/tackc_lib/src/parser.rs
-input_file: crates/tackc_lib/src/parser/tests/basic.tck
+source: tackc_lib/src/parser.rs
+input_file: tackc_lib/src/parser/tests/basic.tck
 ---
 (AstModule(
+  file: File(
+    src: "mod tests;\n\nfunc main() {\n    println(\"Hello, world!\");\n}\n",
+    path: "testing.tck",
+    line_starts: [
+      0,
+      11,
+      12,
+      26,
+      56,
+      58,
+    ],
+    id: 2083824584,
+  ),
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(

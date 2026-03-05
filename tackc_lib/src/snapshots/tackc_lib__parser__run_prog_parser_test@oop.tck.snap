@@ -1,8 +1,21 @@
 ---
-source: crates/tackc_lib/src/parser.rs
-input_file: crates/tackc_lib/src/parser/tests/oop.tck
+source: tackc_lib/src/parser.rs
+input_file: tackc_lib/src/parser/tests/oop.tck
 ---
 (AstModule(
+  file: File(
+    src: "mod tests.order_of_operations;\n\nfunc main() {\n    println(\"{}\", 3 + 2 * 5);\n}\n",
+    path: "testing.tck",
+    line_starts: [
+      0,
+      31,
+      32,
+      46,
+      76,
+      78,
+    ],
+    id: 1888024003,
+  ),
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(
