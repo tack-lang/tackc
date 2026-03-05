@@ -40,13 +40,16 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
+/// The ID that files use to identify themselves.
+pub type FileId = NonZeroU32;
+
 /// A file in tackc.
 #[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct File<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
     line_starts: Vec<SpanValue>,
-    id: NonZeroU32,
+    id: FileId,
 }
 
 impl<'a> File<'a> {
@@ -77,7 +80,7 @@ impl File<'_> {
     }
 
     /// Get the file's ID. Should be unique to any other files.
-    pub const fn id(&self) -> NonZeroU32 {
+    pub const fn id(&self) -> FileId {
         self.id
     }
 

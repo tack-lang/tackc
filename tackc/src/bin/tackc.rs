@@ -1,6 +1,5 @@
 //! Binary for tackc.
 
-use std::num::NonZeroU32;
 use std::path::PathBuf;
 
 use clap::{Parser as ClapParser, ValueEnum};
@@ -11,7 +10,7 @@ use rustc_hash::FxHashMap;
 use tackc_lib::prelude::*;
 
 use tackc_ast::AstModule;
-use tackc_file::File;
+use tackc_file::{File, FileId};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
@@ -67,7 +66,7 @@ fn main() {
     let files_map = files
         .into_iter()
         .map(|file| (file.id(), file))
-        .collect::<FxHashMap<NonZeroU32, File>>();
+        .collect::<FxHashMap<FileId, File>>();
 
     let mods = files_map
         .values()

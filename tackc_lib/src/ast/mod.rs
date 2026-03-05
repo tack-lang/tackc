@@ -5,6 +5,7 @@
 use std::hash::Hash;
 use std::num::NonZeroU32;
 
+use crate::file::FileId;
 use crate::global::{Global, Interned};
 use crate::lexer::Token;
 use crate::sema::LogicalModule;
@@ -29,7 +30,7 @@ pub use module::*;
 
 /// A symbol, consisting of a interned string, a span, and a file ID.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Symbol(pub Interned<str>, pub Span, pub NonZeroU32);
+pub struct Symbol(pub Interned<str>, pub Span, pub FileId);
 
 impl Hash for Symbol {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -48,7 +49,7 @@ impl Symbol {
 
 impl Symbol {
     /// Creates a new symbol from a token, and a file ID.
-    pub const fn new(tok: Token, file: NonZeroU32) -> Self {
+    pub const fn new(tok: Token, file: FileId) -> Self {
         Self(tok.lexeme, tok.span, file)
     }
 }
@@ -59,7 +60,7 @@ pub struct NodeId {
     /// The numerical ID of this node.
     pub id: NonZeroU32,
     /// The file ID of this node.
-    pub file: NonZeroU32,
+    pub file: FileId,
 }
 
 impl PartialOrd for NodeId {
