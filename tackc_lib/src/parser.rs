@@ -1079,8 +1079,8 @@ impl<'src, 'a> Parser<'src, 'a> {
         if !mode.normal()
             || self
                 .peek()
-                .filter(|t| t.kind == TokenKind::LBrace)
-                .is_none()
+                .as_ref()
+                .is_none_or(|t| t.kind != TokenKind::LBrace)
         {
             return self.global_ident(recursion);
         }
