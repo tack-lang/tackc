@@ -394,6 +394,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             mod_stmt: self.alloc_option(mod_stmt),
             items,
             spans: Box::new(FxHashMap::default()),
+            file: self.file,
         }
     }
 

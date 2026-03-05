@@ -41,7 +41,7 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
 }
 
 /// A file in tackc.
-#[derive(Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct File<'a> {
     src: Cow<'a, str>,
     path: Cow<'a, Path>,
