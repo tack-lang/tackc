@@ -311,7 +311,7 @@ impl<'src> Lexer<'src> {
     pub fn new(src: &'src File, global: &'src Global) -> Self {
         Lexer {
             src,
-            span: Span::new(),
+            span: Span::new(src),
             global,
         }
     }

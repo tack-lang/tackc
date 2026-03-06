@@ -4,67 +4,78 @@ use std::{cmp::Ordering, ops::Range};
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::UnwrapExt;
+use crate::{
+    file::{File, FileId},
+    utils::UnwrapExt,
+};
 
 /// The value used as an index in the [`Span`] type.
 pub type SpanValue = u32;
 
 /// The `Span` type represents an area of a file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Span {
     /// The start of the `Span` (Inclusive).
     pub start: SpanValue,
     /// The end of the `Span` (Exclusive).
     pub end: SpanValue,
+    /// The file ID of this span.
+    pub file: FileId,
 }
 
 impl Span {
     /// Creates a new `Span`. This span will start and end at the 0th character, making it have a length of zero.
-    pub fn new() -> Self {
-        Self::new_from(0, 0)
+    pub fn new(file: &File) -> Self {
+        Self::new_from(0, 0, file)
     }
 
-    /// Creates a new `Span` from a pair of start and end indexes.
+    /// Creates a new `Span` from a pair of start and end indexes, and a file.
     ///
     /// # Panics
     /// Panics if start is greater than end, since spans can't have a negative length.
-    pub fn new_from(start: SpanValue, end: SpanValue) -> Self {
+    pub fn new_from(start: SpanValue, end: SpanValue, file: &File) -> Self {
         assert!(end >= start, "cannot create negative-size span");
 
-        Self { start, end }
+        Self {
+            start,
+            end,
+            file: file.id(),
+        }
     }
 
-    /// Creates a new `Span` pointing to the end of a string.
+    /// Creates a new `Span` pointing to the end of a file.
     ///
     /// # Panics
-    /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
-    pub fn eof(string: &str) -> Self {
+    /// This function will panic if the input file's length is greater than [`SpanValue::MAX`].
+    pub fn eof(file: &File) -> Self {
         assert!(
-            string.len() <= SpanValue::MAX as usize,
+            file.len() <= SpanValue::MAX as usize,
             "Length of `Span::eof` input must be less than or equal to `SpanValue::MAX!`"
         );
 
         Self {
-            // Since `string.len() <= SpanValue::MAX`, try_into() will return `Ok`.
-            start: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
-            end: string.len().try_into().expect_unreachable(),   // CHECKED(Chloe)
+            // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
+            start: file.len().try_into().expect_unreachable(), // CHECKED(Chloe)
+            end: file.len().try_into().expect_unreachable(),   // CHECKED(Chloe)
+            file: file.id(),
         }
     }
 
     /// Creates a new `Span` pointing to an entire string.
     ///
     /// # Panics
-    /// This function will panic if the input string's length is greater than [`SpanValue::MAX`].
-    pub fn full(string: &str) -> Self {
+    /// This function will panic if the input file's length is greater than [`SpanValue::MAX`].
+    pub fn full(file: &File) -> Self {
         assert!(
-            string.len() <= SpanValue::MAX as usize,
+            file.len() <= SpanValue::MAX as usize,
             "Length of `Span::full` input must be less than or equal to `SpanValue::MAX!`"
         );
 
         Self {
             start: 0,
-            // Since `string.len() <= SpanValue::MAX`, try_into() will return `Ok`.
-            end: string.len().try_into().expect_unreachable(), // CHECKED(Chloe)
+            // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
+            end: file.len().try_into().expect_unreachable(), // CHECKED(Chloe)
+            file: file.id(),
         }
     }
 
@@ -186,12 +197,6 @@ impl Span {
 impl From<Span> for Range<SpanValue> {
     fn from(val: Span) -> Self {
         val.start..val.end
-    }
-}
-
-impl From<Range<SpanValue>> for Span {
-    fn from(value: Range<SpanValue>) -> Self {
-        Self::new_from(value.start, value.end)
     }
 }
 

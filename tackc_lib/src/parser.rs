@@ -407,6 +407,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             mod_key.span.start,
             semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
         );
         Ok(ModStatement {
             exported,
@@ -441,6 +442,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                 // One component was already pushed, so there has to be at least one.
                 .expect_unreachable() // CHECKED(Chloe)
                 .map_or_else(|| self.loc(), |sym| sym.get(self.global).1.end),
+            self.file,
         );
         Ok(AstPath {
             components,
@@ -495,6 +497,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             const_key.span.start,
             semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
         );
 
         Ok(Item::new(
@@ -561,6 +564,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             block
                 .as_ref()
                 .map_or_else(|| self.loc(), |block| self.span(block.id).end),
+            self.file,
         );
 
         Ok(Item {
@@ -586,6 +590,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             imp.span.start,
             semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
         );
         Ok(Item {
             kind: self.alloc(ItemKind::ImpItem(self.alloc(ImpItem {
@@ -655,6 +660,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             opening.span.start,
             closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+            self.file,
         );
 
         Ok(Block {
@@ -665,23 +671,23 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 
     fn semicolon_statement(&mut self, recursion: u32) -> Option<&'src Statement<'src>> {
-                    let stmt = self.parse_sync(
-                        Self::statement,
-                        &[TokenKind::Semicolon],
-                        "statement, item, or expression",
-                        recursion + 1,
-                    );
+        let stmt = self.parse_sync(
+            Self::statement,
+            &[TokenKind::Semicolon],
+            "statement, item, or expression",
+            recursion + 1,
+        );
         self.alloc_option(stmt)
-                }
+    }
 
     fn no_semicolon_statement(&mut self, recursion: u32) -> Option<&'src Statement<'src>> {
-                    let snapshot = self.snapshot();
-                    let stmt_res = self.statement(recursion + 1);
-                    let stmt = self.report_error(stmt_res, "statement, item, or expression");
-                    if stmt.is_none() {
-                        self.restore(snapshot);
-                        self.synchronize_skip_next_block();
-                    }
+        let snapshot = self.snapshot();
+        let stmt_res = self.statement(recursion + 1);
+        let stmt = self.report_error(stmt_res, "statement, item, or expression");
+        if stmt.is_none() {
+            self.restore(snapshot);
+            self.synchronize_skip_next_block();
+        }
         self.alloc_option(stmt)
     }
 
@@ -689,21 +695,22 @@ impl<'src, 'a> Parser<'src, 'a> {
         &mut self,
         expr: Expression<'src>,
     ) -> Result<Option<&'src Statement<'src>>> {
-                    let semi = self.eat(&[TokenKind::Semicolon]);
+        let semi = self.eat(&[TokenKind::Semicolon]);
 
-                    let span = Span::new_from(
-                        self.span(expr.id).start,
-                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
-                    );
-                    let stmt = Statement::new(
-                        self.alloc(StatementKind::ExpressionStatement(self.alloc(
-                            ExpressionStatement {
-                                expr: self.alloc(expr),
-                                semi: semi.map(Some),
-                            },
-                        ))),
-                        self.prepare_node(span)?,
-                    );
+        let span = Span::new_from(
+            self.span(expr.id).start,
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
+        );
+        let stmt = Statement::new(
+            self.alloc(StatementKind::ExpressionStatement(self.alloc(
+                ExpressionStatement {
+                    expr: self.alloc(expr),
+                    semi: semi.map(Some),
+                },
+            ))),
+            self.prepare_node(span)?,
+        );
         Ok(Some(self.alloc(stmt)))
     }
 
@@ -712,24 +719,25 @@ impl<'src, 'a> Parser<'src, 'a> {
         loc: u32,
         expr: Option<Expression<'src>>,
     ) -> Result<Option<&'src Statement<'src>>> {
-                    let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+        let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
 
-                    let span = Span::new_from(
-                        expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
-                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
-                    );
-                    let statement = match expr {
-                        Some(expr) => Some(Statement::new(
-                            self.alloc(StatementKind::ExpressionStatement(self.alloc(
-                                ExpressionStatement {
-                                    expr: self.alloc(expr),
-                                    semi: Some(semi),
-                                },
-                            ))),
-                            self.prepare_node(span)?,
-                        )),
-                        None => None,
-                    };
+        let span = Span::new_from(
+            expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
+            semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
+        );
+        let statement = match expr {
+            Some(expr) => Some(Statement::new(
+                self.alloc(StatementKind::ExpressionStatement(self.alloc(
+                    ExpressionStatement {
+                        expr: self.alloc(expr),
+                        semi: Some(semi),
+                    },
+                ))),
+                self.prepare_node(span)?,
+            )),
+            None => None,
+        };
 
         Ok(self.alloc_option(statement))
     }
@@ -777,6 +785,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             let_key.span.start,
             semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+            self.file,
         );
 
         Ok(Statement::new(
@@ -824,7 +833,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         };
         let span = semi.map_or_else(
             || self.span(expr.id),
-            |tok| Span::new_from(self.span(expr.id).start, tok.span.end),
+            |tok| Span::new_from(self.span(expr.id).start, tok.span.end, self.file),
         );
         Ok(Statement::new(
             self.alloc(StatementKind::ExpressionStatement(self.alloc(
@@ -856,6 +865,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             self.span(lhs.id).start,
             semi.map_or_else(|| self.loc(), |tok| tok.span.end),
+            self.file,
         );
         Ok(Statement::new(
             self.alloc(StatementKind::AssignmentStatement(self.alloc(
@@ -948,6 +958,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             let id = self.prepare_node(Span::new_from(
                 self.span(lhs.id).start,
                 self.span(rhs.id).end,
+                self.file,
             ))?;
             lhs = Expression::new(
                 self.alloc(ExpressionKind::Binary(
@@ -982,7 +993,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             return self.postfix(mode, recursion + 1);
         };
         let rhs = self.unary(mode, recursion + 1)?;
-        let span = Span::new_from(op.span.start, self.span(rhs.id).end);
+        let span = Span::new_from(op.span.start, self.span(rhs.id).end, self.file);
         let kind = match op.kind {
             TokenKind::Minus => ExpressionKind::Unary(UnOp::Neg, self.alloc(rhs)),
             TokenKind::Bang => ExpressionKind::Unary(UnOp::Not, self.alloc(rhs)),
@@ -1024,6 +1035,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             self.span(lhs.id).start,
             closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+            self.file,
         );
 
         Ok(Expression::new(
@@ -1049,6 +1061,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             self.span(lhs.id).start,
             closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+            self.file,
         );
         Ok(Expression::new(
             self.alloc(ExpressionKind::Call(self.alloc(lhs), args)),
@@ -1062,6 +1075,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let span = Span::new_from(
             self.span(lhs.id).start,
             ident.map_or_else(|| self.loc(), |tok| tok.span.end),
+            self.file,
         );
         Ok(Expression::new(
             self.alloc(ExpressionKind::Member(
@@ -1092,6 +1106,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             self.prepare_node(Span::new_from(
                 opening.span.start,
                 closing.map_or_else(|| self.loc(), |tok| tok.span.end),
+                self.file,
             ))?,
         );
         Ok(expr)
@@ -1132,7 +1147,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             ));
             return Ok(Expression::new(
                 self.alloc(ExpressionKind::GlobalIdent(None)),
-                self.prepare_node(Span::new_from(dot.span.start, tok.span.end))?,
+                self.prepare_node(Span::new_from(dot.span.start, tok.span.end, self.file))?,
             ));
         }
 
@@ -1142,6 +1157,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             ident
                 .as_ref()
                 .map_or_else(|| self.loc(), |ident| ident.span.end),
+            self.file,
         );
         Ok(Expression::new(
             self.alloc(ExpressionKind::GlobalIdent(ident.map(|ident| {
