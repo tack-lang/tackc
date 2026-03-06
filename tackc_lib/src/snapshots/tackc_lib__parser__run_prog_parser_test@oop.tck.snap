@@ -20,8 +20,8 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(6754365714538987880, PhantomData)),
-        Some(Interned(2559923243858721692, PhantomData)),
+        Some(Interned(8922184771857907008, PhantomData)),
+        Some(Interned(12761340558565472169, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -37,7 +37,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(8488402302748686454, PhantomData)),
+        ident: Some(Interned(10208821999078660917, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -46,7 +46,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(11275863810042248680, PhantomData)),
+                    kind: Ident(Interned(15294229520853328409, PhantomData)),
                     id: NodeId(
                       id: 3,
                       file: 1888024003,
@@ -100,6 +100,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
                   span: Span(
                     start: 74,
                     end: 75,
+                    file: 1888024003,
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
@@ -131,6 +132,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 4,
       end: 29,
+      file: 1888024003,
     ),
     NodeId(
       id: 2,
@@ -138,6 +140,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 0,
       end: 30,
+      file: 1888024003,
     ),
     NodeId(
       id: 3,
@@ -145,6 +148,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 50,
       end: 57,
+      file: 1888024003,
     ),
     NodeId(
       id: 4,
@@ -152,6 +156,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 58,
       end: 62,
+      file: 1888024003,
     ),
     NodeId(
       id: 5,
@@ -159,6 +164,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 64,
       end: 65,
+      file: 1888024003,
     ),
     NodeId(
       id: 6,
@@ -166,6 +172,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 68,
       end: 69,
+      file: 1888024003,
     ),
     NodeId(
       id: 7,
@@ -173,6 +180,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 72,
       end: 73,
+      file: 1888024003,
     ),
     NodeId(
       id: 8,
@@ -180,6 +188,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 68,
       end: 73,
+      file: 1888024003,
     ),
     NodeId(
       id: 9,
@@ -187,6 +196,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 64,
       end: 73,
+      file: 1888024003,
     ),
     NodeId(
       id: 10,
@@ -194,6 +204,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 50,
       end: 74,
+      file: 1888024003,
     ),
     NodeId(
       id: 11,
@@ -201,6 +212,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 50,
       end: 75,
+      file: 1888024003,
     ),
     NodeId(
       id: 12,
@@ -208,6 +220,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 44,
       end: 77,
+      file: 1888024003,
     ),
     NodeId(
       id: 13,
@@ -215,6 +228,7 @@ input_file: tackc_lib/src/parser/tests/oop.tck
     ): Span(
       start: 32,
       end: 77,
+      file: 1888024003,
     ),
   },
 ), [])

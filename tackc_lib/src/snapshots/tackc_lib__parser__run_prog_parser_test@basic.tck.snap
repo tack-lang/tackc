@@ -20,7 +20,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(1358731090239635984, PhantomData)),
+        Some(Interned(17945655703465954163, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -36,7 +36,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(9365442088046645862, PhantomData)),
+        ident: Some(Interned(16687065173729340688, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -45,7 +45,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(9582129718345307716, PhantomData)),
+                    kind: Ident(Interned(11666043647222946306, PhantomData)),
                     id: NodeId(
                       id: 3,
                       file: 2083824584,
@@ -68,6 +68,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
                   span: Span(
                     start: 54,
                     end: 55,
+                    file: 2083824584,
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
@@ -99,6 +100,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 4,
       end: 9,
+      file: 2083824584,
     ),
     NodeId(
       id: 2,
@@ -106,6 +108,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 0,
       end: 10,
+      file: 2083824584,
     ),
     NodeId(
       id: 3,
@@ -113,6 +116,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 30,
       end: 37,
+      file: 2083824584,
     ),
     NodeId(
       id: 4,
@@ -120,6 +124,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 38,
       end: 53,
+      file: 2083824584,
     ),
     NodeId(
       id: 5,
@@ -127,6 +132,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 30,
       end: 54,
+      file: 2083824584,
     ),
     NodeId(
       id: 6,
@@ -134,6 +140,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 30,
       end: 55,
+      file: 2083824584,
     ),
     NodeId(
       id: 7,
@@ -141,6 +148,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 24,
       end: 57,
+      file: 2083824584,
     ),
     NodeId(
       id: 8,
@@ -148,6 +156,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     ): Span(
       start: 12,
       end: 57,
+      file: 2083824584,
     ),
   },
 ), [])

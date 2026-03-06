@@ -1,12 +1,13 @@
 ---
-source: crates/tackc_lib/src/lexer.rs
-input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
+source: tackc_lib/src/lexer.rs
+input_file: tackc_lib/src/lexer-tests/trailing-dot-floats.tck
 ---
 [
   Ok(Token(
     span: Span(
       start: 0,
       end: 1,
+      file: 3697270064,
     ),
     kind: IntLit,
     lexeme: Interned(7161555357105607078, PhantomData),
@@ -15,6 +16,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 1,
       end: 2,
+      file: 3697270064,
     ),
     kind: Dot,
     lexeme: Interned(11711581811000960557, PhantomData),
@@ -23,6 +25,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 2,
       end: 3,
+      file: 3697270064,
     ),
     kind: Ident,
     lexeme: Interned(1181946830874371766, PhantomData),
@@ -31,6 +34,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 4,
       end: 6,
+      file: 3697270064,
     ),
     kind: FloatLit,
     lexeme: Interned(15804891890253226098, PhantomData),
@@ -39,6 +43,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 7,
       end: 8,
+      file: 3697270064,
     ),
     kind: IntLit,
     lexeme: Interned(9512443353228393487, PhantomData),
@@ -47,6 +52,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 8,
       end: 9,
+      file: 3697270064,
     ),
     kind: Dot,
     lexeme: Interned(11711581811000960557, PhantomData),
@@ -55,6 +61,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 9,
       end: 10,
+      file: 3697270064,
     ),
     kind: Dot,
     lexeme: Interned(11711581811000960557, PhantomData),
@@ -63,6 +70,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 11,
       end: 12,
+      file: 3697270064,
     ),
     kind: IntLit,
     lexeme: Interned(10019683587694836890, PhantomData),
@@ -71,6 +79,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 12,
       end: 13,
+      file: 3697270064,
     ),
     kind: Dot,
     lexeme: Interned(11711581811000960557, PhantomData),
@@ -79,6 +88,7 @@ input_file: crates/tackc_lib/src/lexer-tests/trailing-dot-floats.tck
     span: Span(
       start: 13,
       end: 14,
+      file: 3697270064,
     ),
     kind: Ident,
     lexeme: Interned(15260803566067473922, PhantomData),

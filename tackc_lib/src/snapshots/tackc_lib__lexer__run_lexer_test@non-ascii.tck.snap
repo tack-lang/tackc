@@ -1,12 +1,13 @@
 ---
-source: crates/tackc_lib/src/lexer.rs
-input_file: crates/tackc_lib/src/lexer-tests/non-ascii.tck
+source: tackc_lib/src/lexer.rs
+input_file: tackc_lib/src/lexer-tests/non-ascii.tck
 ---
 [
   Ok(Token(
     span: Span(
       start: 0,
       end: 50,
+      file: 3117196086,
     ),
     kind: StringLit,
     lexeme: Interned(11630305010289892668, PhantomData),
@@ -15,6 +16,7 @@ input_file: crates/tackc_lib/src/lexer-tests/non-ascii.tck
     span: Span(
       start: 52,
       end: 109,
+      file: 3117196086,
     ),
     kind: StringLit,
     lexeme: Interned(9613824617613772305, PhantomData),
