@@ -611,24 +611,11 @@ impl<'src, 'a> Parser<'src, 'a> {
             match self.peek().map(|tok| tok.kind) {
                 // Statements that end in semicolons
                 Some(TokenKind::Let | TokenKind::Const) => {
-                    let stmt = self.parse_sync(
-                        Self::statement,
-                        &[TokenKind::Semicolon],
-                        "statement, item, or expression",
-                        recursion + 1,
-                    );
-                    stmts.push(self.alloc_option(stmt));
+                    stmts.push(self.semicolon_statement(recursion + 1));
                 }
                 // Statements that don't end in semicolons
                 Some(TokenKind::Func) => {
-                    let snapshot = self.snapshot();
-                    let stmt_res = self.statement(recursion + 1);
-                    let stmt = self.report_error(stmt_res, "statement, item, or expression");
-                    if stmt.is_none() {
-                        self.restore(snapshot);
-                        self.synchronize_skip_next_block();
-                    }
-                    stmts.push(self.alloc_option(stmt));
+                    stmts.push(self.no_semicolon_statement(recursion + 1));
                 }
                 // Expressions that optionally end in semicolons when used as statements
                 Some(TokenKind::LBrace) => {
@@ -638,22 +625,8 @@ impl<'src, 'a> Parser<'src, 'a> {
                     {
                         break Some(Some(expr));
                     }
-                    let semi = self.eat(&[TokenKind::Semicolon]);
 
-                    let span = Span::new_from(
-                        self.span(expr.id).start,
-                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
-                    );
-                    let stmt = Statement::new(
-                        self.alloc(StatementKind::ExpressionStatement(self.alloc(
-                            ExpressionStatement {
-                                expr: self.alloc(expr),
-                                semi: semi.map(Some),
-                            },
-                        ))),
-                        self.prepare_node(span)?,
-                    );
-                    stmts.push(Some(self.alloc(stmt)));
+                    stmts.push(self.optional_semicolon_expression_statement(expr)?);
                 }
                 // Expressions that end in semicolons when used as statements
                 Some(_) => {
@@ -669,27 +642,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                     {
                         break Some(expr);
                     }
-
-                    let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
-
-                    let span = Span::new_from(
-                        expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
-                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
-                    );
-                    let statement = match expr {
-                        Some(expr) => Some(Statement::new(
-                            self.alloc(StatementKind::ExpressionStatement(self.alloc(
-                                ExpressionStatement {
-                                    expr: self.alloc(expr),
-                                    semi: Some(semi),
-                                },
-                            ))),
-                            self.prepare_node(span)?,
-                        )),
-                        None => None,
-                    };
-
-                    stmts.push(self.alloc_option(statement));
+                    stmts.push(self.semicolon_expression_statement(loc, expr)?);
                 }
                 None => {
                     self.push_err(ParseError::eof(Some("statement, item, or expression")));
@@ -709,6 +662,76 @@ impl<'src, 'a> Parser<'src, 'a> {
             expr: self.alloc_option_option(expr),
             id: self.prepare_node(span)?,
         })
+    }
+
+    fn semicolon_statement(&mut self, recursion: u32) -> Option<&'src Statement<'src>> {
+                    let stmt = self.parse_sync(
+                        Self::statement,
+                        &[TokenKind::Semicolon],
+                        "statement, item, or expression",
+                        recursion + 1,
+                    );
+        self.alloc_option(stmt)
+                }
+
+    fn no_semicolon_statement(&mut self, recursion: u32) -> Option<&'src Statement<'src>> {
+                    let snapshot = self.snapshot();
+                    let stmt_res = self.statement(recursion + 1);
+                    let stmt = self.report_error(stmt_res, "statement, item, or expression");
+                    if stmt.is_none() {
+                        self.restore(snapshot);
+                        self.synchronize_skip_next_block();
+                    }
+        self.alloc_option(stmt)
+    }
+
+    fn optional_semicolon_expression_statement(
+        &mut self,
+        expr: Expression<'src>,
+    ) -> Result<Option<&'src Statement<'src>>> {
+                    let semi = self.eat(&[TokenKind::Semicolon]);
+
+                    let span = Span::new_from(
+                        self.span(expr.id).start,
+                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+                    );
+                    let stmt = Statement::new(
+                        self.alloc(StatementKind::ExpressionStatement(self.alloc(
+                            ExpressionStatement {
+                                expr: self.alloc(expr),
+                                semi: semi.map(Some),
+                            },
+                        ))),
+                        self.prepare_node(span)?,
+                    );
+        Ok(Some(self.alloc(stmt)))
+    }
+
+    fn semicolon_expression_statement(
+        &mut self,
+        loc: u32,
+        expr: Option<Expression<'src>>,
+    ) -> Result<Option<&'src Statement<'src>>> {
+                    let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
+
+                    let span = Span::new_from(
+                        expr.as_ref().map_or(loc, |expr| self.span(expr.id).start),
+                        semi.map_or_else(|| self.loc(), |semi| semi.span.end),
+                    );
+                    let statement = match expr {
+                        Some(expr) => Some(Statement::new(
+                            self.alloc(StatementKind::ExpressionStatement(self.alloc(
+                                ExpressionStatement {
+                                    expr: self.alloc(expr),
+                                    semi: Some(semi),
+                                },
+                            ))),
+                            self.prepare_node(span)?,
+                        )),
+                        None => None,
+                    };
+
+        Ok(self.alloc_option(statement))
     }
 
     fn statement(&mut self, recursion: u32) -> Result<Statement<'src>> {
