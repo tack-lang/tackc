@@ -6,6 +6,7 @@ use std::{
     hash::{Hash, Hasher},
     marker::PhantomData,
     num::NonZeroU64,
+    slice,
 };
 
 use crate::{
@@ -108,6 +109,16 @@ impl Interned<str> {
     }
 }
 
+impl<T: Hash> Interned<[T]> {
+    /// Returns a reference to the interned string.
+    ///
+    /// # Panics
+    /// This function will panic if the global given was not the global used to create this interned string.
+    pub fn get(self, global: &Global) -> &[T] {
+        global.get_interned_slice(self)
+    }
+}
+
 /// tackc's global context.
 #[derive(Debug)]
 pub struct Global {
@@ -117,6 +128,7 @@ pub struct Global {
     arena: Bump,
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
     interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
+    interned_slices: IdentityDashMap<NonZeroU64, (usize, *const u8)>,
     file_list: FileList,
 }
 
@@ -162,6 +174,7 @@ impl Global {
             arena: Bump::new(),
             interned: IdentityDashMap::default(),
             interned_strs: IdentityDashMap::default(),
+            interned_slices: IdentityDashMap::default(),
             file_list: FileList::default(),
         })
     }
@@ -203,7 +216,10 @@ impl Global {
         let hash = hasher.finish_non_zero();
 
         if let Some(interned) = self.interned.get(&hash) {
-            assert!(interned.dyn_eq(&val), "Hash collision!");
+            if interned.dyn_eq(&val) {
+                return Interned(hash, PhantomData);
+            }
+            Self::report_collision();
         }
 
         let ptr: *mut dyn Internable = self.alloc(val);
@@ -243,9 +259,10 @@ impl Global {
             val.hash(&mut hasher);
             let hash = hasher.finish_non_zero();
 
-            if let Some(interned) = global.interned_strs.get(&hash)
-                && *interned != val
-            {
+            if let Some(interned) = global.interned_strs.get(&hash) {
+                if *interned == val {
+                    return Interned(hash, PhantomData);
+                }
                 Global::report_collision();
             }
 
@@ -256,13 +273,6 @@ impl Global {
             Interned(hash, PhantomData)
         }
         inner(self, val.as_ref())
-    }
-
-    #[inline(never)]
-    #[cold]
-    fn report_collision() -> ! {
-        // Hash collisions should be treated as impossible.
-        panic!("Hash collision!"); // CHECKED(Chloe)
     }
 
     /// Gets a reference to the interned string value represented by `interned`.
@@ -279,6 +289,85 @@ impl Global {
         *self.interned_strs.get(&interned.0).expect_unreachable() // CHECKED(Chloe)
     }
 
+    /// Interns a string value into the global map by copying its elements.
+    ///
+    /// # Panics
+    /// This function will only panic in the event of a hash collision.
+    pub fn intern_slice_copy<T: Copy + Hash + PartialEq>(&self, val: &[T]) -> Interned<[T]> {
+        self.intern_slice(val, Self::alloc_slice_copy)
+    }
+
+    /// Interns a string value into the global map by cloning its elements.
+    ///
+    /// # Panics
+    /// This function will only panic in the event of a hash collision.
+    pub fn intern_slice_clone<T: Clone + Hash + PartialEq>(&self, val: &[T]) -> Interned<[T]> {
+        self.intern_slice(val, Self::alloc_slice_clone)
+    }
+
+    fn intern_slice<'a, T: Hash + PartialEq>(
+        &'a self,
+        val: &[T],
+        func: fn(&'a Self, &[T]) -> &'a mut [T],
+    ) -> Interned<[T]> {
+        let mut hasher = Self::get_hasher();
+        type_name::<[T]>().hash(&mut hasher);
+        val.hash(&mut hasher);
+        let hash = hasher.finish_non_zero();
+
+        if let Some(interned) = self.interned_slices.get(&hash) {
+            let (len, ptr) = *interned;
+            let ptr = ptr.cast::<T>();
+
+            #[expect(unsafe_code)] // CHECKED(Chloe)
+            // SAFETY:
+            // When inserting into the `interned_slices` map,
+            // we ensure that the pointer/length comes from a valid slice.
+            let slice = unsafe { slice::from_raw_parts(ptr, len) };
+
+            if slice == val {
+                return Interned(hash, PhantomData);
+            }
+            Self::report_collision();
+        }
+
+        let ptr = func(self, val);
+
+        self.interned_slices
+            .insert(hash, (ptr.len(), ptr.as_ptr().cast::<u8>()));
+
+        Interned(hash, PhantomData)
+    }
+
+    /// Gets a reference to the interned slice value represented by `interned`.
+    ///
+    /// # Panics
+    /// This function will panic if the `interned` given is from a different `Global`.
+    pub fn get_interned_slice<T: Hash>(&self, interned: Interned<[T]>) -> &[T] {
+        assert!(
+            self.interned_slices.contains_key(&interned.0),
+            "wrong Global!"
+        );
+
+        let (len, ptr) = *self.interned_slices.get(&interned.0).expect_unreachable();
+        let ptr = ptr.cast::<T>();
+
+        #[expect(unsafe_code)] // CHECKED(Chloe)
+        // SAFETY:
+        // When inserting into the `interned_slices` map,
+        // we ensure that the pointer/length comes from a valid slice.
+        unsafe {
+            slice::from_raw_parts(ptr, len)
+        }
+    }
+
+    #[inline(never)]
+    #[cold]
+    fn report_collision() -> ! {
+        // Hash collisions should be treated as impossible.
+        panic!("Hash collision!"); // CHECKED(Chloe)
+    }
+
     /// Allocates a value within the arena of this [`Global`] without interning it.
     pub fn alloc<T>(&self, val: T) -> &mut T {
         self.arena.alloc(val)
@@ -286,7 +375,17 @@ impl Global {
 
     /// Allocates a string within the arena of this [`Global`] without interning it.
     #[inline(never)] // `Bump::alloc_str` is huge, so don't inline.
-    pub fn alloc_str(&self, val: &str) -> &mut str {
-        self.arena.alloc_str(val)
+    pub fn alloc_str(&self, src: &str) -> &mut str {
+        self.arena.alloc_str(src)
+    }
+
+    /// Allocates a slice where `T: Copy` within the arena of this [`Global`] without interning it.
+    pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
+        self.arena.alloc_slice_copy(src)
+    }
+
+    /// Allocates a slice where `T: Clone` within the arena of this [`Global`] without interning it.
+    pub fn alloc_slice_clone<T: Clone>(&self, src: &[T]) -> &mut [T] {
+        self.arena.alloc_slice_clone(src)
     }
 }
