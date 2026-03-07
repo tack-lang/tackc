@@ -70,28 +70,29 @@ impl<'src> Resolver<'src> {
             return;
         };
 
-        let mut logical_path = LogicalPath::from([first.get(self.global).0]);
+        let logical_path =
+            LogicalPath::new(&[first.get(self.global).0], self.global).with_global(self.global);
         let mut current = self
             .logical_mods
-            .entry(logical_path.clone())
-            .or_insert_with(|| LogicalModule::new(logical_path.clone()));
+            .entry(logical_path.inner())
+            .or_insert_with(|| LogicalModule::new(logical_path.inner()));
 
         for next in comps {
             let Some(next) = next else {
                 return;
             };
 
-            logical_path.push(next.get(self.global).0);
+            let logical_path = logical_path.push(next.get(self.global).0);
 
             current = self
                 .logical_mods
-                .entry(logical_path.clone())
-                .or_insert_with(|| LogicalModule::new(logical_path.clone()));
+                .entry(logical_path.inner())
+                .or_insert_with(|| LogicalModule::new(logical_path.inner()));
         }
 
         if let Some(file) = current.file {
             self.errors
-                .entry(logical_path)
+                .entry(logical_path.inner())
                 .and_modify(|vec| vec.push(module_file))
                 .or_insert_with(|| {
                     vec![

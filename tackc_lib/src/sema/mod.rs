@@ -1,6 +1,11 @@
 //! Module for semantic analysis.
 
-use std::{cmp::Ordering, fmt::Write, hash::Hash, ops::Deref};
+use std::{
+    cmp::Ordering,
+    fmt::{self, Write},
+    hash::Hash,
+    ops::Deref,
+};
 
 use parking_lot::Mutex;
 use rustc_hash::FxHashMap;
@@ -65,56 +70,115 @@ impl LogicalModule<'_> {
     }
 }
 
-/// A struct representing a path in Tack.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+/// A struct representing an immutable path in Tack.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[must_use]
 pub struct LogicalPath {
-    comps: ThinVec<Interned<str>>,
+    comps: Interned<[Interned<str>]>,
 }
 
 impl LogicalPath {
-    /// Pushes a symbol to the path.
-    pub fn push(&mut self, symbol: Interned<str>) {
-        self.comps.push(symbol);
-    }
-
-    /// Takes the last symbol off of the path.
-    pub fn pop(&mut self) -> Option<Interned<str>> {
-        self.comps.pop()
-    }
-
-    /// Returns the length of the path.
-    pub fn len(&self) -> usize {
-        self.comps.len()
-    }
-
-    /// Returns whether the path is empty or not.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
+    /// Creates a new logical path using a list of components, and a [`Global`].
+    pub fn new(comps: &[Interned<str>], global: &Global) -> Self {
+        Self {
+            comps: global.intern_slice_copy(comps),
+        }
     }
 
     /// Displays the path.
     pub fn display(&self, global: &Global) -> String {
         let mut str = String::new();
 
-        for comp in &self.comps {
+        for comp in self.comps.get(global) {
             _ = write!(str, "{}.", comp.display(global));
         }
 
         str.truncate(str.len().saturating_sub(1)); // Remove final `.`
         str
     }
+
+    /// Creates a version of this path that contains a [`Global`]. More traits are implemented for this struct.
+    pub const fn with_global<'a>(&self, global: &'a Global) -> LogicalPathGlobal<'a> {
+        LogicalPathGlobal(*self, global)
+    }
+
+    /// Falliably converts an [`AstPath`] to a [`LogicalPath`] using a [`Global`].
+    pub fn try_from(ast_path: &AstPath, global: &Global) -> Option<Self> {
+        let mut comps = Vec::new();
+        for comp in &ast_path.components {
+            let Some(comp) = comp else { return None };
+            comps.push(comp.get(global).0);
+        }
+        Some(Self::new(&comps, global))
+    }
 }
 
-impl PartialOrd for LogicalPath {
+/// A version of [`LogicalPath`] that contains a [`Global`].
+#[derive(Copy, Clone)]
+#[must_use]
+pub struct LogicalPathGlobal<'a>(LogicalPath, &'a Global);
+
+impl LogicalPathGlobal<'_> {
+    /// Gets the [`LogicalPath`] on the inside of this [`LogicalPathGlobal`].
+    pub const fn inner(self) -> LogicalPath {
+        self.0
+    }
+
+    /// Pushes a symbol to the path.
+    pub fn push(self, symbol: Interned<str>) -> Self {
+        let mut vec = self.0.comps.get(self.1).to_vec();
+        vec.push(symbol);
+        LogicalPath::new(&vec, self.1).with_global(self.1)
+    }
+
+    /// Takes the last symbol off of the path.
+    pub fn pop(self) -> (Option<Interned<str>>, Self) {
+        let mut vec = self.0.comps.get(self.1).to_vec();
+        let sym = vec.pop();
+        (sym, LogicalPath::new(&vec, self.1).with_global(self.1))
+    }
+
+    /// Returns the length of the path.
+    pub fn len(&self) -> usize {
+        self.0.comps.get(self.1).len()
+    }
+
+    /// Returns whether the path is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl fmt::Display for LogicalPathGlobal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0.display(self.1))
+    }
+}
+
+impl PartialEq for LogicalPathGlobal<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Eq for LogicalPathGlobal<'_> {}
+
+impl Hash for LogicalPathGlobal<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+impl PartialOrd for LogicalPathGlobal<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for LogicalPath {
+impl Ord for LogicalPathGlobal<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
-        let mut iter = self.comps.iter();
-        let mut other_iter = other.comps.iter();
+        let mut iter = self.0.comps.get(self.1).iter();
+        let mut other_iter = other.0.comps.get(other.1).iter();
 
         loop {
             match (iter.next(), other_iter.next()) {
@@ -133,23 +197,11 @@ impl Ord for LogicalPath {
     }
 }
 
-impl<const N: usize> From<[Interned<str>; N]> for LogicalPath {
-    fn from(value: [Interned<str>; N]) -> Self {
-        Self {
-            comps: ThinVec::from(value),
-        }
-    }
-}
+impl Deref for LogicalPathGlobal<'_> {
+    type Target = [Interned<str>];
 
-impl LogicalPath {
-    /// Falliably converts an [`AstPath`] to a [`LogicalPath`].
-    pub fn try_from(value: &AstPath, global: &Global) -> Option<Self> {
-        let mut path = Self::default();
-        for comp in &value.components {
-            path.push(comp.as_ref()?.get(global).0);
-        }
-
-        Some(path)
+    fn deref(&self) -> &Self::Target {
+        self.0.comps.get(self.1)
     }
 }
 
@@ -166,7 +218,7 @@ impl ModuleList<'_> {
         let mut str = String::new();
 
         let mut vec = self.mods.iter().collect::<Vec<_>>();
-        vec.sort_by_key(|(path, _)| *path);
+        vec.sort_by_key(|(path, _)| path.with_global(global));
         for (_, module) in vec {
             _ = writeln!(str, "{}\n", module.display(global));
         }

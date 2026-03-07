@@ -46,14 +46,14 @@ impl Resolver<'_> {
                 let Some(pointed) = self.bindings.map.get(path) else {
                     // Error handling (dangling import)
                     self.errors
-                        .push(ImportResolutionError::DanglingImport(path.clone(), *span));
+                        .push(ImportResolutionError::DanglingImport(*path, *span));
                     *binding = ImportBinding::Error;
                     return None;
                 };
                 let Some(mut kind) = pointed.get(self.global).kind.try_lock() else {
                     // Error handling (recursive import)
                     self.errors
-                        .push(ImportResolutionError::RecursiveImport(path.clone(), *span));
+                        .push(ImportResolutionError::RecursiveImport(*path, *span));
                     *binding = ImportBinding::Error;
                     return None;
                 };
