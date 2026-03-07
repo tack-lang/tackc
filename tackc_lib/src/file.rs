@@ -97,7 +97,7 @@ impl File {
 
         let src_len = self.len();
         assert!(
-            (index as usize) > src_len,
+            (index as usize) < src_len,
             "index is greater than file length!"
         );
 

@@ -14,7 +14,7 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
 use tackc_parser::Parser;
-use tackc_sema::{resolve_globals, resolve_mods};
+use tackc_sema::{resolve_globals, resolve_imports, resolve_mods};
 
 #[derive(ClapParser)]
 struct Args {
@@ -90,8 +90,16 @@ fn main() {
         eprintln!("{} {}", "error:".bright_red(), e.display(global));
     }
     println!("{}", mods.display(global));
-    let globals = resolve_globals(&mods, global);
-    println!("{}", globals.display(global));
+    let mut bindings = resolve_globals(&mods, global);
+    println!("{}", bindings.display(global));
+
+    println!();
+
+    let errors = resolve_imports(&mut bindings, global);
+    for e in errors {
+        eprintln!("{} {}", "error:".bright_red(), e.display(global));
+    }
+    println!("{}", bindings.display(global));
 }
 
 fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {

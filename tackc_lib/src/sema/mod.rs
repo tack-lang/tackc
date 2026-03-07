@@ -1,7 +1,8 @@
 //! Module for semantic analysis.
 
-use std::{cmp::Ordering, fmt::Write, ops::Deref};
+use std::{cmp::Ordering, fmt::Write, hash::Hash, ops::Deref};
 
+use parking_lot::Mutex;
 use rustc_hash::FxHashMap;
 use thin_vec::ThinVec;
 
@@ -16,6 +17,8 @@ pub mod module_resolution;
 pub use module_resolution::resolve_mods;
 pub mod global_resolution;
 pub use global_resolution::resolve_globals;
+pub mod import_resolution;
+pub use import_resolution::resolve_imports;
 
 /// A struct for modules, represented in a logical form, instead of a raw AST form.
 #[derive(Debug)]
@@ -183,25 +186,70 @@ impl<'src> Deref for ModuleList<'src> {
 }
 
 /// A binding to a variable in tackc.
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct Binding {
     /// The kind of binding this is.
-    pub kind: BindingKind,
+    pub kind: Mutex<BindingKind>,
     /// The name of this binding.
     pub name: Interned<str>,
     /// Whether this binding is exported or not.
     pub exported: bool,
+    /// The index of this binding.
+    pub idx: u64,
 }
 
-/// The kind of binding this is.
+impl PartialEq for Binding {
+    #[rustfmt::skip] // rustfmt forces this to be one line
+    fn eq(&self, other: &Self) -> bool {
+        self.idx == other.idx
+            && self.name == other.name
+            && self.exported == other.exported
+    }
+}
+
+impl Eq for Binding {}
+
+impl Hash for Binding {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        self.exported.hash(state);
+        self.idx.hash(state);
+    }
+}
+
+/// The kind of binding.
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub enum BindingKind {
     /// An `imp` binding.
-    Import(LogicalPath),
+    Import(ImportBinding),
     /// A `const` binding.
     Const,
+    /// A `let` binding.
+    Let,
     /// A `func` binding.
     Func,
+}
+
+/// The kind of import binding this is.
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum ImportBinding {
+    /// Points to a path. Used before import resolution.
+    Path(LogicalPath, Span),
+    /// Signifies that there was an error during import resolution.
+    Error,
+    /// Points to a binding. Used after import resolution.
+    Binding(Interned<Binding>),
+}
+
+impl ImportBinding {
+    /// Displays this import binding kind, either as a path or a binding.
+    pub fn display(&self, global: &Global) -> String {
+        match self {
+            Self::Path(path, _) => path.display(global),
+            Self::Error => "<ERROR>".to_string(),
+            Self::Binding(binding) => binding.get(global).display(global),
+        }
+    }
 }
 
 impl Binding {
@@ -209,9 +257,10 @@ impl Binding {
     pub fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
 
-        let binding = match &self.kind {
+        let binding = match &*self.kind.lock() {
             BindingKind::Const => "const".to_string(),
             BindingKind::Func => "func".to_string(),
+            BindingKind::Let => "let".to_string(),
             BindingKind::Import(path) => format!("imp {}", path.display(global)),
         };
 
@@ -224,6 +273,8 @@ impl Binding {
 pub struct BindingList {
     /// The list of globals.
     pub map: FxHashMap<LogicalPath, Interned<Binding>>,
+    /// The binding index.
+    pub idx: u64,
 }
 
 impl BindingList {
