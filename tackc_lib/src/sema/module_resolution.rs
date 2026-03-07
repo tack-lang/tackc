@@ -9,12 +9,13 @@ use crate::{
     file::File,
     global::Global,
     sema::{LogicalModule, LogicalPath, ModuleList},
+    utils::UnwrapExt,
 };
 
 /// Errors during module resolution.
 pub enum ModuleResolveError<'src> {
     /// A duplicated module.
-    DuplicateModule(LogicalPath, Vec<&'src File<'src>>),
+    DuplicateModule(LogicalPath, Vec<&'src File>),
 }
 
 impl ModuleResolveError<'_> {
@@ -43,12 +44,20 @@ impl ModuleResolveError<'_> {
 
 struct Resolver<'src> {
     logical_mods: FxHashMap<LogicalPath, LogicalModule<'src>>,
-    errors: FxHashMap<LogicalPath, Vec<&'src File<'src>>>,
+    errors: FxHashMap<LogicalPath, Vec<&'src File>>,
     global: &'src Global,
 }
 
 impl<'src> Resolver<'src> {
     fn analyze_module(&mut self, mut module: AstModule<'src>) {
+        let Some(module_file) = self.global.file_list().get(&module.file) else {
+            #[cfg(debug_assertions)]
+            {
+                println!("failed to find file in global file list! is the file list set?");
+            }
+            return;
+        };
+
         let Some(mod_stmt) = module.mod_stmt else {
             return;
         };
@@ -83,8 +92,13 @@ impl<'src> Resolver<'src> {
         if let Some(file) = current.file {
             self.errors
                 .entry(logical_path)
-                .and_modify(|vec| vec.push(module.file))
-                .or_insert_with(|| vec![file, module.file]);
+                .and_modify(|vec| vec.push(module_file))
+                .or_insert_with(|| {
+                    vec![
+                        self.global.file_list().get(&file).expect_unreachable(), // CHECKED(Chloe)
+                        module_file,
+                    ]
+                });
 
             current.items.append(&mut module.items);
             current.spans.extend(*module.spans);

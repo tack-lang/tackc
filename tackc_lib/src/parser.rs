@@ -52,7 +52,7 @@ struct ParserSnapshot {
 
 /// The state of a parser.
 pub struct Parser<'src, 'a> {
-    file: &'src File<'src>,
+    file: &'src File,
     tokens: &'a [Token],
     ptr: usize,
     errors: Vec<ParseError>,
@@ -165,11 +165,11 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 
     fn expect_peek_all(&self) -> Result<Token> {
-        self.peek().ok_or_else(|| ParseError::eof(None))
+        self.peek().ok_or_else(|| ParseError::eof(None, self.file))
     }
 
     fn expect_peek2_all(&self) -> Result<Token> {
-        self.peek2().ok_or_else(|| ParseError::eof(None))
+        self.peek2().ok_or_else(|| ParseError::eof(None, self.file))
     }
 
     fn advance(&mut self) -> Option<Token> {
@@ -394,7 +394,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             mod_stmt: self.alloc_option(mod_stmt),
             items,
             spans: Box::new(FxHashMap::default()),
-            file: self.file,
+            file: self.file.id(),
         }
     }
 
@@ -650,7 +650,10 @@ impl<'src, 'a> Parser<'src, 'a> {
                     stmts.push(self.semicolon_expression_statement(loc, expr)?);
                 }
                 None => {
-                    self.push_err(ParseError::eof(Some("statement, item, or expression")));
+                    self.push_err(ParseError::eof(
+                        Some("statement, item, or expression"),
+                        self.file,
+                    ));
                     break None;
                 }
             }

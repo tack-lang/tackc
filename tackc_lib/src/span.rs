@@ -176,21 +176,27 @@ impl Span {
         self.start = self.end;
     }
 
-    /// Returns whether the span can be applied to the string.
-    pub const fn fits(&self, string: &str) -> bool {
-        (self.end as usize) <= string.len()
+    /// Returns whether the span can be applied to the file.
+    pub fn fits(&self, file: &File) -> bool {
+        (self.end as usize) <= file.len()
     }
 
-    /// Applies the span to `string`, with `start` and `end` corresponding to byte indexes.
+    /// Returns whether the span's file matches the file.
+    pub fn matches(&self, file: &File) -> bool {
+        self.file == file.id()
+    }
+
+    /// Applies the span to `file`, with `start` and `end` corresponding to byte indexes.
     ///
     /// # Panics
-    /// Panics if `string` is shorter than the end of the span.
-    pub fn apply_bytes<'a>(&self, string: &'a str) -> &'a str {
+    /// Panics if `file` is shorter than the end of the span.
+    pub fn apply_bytes<'a>(&self, file: &'a File) -> &'a str {
         assert!(
-            self.fits(string),
-            "string is too short to have the span applied"
+            self.fits(file),
+            "file is too short to have the span applied"
         );
-        &string[(self.start as usize)..(self.end as usize)]
+        assert!(self.matches(file), "file doesn't match span's file");
+        &file[(self.start as usize)..(self.end as usize)]
     }
 }
 

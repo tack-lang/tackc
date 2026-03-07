@@ -20,7 +20,7 @@ pub fn run(data: &[u8]) {
     };
 
     // Create a borrowed file (no on-disk IO, avoids growing global intern tables).
-    let file = File::new(&src_owned, Path::new("fuzz_input.tck"));
+    let file = File::new(src_owned, Path::new("fuzz_input.tck"));
 
     // Use a heap-allocated Global for each iteration to avoid the single-call
     // restriction of `Global::new()` in debug builds.
@@ -34,7 +34,7 @@ pub fn run(data: &[u8]) {
 
     if !errors.is_empty() {
         for e in errors {
-            e.display(&file);
+            e.display(&global);
         }
         return;
     }
@@ -43,7 +43,7 @@ pub fn run(data: &[u8]) {
     // and crashes are what the fuzzer should find.
     let (prog, errors, failed) = Parser::parse(&tokens, &file, &global);
     for e in errors {
-        e.display(&file, &global);
+        e.display(&global);
     }
     prog.display(&global);
 

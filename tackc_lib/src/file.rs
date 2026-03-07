@@ -10,6 +10,7 @@ use std::{
 
 use crate::span::SpanValue;
 use crate::utils::{UnwrapExt, hash::NonZeroFxHasherBuilder};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 /// Returns a vector corresponding to the byte indexes of the start of each line.
@@ -45,21 +46,21 @@ pub type FileId = NonZeroU32;
 
 /// A file in tackc.
 #[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
-pub struct File<'a> {
-    src: Cow<'a, str>,
-    path: Cow<'a, Path>,
+pub struct File {
+    src: Cow<'static, str>,
+    path: Cow<'static, Path>,
     line_starts: Vec<SpanValue>,
     id: FileId,
 }
 
-impl<'a> File<'a> {
+impl File {
     /// Create a new [`File`] from a source and a path. To open a file at a path, use [`File::try_from`].
-    pub fn new<S: Into<Cow<'a, str>>, P: Into<Cow<'a, Path>>>(src: S, path: P) -> Self {
+    pub fn new<S: Into<Cow<'static, str>>, P: Into<Cow<'static, Path>>>(src: S, path: P) -> Self {
         let src = src.into();
         let path = path.into();
         let line_starts = line_starts(&src);
         let id = NonZeroFxHasherBuilder.hash_one_non_zero_truncated((&src, &path));
-        File {
+        Self {
             src,
             path,
             line_starts,
@@ -68,7 +69,7 @@ impl<'a> File<'a> {
     }
 }
 
-impl File<'_> {
+impl File {
     /// Get the file's source.
     pub fn src(&self) -> &str {
         &self.src
@@ -85,20 +86,23 @@ impl File<'_> {
     }
 
     /// Find the line and column numbers of an index using the given line starts.
+    ///
+    /// # Panics
+    /// This function panics if the input index is greater than the file length.
+    ///
+    /// # Returns
+    /// This function only returns [`None`] if one of the outputs would have been greater than [`SpanValue::MAX`].
     pub fn line_and_column(&self, index: SpanValue) -> Option<(SpanValue, SpanValue)> {
         let starts = &self.line_starts;
-        if starts.is_empty() {
-            return None;
-        }
 
         let src_len = self.len();
-        // reject out-of-range indexes
-        if (index as usize) > src_len {
-            return None;
-        }
+        assert!(
+            (index as usize) > src_len,
+            "index is greater than file length!"
+        );
 
         // find the last line start that is <= index
-        let line_idx = starts.iter().rposition(|&s| s <= index)?;
+        let line_idx = starts.iter().rposition(|&start| start <= index)?;
 
         let line_num: SpanValue = (line_idx + 1).try_into().ok()?;
         // `line_idx` is only as large as `starts.len()`
@@ -112,7 +116,7 @@ impl File<'_> {
     }
 }
 
-impl Deref for File<'_> {
+impl Deref for File {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -120,7 +124,7 @@ impl Deref for File<'_> {
     }
 }
 
-impl TryFrom<PathBuf> for File<'_> {
+impl TryFrom<PathBuf> for File {
     type Error = io::Error;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
@@ -129,11 +133,33 @@ impl TryFrom<PathBuf> for File<'_> {
     }
 }
 
-impl<'a> TryFrom<&'a Path> for File<'a> {
+impl TryFrom<&'static Path> for File {
     type Error = io::Error;
 
-    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+    fn try_from(path: &'static Path) -> Result<Self, Self::Error> {
         let src = fs::read_to_string(path)?;
         Ok(Self::new(src, path))
+    }
+}
+
+/// A map of [`FileId`]s to [`File`].
+#[derive(Debug, Default)]
+pub struct FileList {
+    files: FxHashMap<FileId, File>,
+}
+
+impl From<Vec<File>> for FileList {
+    fn from(value: Vec<File>) -> Self {
+        Self {
+            files: value.into_iter().map(|file| (file.id(), file)).collect(),
+        }
+    }
+}
+
+impl Deref for FileList {
+    type Target = FxHashMap<FileId, File>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.files
     }
 }

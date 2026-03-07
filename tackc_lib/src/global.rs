@@ -8,9 +8,12 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::utils::{
-    UnwrapExt,
-    hash::{IdentityDashMap, NonZeroFxHasher},
+use crate::{
+    file::FileList,
+    utils::{
+        UnwrapExt,
+        hash::{IdentityDashMap, NonZeroFxHasher},
+    },
 };
 use bumpalo::Bump;
 use serde::{Deserialize, Serialize};
@@ -114,6 +117,7 @@ pub struct Global {
     arena: Bump,
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
     interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
+    file_list: FileList,
 }
 
 impl Global {
@@ -158,7 +162,18 @@ impl Global {
             arena: Bump::new(),
             interned: IdentityDashMap::default(),
             interned_strs: IdentityDashMap::default(),
+            file_list: FileList::default(),
         })
+    }
+
+    /// Sets the file list in this [`Global`].
+    pub fn set_file_list(&mut self, file_list: FileList) {
+        self.file_list = file_list;
+    }
+
+    /// Gets the file list of this [`Global`].
+    pub const fn file_list(&self) -> &FileList {
+        &self.file_list
     }
 
     #[inline]

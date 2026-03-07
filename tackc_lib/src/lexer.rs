@@ -250,8 +250,8 @@ pub struct LexError {
 
 impl LexError {
     /// Displays this diagnostic.
-    pub fn display(&self, file: &File) -> String {
-        Diag::with_span(self.kind.to_string(), self.span).display(file)
+    pub fn display(&self, global: &Global) -> String {
+        Diag::with_span(self.kind.to_string(), self.span).display(global)
     }
 }
 
@@ -301,7 +301,7 @@ impl Display for IntegerBase {
 /// `Lexer`'s `Iterator` implementation returns `None` when `next_token` returns `Ok` with a token kind of [`TokenKind::Eof`].
 /// `Lexer` should be easily cloneable.
 pub struct Lexer<'src> {
-    src: &'src File<'src>,
+    src: &'src File,
     span: Span,
     global: &'src Global,
 }
@@ -670,7 +670,7 @@ proptest! {
     fn lexer(s in ".{1,4096}") {
         use crate::file::File;
 
-        let file = File::new(&s, Path::new("proptest.tck"));
+        let file = File::new(s, Path::new("proptest.tck"));
         let global = Global::create_heap();
         let lexer = Lexer::new(&file, &global);
         for i in lexer {
@@ -695,7 +695,7 @@ fn run_lexer_test(path: &Path) {
     use crate::file::File;
 
     let src = std::fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
-    let path = Path::new(path.file_name().unwrap()); // CHECKED(Chloe)
+    let path = Path::new(path.file_name().unwrap()).to_path_buf(); // CHECKED(Chloe)
     let file = File::new(src, path);
 
     let global = Global::create_heap();

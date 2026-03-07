@@ -3,10 +3,12 @@
 use std::{borrow::Cow, result::Result as StdResult};
 
 use crate::error::Diag;
-use crate::file::File;
+use crate::file::{File, FileId};
 use crate::global::Global;
 use crate::lexer::Token;
 use crate::span::Span;
+use crate::utils::UnwrapExt;
+
 use serde::{Deserialize, Serialize};
 
 /// A result alias that uses [`ParseError`] for its error type.
@@ -18,7 +20,7 @@ pub enum ParseError {
     /// An error for when something is expected, but a different token is found.
     Expected(Option<Cow<'static, str>>, Token),
     /// An error for when something is expected, but the EOF is found.
-    Eof(Option<Cow<'static, str>>),
+    Eof(Option<Cow<'static, str>>, FileId),
     /// An error for when the error limit is reached.
     ErrorLimit,
     /// An error for when the recursion limit is reached.
@@ -39,7 +41,7 @@ impl ParseError {
     /// Sets the 'expected' value of this error, if it's an [`Expected`](Self::Expected).
     pub fn set_expected(&mut self, new: &'static str) {
         match self {
-            Self::Expected(expected, _) | Self::Eof(expected) => {
+            Self::Expected(expected, _) | Self::Eof(expected, _) => {
                 expected.get_or_insert(new.into());
             }
             _ => {}
@@ -52,8 +54,8 @@ impl ParseError {
     }
 
     /// Creates an [`Eof`](Self::Eof) error.
-    pub fn eof(expected: Option<&'static str>) -> Self {
-        Self::Eof(expected.map(Into::into))
+    pub fn eof(expected: Option<&'static str>, file: &File) -> Self {
+        Self::Eof(expected.map(Into::into), file.id())
     }
 
     /// Creates an [`Other`](Self::Other) error.
@@ -89,8 +91,11 @@ impl ParseError {
         Self::NodeIdLimit
     }
 
-    /// Displays the given error as a string, using a file and global.
-    pub fn display(&self, file: &File, global: &Global) -> String {
+    /// Displays the given error as a string, using a file list and global.
+    ///
+    /// # Panics
+    /// This function panics if the file used to produce this error is not in `global`'s file list.
+    pub fn display(&self, global: &Global) -> String {
         match self {
             Self::Expected(expected, tok) => {
                 let expected = expected.as_ref().map_or("<ERROR>", |v| v);
@@ -98,18 +103,23 @@ impl ParseError {
                     format!("expected {expected}, found '{}'", tok.display(global)),
                     tok.span,
                 )
-                .display(file)
+                .display(global)
             }
-            Self::Eof(expected) => {
+            Self::Eof(expected, file_id) => {
+                assert!(global.file_list().contains_key(file_id), "file not found!");
+
                 let expected = expected.as_ref().map_or("<ERROR>", |v| v);
                 Diag::with_span(
                     format!("unexpected EOF, expected {expected}"),
-                    Span::eof(file),
+                    Span::eof(
+                        // We already asserted that `global.file_list()` contains `file_id` as a key.
+                        global.file_list().get(file_id).expect_unreachable(), // CHECKED(Chloe)
+                    ),
                 )
-                .display(file)
+                .display(global)
             }
             Self::Other(msg, spans) => {
-                Diag::with_spans(msg.to_string(), spans.clone()).display(file)
+                Diag::with_spans(msg.to_string(), spans.clone()).display(global)
             }
             Self::ErrorLimit => String::from("error limit reached. What are you doing?"),
             Self::RecursionLimit => String::from("recursion limit reached. What are you doing?"),

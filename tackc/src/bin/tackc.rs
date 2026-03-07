@@ -5,12 +5,11 @@ use std::path::PathBuf;
 use clap::{Parser as ClapParser, ValueEnum};
 
 use colored::Colorize;
-use rustc_hash::FxHashMap;
 
 use tackc_lib::prelude::*;
 
 use tackc_ast::AstModule;
-use tackc_file::{File, FileId};
+use tackc_file::{File, FileList};
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
@@ -52,8 +51,9 @@ fn main() {
     let mut failed = false;
     let files: Vec<File> = args
         .files
-        .iter()
-        .map(PathBuf::as_ref)
+        .into_iter()
+        .map(PathBuf::leak)
+        .map(|path| &*path)
         .map(|path| File::try_from(path).map_err(|x| (x, path)))
         .consume_reporter(|(e, path)| {
             failed = true;
@@ -63,12 +63,13 @@ fn main() {
     if failed {
         return;
     }
-    let files_map = files
-        .into_iter()
-        .map(|file| (file.id(), file))
-        .collect::<FxHashMap<FileId, File>>();
 
-    let mods = files_map
+    let file_list = FileList::from(files);
+
+    global.set_file_list(file_list);
+
+    let mods = global
+        .file_list()
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
@@ -106,7 +107,7 @@ fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Toke
         for token in &tokens {
             match token {
                 Ok(token) => eprintln!("{}", token.display(global)),
-                Err(e) => eprintln!("{}", e.display(file)),
+                Err(e) => eprintln!("{}", e.display(global)),
             }
         }
     }
@@ -120,7 +121,7 @@ fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Toke
         .collect();
 
     for e in errors {
-        eprintln!("{} {}\n", "error:".bright_red(), e.display(file));
+        eprintln!("{} {}\n", "error:".bright_red(), e.display(global));
     }
 
     tokens
@@ -142,7 +143,7 @@ fn run_parser<'src>(
     }
 
     for err in errs {
-        eprintln!("{} {}\n", "error:".bright_red(), err.display(file, global));
+        eprintln!("{} {}\n", "error:".bright_red(), err.display(global));
     }
 
     (module, failed)

@@ -7,7 +7,7 @@ use thin_vec::ThinVec;
 
 use crate::{
     ast::{AstPath, Item, NodeId},
-    file::File,
+    file::FileId,
     global::{Global, Interned},
     span::Span,
 };
@@ -28,10 +28,10 @@ pub struct LogicalModule<'src> {
     pub exported: bool,
     /// Whether or not a module duplication error occured.
     pub duplicated: bool,
+    /// The file that holds this module. In the case of a module duplication error, this is not 100% accurate.
+    pub file: Option<FileId>,
     /// The path of this module.
     pub path: LogicalPath,
-    /// The file that holds this module. In the case of a module duplication error, this is not 100% accurate.
-    pub file: Option<&'src File<'src>>,
 }
 
 impl LogicalModule<'_> {

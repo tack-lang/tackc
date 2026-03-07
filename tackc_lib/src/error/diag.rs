@@ -1,16 +1,21 @@
 use std::borrow::Cow;
 
-use crate::file::File;
 use crate::span::Span;
-use crate::utils::UnwrapExt;
+use crate::{global::Global, utils::UnwrapExt};
 use serde::{Deserialize, Serialize};
+use thin_vec::ThinVec;
 
 /// Diagnostic error struct.
 #[derive(Serialize, Deserialize)]
-pub struct Diag {
-    // If `span` is `Some`, `span.0.is_empty()` should be `false`.
-    span: Option<(Vec<Span>, Option<Cow<'static, str>>)>,
-    msg: Cow<'static, str>,
+pub enum Diag {
+    /// A [`Diag`] without a span.
+    Message(Cow<'static, str>),
+    /// A [`Diag`] with a span, but without a local message.
+    WithSpan(Cow<'static, str>, Span),
+    /// A [`Diag`] with multiple spans, but without a local message.
+    ///
+    /// The spans must be non-empty.
+    WithSpans(Cow<'static, str>, ThinVec<Span>),
 }
 
 impl Diag {
@@ -19,10 +24,7 @@ impl Diag {
     where
         S: Into<Cow<'static, str>>,
     {
-        Self {
-            span: None,
-            msg: msg.into(),
-        }
+        Self::Message(msg.into())
     }
 
     /// Create a [`Diag`] with a span, but without a local message.
@@ -30,10 +32,7 @@ impl Diag {
     where
         S: Into<Cow<'static, str>>,
     {
-        Self {
-            span: Some((vec![span], None)),
-            msg: msg.into(),
-        }
+        Self::WithSpan(msg.into(), span)
     }
 
     /// Create a [`Diag`] with multiple spans, but without a local message.
@@ -44,48 +43,39 @@ impl Diag {
     where
         S: Into<Cow<'static, str>>,
     {
-        let spans_vec: Vec<Span> = spans.into_iter().collect();
-        assert!(!spans_vec.is_empty(), "`spans` cannot be empty!");
-        Self {
-            span: Some((spans_vec, None)),
-            msg: msg.into(),
-        }
-    }
-
-    /// Create a [`Diag`] with a span, and a local message.
-    pub fn with_local_msg<S1, S2>(msg: S1, span: Span, local_msg: S2) -> Self
-    where
-        S1: Into<Cow<'static, str>>,
-        S2: Into<Cow<'static, str>>,
-    {
-        Self {
-            span: Some((vec![span], Some(local_msg.into()))),
-            msg: msg.into(),
-        }
-    }
-
-    /// Returns the first span of this diagnostic.
-    pub fn first_span(&self) -> Option<Span> {
-        debug_assert!(!self.span.as_ref()?.0.is_empty(), "invariant violated!");
-
-        Some(
-            // `self.span.0` being non-empty is an invariant.
-            *self.span.as_ref()?.0.first().expect_unreachable(), // CHECKED(Chloe)
-        )
+        let vec = spans.into_iter().collect::<ThinVec<_>>();
+        assert!(!vec.is_empty(), "`spans` is empty!");
+        Self::WithSpans(msg.into(), vec)
     }
 
     /// Returns the string representation of this `Diag`.
     ///
     /// # Panics
     /// This function panics if the file given is too short for the span inside of this `Diag`.
-    pub fn display(&self, file: &File) -> String {
-        let location = self.first_span().map_or_else(String::new, |span| {
-            assert!(span.fits(file.src()), "given file is too short!");
-            let (line, column) = file.line_and_column(span.start).expect_unreachable(); // CHECKED(Chloe)
+    pub fn display(&self, global: &Global) -> String {
+        match self {
+            Self::Message(msg) => msg.to_string(),
+            Self::WithSpan(msg, span) => {
+                let Some(file) = global.file_list().get(&span.file) else {
+                    panic!("missing file from global file list!");
+                };
+                let Some((line, column)) = file.line_and_column(span.start) else {
+                    panic!("");
+                };
+                format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
+            }
+            Self::WithSpans(msg, spans) => {
+                // This is an invariant.
+                let span = spans.first().expect_unreachable(); // CHECKED(Chloe)
 
-            format!(":{line}:{column}")
-        });
-
-        format!("{}\n  --> {}{location}", self.msg, file.path().display())
+                let Some(file) = global.file_list().get(&span.file) else {
+                    panic!("missing file from global file list!");
+                };
+                let Some((line, column)) = file.line_and_column(span.start) else {
+                    panic!("");
+                };
+                format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
+            }
+        }
     }
 }

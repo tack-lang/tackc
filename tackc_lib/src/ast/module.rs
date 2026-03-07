@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::file::File;
+use crate::file::FileId;
 use crate::global::{Global, Interned};
 use crate::span::Span;
 use rustc_hash::FxHashMap;
@@ -15,7 +15,7 @@ use crate::ast::{Item, NodeId, Symbol};
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct AstModule<'src> {
     /// The file of this module.
-    pub file: &'src File<'src>,
+    pub file: FileId,
     /// The module statement of this module.
     pub mod_stmt: Option<&'src ModStatement>,
     /// The items of this module.
