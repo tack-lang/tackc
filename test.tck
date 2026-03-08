@@ -1,6 +1,6 @@
 mod statement;
 
-exp imp tack.stdlib.T;
+exp imp .tack.stdlib.T;
 
 func main() {
     {
