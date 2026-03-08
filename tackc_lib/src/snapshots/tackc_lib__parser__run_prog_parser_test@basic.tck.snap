@@ -7,6 +7,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(
+      global: false,
       components: [
         Some(Interned(17945655703465954163, PhantomData)),
       ],
