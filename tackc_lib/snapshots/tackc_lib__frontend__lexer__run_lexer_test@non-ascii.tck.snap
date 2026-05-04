@@ -1,6 +1,5 @@
 ---
 source: tackc_lib/src/frontend/lexer.rs
-assertion_line: 704
 input_file: tackc_lib/src/frontend/lexer-tests/non-ascii.tck
 ---
 [

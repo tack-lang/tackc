@@ -1,6 +1,5 @@
 ---
 source: tackc_lib/src/frontend/parser.rs
-assertion_line: 1226
 input_file: tackc_lib/src/frontend/parser/tests/oop.tck
 ---
 (AstModule(
