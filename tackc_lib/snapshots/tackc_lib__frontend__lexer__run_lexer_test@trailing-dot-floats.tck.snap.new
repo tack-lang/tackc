@@ -1,6 +1,7 @@
 ---
-source: tackc_lib/src/lexer.rs
-input_file: tackc_lib/src/lexer-tests/trailing-dot-floats.tck
+source: tackc_lib/src/frontend/lexer.rs
+assertion_line: 704
+input_file: tackc_lib/src/frontend/lexer-tests/trailing-dot-floats.tck
 ---
 [
   Ok(Token(

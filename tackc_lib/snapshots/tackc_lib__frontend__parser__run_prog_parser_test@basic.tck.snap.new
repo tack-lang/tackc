@@ -1,6 +1,7 @@
 ---
-source: tackc_lib/src/parser.rs
-input_file: tackc_lib/src/parser/tests/basic.tck
+source: tackc_lib/src/frontend/parser.rs
+assertion_line: 1226
+input_file: tackc_lib/src/frontend/parser/tests/basic.tck
 ---
 (AstModule(
   file: 2083824584,
@@ -8,7 +9,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(17945655703465954163, PhantomData)),
+        Some(Interned(16490859229767377408, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -24,7 +25,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(16687065173729340688, PhantomData)),
+        ident: Some(Interned(15232268699963655069, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -33,7 +34,7 @@ input_file: tackc_lib/src/parser/tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(11666043647222946306, PhantomData)),
+                    kind: Ident(Interned(10211247173524369551, PhantomData)),
                     id: NodeId(
                       id: 3,
                       file: 2083824584,
