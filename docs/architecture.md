@@ -12,7 +12,7 @@ The purpose of the front-end is to take in input files, and return a raw AST of 
 The objective of SemA, short for Semantic Analysis, is to take the raw AST from the front-end, and return a decorated AST. The information that is required from the decorated AST is yet to be decided, at time of writing.
 
 ## Middle-end
-The job of the middle-end is to take the decorated AST, and turn it into optimized Clover bytecode. The specification for Clover bytecode has not yet been written.
+The job of the middle-end is to take the decorated AST, and turn it into Clover bytecode. The specification for Clover bytecode has not yet been written.
 
 ## Clover
 Clover is an engine that can analyze a bytecode format to ensure all contracts in the original Tack code are met. In addition to this, Clover can optimize the bytecode.
