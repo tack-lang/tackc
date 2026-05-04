@@ -349,7 +349,8 @@ impl Global {
             "wrong Global!"
         );
 
-        let (len, ptr) = *self.interned_slices.get(&interned.0).expect_unreachable();
+        // This was just checked.
+        let (len, ptr) = *self.interned_slices.get(&interned.0).expect_unreachable(); // CHECKED(Chloe)
         let ptr = ptr.cast::<T>();
 
         #[expect(unsafe_code)] // CHECKED(Chloe)

@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
-use crate::ast::{Item, NodeId, Symbol};
+use crate::frontend::ast::{Item, NodeId, Symbol};
 
 /// A module represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize)]

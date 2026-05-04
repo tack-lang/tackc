@@ -2,9 +2,9 @@
 
 /// The prelude for this module.
 pub mod prelude {
-    pub use super::UnwrapExt as _;
-    pub use super::iter::IteratorExt as _;
-    pub use super::tree::TreeItemExt as _;
+    pub use crate::utils::UnwrapExt as _;
+    pub use crate::utils::iter::IteratorExt as _;
+    pub use crate::utils::tree::TreeItemExt as _;
 }
 
 pub mod hash;

@@ -4,8 +4,8 @@ use std::{borrow::Cow, result::Result as StdResult};
 
 use crate::error::Diag;
 use crate::file::{File, FileId};
+use crate::frontend::lexer::Token;
 use crate::global::Global;
-use crate::lexer::Token;
 use crate::span::Span;
 use crate::utils::UnwrapExt;
 

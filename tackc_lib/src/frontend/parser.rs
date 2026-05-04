@@ -10,15 +10,15 @@ use error::{ParseError, Result};
 use nonzero::nonzero;
 use rustc_hash::FxHashMap;
 
-use crate::ast::NodeId;
 use crate::file::File;
+use crate::frontend::ast::NodeId;
+use crate::frontend::lexer::{Token, TokenKind};
 use crate::global::Global;
-use crate::lexer::{Token, TokenKind};
 use crate::span::{Span, SpanValue};
 use crate::utils::UnwrapExt;
 use thin_vec::ThinVec;
 
-use crate::{
+use crate::frontend::{
     ast::{
         AssignmentStatement, AstModule, AstPath, BinOp, Block, ConstItem, Expression,
         ExpressionKind, ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement,
@@ -1211,7 +1211,7 @@ fn run_prog_parser_test(path: &Path) {
     use std::fs;
 
     use crate::file::File;
-    use crate::lexer::Lexer;
+    use crate::frontend::lexer::Lexer;
 
     let src = fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
     let file = File::new(src, Path::new("testing.tck"));

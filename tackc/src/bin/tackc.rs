@@ -8,12 +8,13 @@ use colored::Colorize;
 
 use tackc_lib::prelude::*;
 
-use tackc_ast::AstModule;
-use tackc_file::{File, FileList};
-use tackc_global::Global;
-use tackc_lexer::Lexer;
-use tackc_lexer::Token;
-use tackc_parser::Parser;
+use tackc_lib::file::{File, FileList};
+use tackc_lib::frontend::{
+    ast::AstModule,
+    lexer::{Lexer, Token},
+    parser::Parser,
+};
+use tackc_lib::global::Global;
 
 #[derive(ClapParser)]
 struct Args {

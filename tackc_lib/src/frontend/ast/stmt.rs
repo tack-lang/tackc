@@ -1,10 +1,10 @@
 //! Statements in tackc.
 
+use crate::frontend::lexer::Token;
 use crate::global::{Global, Interned};
-use crate::lexer::Token;
 use serde::Serialize;
 
-use crate::ast::{Expression, Item, NodeId, Symbol};
+use crate::frontend::ast::{Expression, Item, NodeId, Symbol};
 
 /// A statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]

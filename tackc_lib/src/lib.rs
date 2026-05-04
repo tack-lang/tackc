@@ -12,26 +12,15 @@ macro_rules! setup_insta_test {
     };
 }
 
-pub mod ast;
 pub mod error;
 pub mod file;
+pub mod frontend;
 pub mod global;
-pub mod lexer;
-pub mod parser;
 pub mod span;
 pub mod utils;
 
-/// Combines the preludes of all the other modules, along with some re-exports.
+/// Combines the preludes of all the other modules.
 pub mod prelude {
-    pub use super::error::prelude::*;
-    pub use super::utils::prelude::*;
-
-    pub use super::ast as tackc_ast;
-    pub use super::error as tackc_error;
-    pub use super::file as tackc_file;
-    pub use super::global as tackc_global;
-    pub use super::lexer as tackc_lexer;
-    pub use super::parser as tackc_parser;
-    pub use super::span as tackc_span;
-    pub use super::utils as tackc_utils;
+    pub use crate::error::prelude::*;
+    pub use crate::utils::prelude::*;
 }

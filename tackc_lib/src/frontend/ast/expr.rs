@@ -6,7 +6,7 @@ use crate::global::{Global, Interned};
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
-use super::{Block, NodeId, Symbol};
+use crate::frontend::ast::{Block, NodeId, Symbol};
 
 /// An expression in parsed form.
 #[derive(Debug, PartialEq, Eq, Serialize)]

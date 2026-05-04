@@ -6,8 +6,8 @@ use std::hash::Hash;
 use std::num::NonZeroU32;
 
 use crate::file::FileId;
+use crate::frontend::lexer::Token;
 use crate::global::{Global, Interned};
-use crate::lexer::Token;
 use crate::span::Span;
 use serde::{Deserialize, Serialize};
 

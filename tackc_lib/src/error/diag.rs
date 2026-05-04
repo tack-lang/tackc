@@ -51,30 +51,29 @@ impl Diag {
     /// Returns the string representation of this `Diag`.
     ///
     /// # Panics
-    /// This function panics if the file given is too short for the span inside of this `Diag`.
+    /// This function panics if the file given is too short for the span inside of this `Diag`, or if the global given doesn't contain the file inside of this `Diag`.
     pub fn display(&self, global: &Global) -> String {
         match self {
             Self::Message(msg) => msg.to_string(),
             Self::WithSpan(msg, span) => {
-                let Some(file) = global.file_list().get(&span.file) else {
-                    panic!("missing file from global file list!");
-                };
-                let Some((line, column)) = file.line_and_column(span.start) else {
-                    panic!("");
-                };
-                format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
+                assert!(
+                    global.file_list().contains_key(&span.file),
+                    "Global doesn't contain file!"
+                );
+
+                // This was just checked for.
+                let file = global.file_list().get(&span.file).expect_unreachable(); // CHECKED(Chloe)
+                if let Some((line, column)) = file.line_and_column(span.start) {
+                    format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
+                } else {
+                    format!("{msg}\n  --> {}:<UNKNOWN>:<UNKNOWN>", file.path().display())
+                }
             }
             Self::WithSpans(msg, spans) => {
                 // This is an invariant.
                 let span = spans.first().expect_unreachable(); // CHECKED(Chloe)
 
-                let Some(file) = global.file_list().get(&span.file) else {
-                    panic!("missing file from global file list!");
-                };
-                let Some((line, column)) = file.line_and_column(span.start) else {
-                    panic!("");
-                };
-                format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
+                Self::WithSpan(Cow::Owned(msg.to_string()), *span).display(global)
             }
         }
     }

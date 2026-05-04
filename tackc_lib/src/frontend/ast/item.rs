@@ -10,7 +10,7 @@ use crate::{
 use serde::Serialize;
 use thin_vec::ThinVec;
 
-use crate::ast::{AstPath, Block, Expression, NodeId, Symbol};
+use crate::frontend::ast::{AstPath, Block, Expression, NodeId, Symbol};
 
 /// An item.
 #[derive(Debug, PartialEq, Eq, Serialize)]

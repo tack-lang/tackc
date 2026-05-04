@@ -6,7 +6,7 @@ use crate::global::Global;
 use serde::Serialize;
 use thin_vec::ThinVec;
 
-use crate::ast::{Expression, NodeId, Statement};
+use crate::frontend::ast::{Expression, NodeId, Statement};
 
 /// Code blocks.
 #[derive(Debug, PartialEq, Eq, Serialize)]

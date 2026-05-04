@@ -2,7 +2,7 @@
 
 /// The prelude for this module.
 pub mod prelude {
-    pub use super::iter::IteratorExt as _;
+    pub use crate::error::iter::IteratorExt as _;
 }
 
 /// Iterator adapters for errors.

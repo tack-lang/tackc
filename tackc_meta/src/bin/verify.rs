@@ -14,7 +14,7 @@ use std::{
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use ignore::{DirEntry, WalkBuilder, WalkState};
 
-const DANGEROUS_PATTERNS: [(&str, &str); 9] = [
+const DANGEROUS_PATTERNS: [(&str, &str); 10] = [
     (".expect_unreachable()", "expect_unreachable()"),
     ("[expect", "#[expect]"),
     (".unwrap(", "unwrap()"),
@@ -24,6 +24,7 @@ const DANGEROUS_PATTERNS: [(&str, &str); 9] = [
     ("panic!", "panic!()"),
     ("unreachable!", "unreachable!()"),
     ("unimplemented!", "unimplemented!()"),
+    ("super", "super::*"),
 ];
 
 fn main() -> io::Result<()> {
@@ -42,7 +43,7 @@ fn main() -> io::Result<()> {
     );
     let error = Arc::new(AtomicBool::new(false));
     let contributors = Arc::new(Mutex::new(vec![]));
-    let ignore = WalkBuilder::new("crates").build_parallel();
+    let ignore = WalkBuilder::new("tackc_lib").build_parallel();
 
     ignore.run(|| {
         Box::new({
@@ -61,12 +62,6 @@ fn main() -> io::Result<()> {
                         }
 
                         if e.path().extension().is_some_and(|ext| ext != "rs") {
-                            break 'exit;
-                        }
-                        if e.path().starts_with("crates/tackc_meta") {
-                            break 'exit;
-                        }
-                        if e.path().starts_with("crates/tackc") {
                             break 'exit;
                         }
 
@@ -105,11 +100,7 @@ fn run_line(
 
         let Some(idx) = line.find("CHECKED") else {
             error.store(true, Ordering::SeqCst);
-            eprintln!(
-                "{}:{}: Contains {disp}, missing CHECKED",
-                dir.path().display(),
-                i + 1,
-            );
+            eprintln!("{}:{}: Contains {disp}", dir.path().display(), i + 1,);
             continue;
         };
 
