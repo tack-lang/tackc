@@ -11,7 +11,6 @@ use tackc_file::File;
 use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_parser::Parser;
-use tackc_sema::resolve_mods;
 
 /// Run the main fuzzing loop.
 pub fn run(data: &[u8]) {
@@ -48,13 +47,7 @@ pub fn run(data: &[u8]) {
     prog.display(&global);
 
     // If the parser utterly fails, we probably shouldn't continue.
-    if failed {
+    /*if failed {
         return;
-    }
-
-    let (mods, errors) = resolve_mods(vec![prog], &global);
-    mods.display(&global);
-    for e in errors {
-        e.display(&global);
-    }
+    }*/
 }
