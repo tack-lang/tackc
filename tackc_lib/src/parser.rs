@@ -419,8 +419,6 @@ impl<'src, 'a> Parser<'src, 'a> {
     fn path(&mut self, recursion: u32) -> Result<AstPath> {
         self.check_failed(recursion)?;
 
-        let global = self.eat(&[TokenKind::Dot]).is_some();
-
         let mut components = ThinVec::new();
         let ident = self.expect_kinds(&[TokenKind::Ident])?;
         components.push(Some(self.global.intern(Symbol::new(ident, self.file.id()))));
@@ -447,7 +445,6 @@ impl<'src, 'a> Parser<'src, 'a> {
             self.file,
         );
         Ok(AstPath {
-            global,
             components,
             id: self.prepare_node(span)?,
         })

@@ -72,8 +72,6 @@ impl ModStatement {
 /// A path represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstPath {
-    /// Whether or not this path is global.
-    pub global: bool,
     /// The components of the path.
     pub components: ThinVec<Option<Interned<Symbol>>>,
     /// The ID of this AST node.
