@@ -41,6 +41,8 @@ The previous section mentioned a tool called `cargo verify`. This is a tool that
   - `panic!()`
   - `unreachable!()`
   - `unimplemented!()`
+- `super::*` paths
+  - Paths should not be relative to the module they are used in.
 
 ## Clippy
 
