@@ -40,7 +40,7 @@ pub fn run(data: &[u8]) {
 
     // Try to parse an expression; we don't care about the result here — panics
     // and crashes are what the fuzzer should find.
-    let (prog, errors, failed) = Parser::parse(&tokens, &file, &global);
+    let (prog, errors, _failed) = Parser::parse(&tokens, &file, &global);
     for e in errors {
         e.display(&global);
     }
