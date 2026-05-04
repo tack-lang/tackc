@@ -14,7 +14,6 @@ use tackc_global::Global;
 use tackc_lexer::Lexer;
 use tackc_lexer::Token;
 use tackc_parser::Parser;
-use tackc_sema::{resolve_globals, resolve_imports, resolve_mods};
 
 #[derive(ClapParser)]
 struct Args {
@@ -68,7 +67,7 @@ fn main() {
 
     global.set_file_list(file_list);
 
-    let mods = global
+    let _mods = global
         .file_list()
         .values()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
@@ -81,25 +80,9 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    if failed {
+    /*if failed {
         return;
-    }
-
-    let (mods, errors) = resolve_mods(mods, global);
-    for e in errors {
-        eprintln!("{} {}", "error:".bright_red(), e.display(global));
-    }
-    println!("{}", mods.display(global));
-    let mut bindings = resolve_globals(&mods, global);
-    println!("{}", bindings.display(global));
-
-    println!();
-
-    let errors = resolve_imports(&mut bindings, global);
-    for e in errors {
-        eprintln!("{} {}", "error:".bright_red(), e.display(global));
-    }
-    println!("{}", bindings.display(global));
+    }*/
 }
 
 fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
