@@ -8,6 +8,7 @@ macro_rules! setup_insta_test {
         let mut settings = Settings::clone_current();
         settings.set_sort_maps(true);
         settings.set_omit_expression(true);
+        settings.set_snapshot_path(concat!(env!("CARGO_MANIFEST_DIR"), "/snapshots"));
         let _guard = settings.bind_to_scope();
     };
 }
