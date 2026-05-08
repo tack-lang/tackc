@@ -684,8 +684,8 @@ insta_test!(lexer_test_glob, "lexer-tests/*.tck", run_lexer_test);
 
 #[cfg(test)]
 fn run_lexer_test(src: String) {
-    use std::path::Path;
     use crate::file::File;
+    use std::path::Path;
 
     let file = File::new(src, Path::new("testing.tck"));
 
