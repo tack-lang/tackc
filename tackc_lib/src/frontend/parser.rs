@@ -68,8 +68,7 @@ pub struct Parser<'src, 'a> {
 }
 
 impl<'src, 'a> Parser<'src, 'a> {
-    /// Creates a new parser.
-    pub fn new(tokens: &'a [Token], file: &'src File, global: &'src Global) -> Self {
+    fn new(tokens: &'a [Token], file: &'src File, global: &'src Global) -> Self {
         Parser {
             file,
             tokens,
@@ -315,6 +314,10 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 
     /// Parses an program from `tokens` and `file`, and returns all errors.
+    ///
+    /// # Returns
+    /// This function returns three things. An [`AstModule`], a [`Vec`] of [`ParseErrors`](ParseError), and a bool to represent whether the parser "failed" or not.
+    /// If the parser failed, that means it reached an error that it couldn't recover from. This is rare, and should probably halt execution.
     pub fn parse(
         tokens: &'a [Token],
         file: &'src File,
