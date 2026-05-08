@@ -6,11 +6,12 @@ use std::collections::HashMap;
 
 use std::{
     hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
+    marker::PhantomData,
     num::{NonZeroU32, NonZeroU64},
 };
 
 use dashmap::DashMap;
-use rustc_hash::FxHasher;
+use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::utils::UnwrapExt;
 
@@ -143,3 +144,61 @@ impl Hasher for IdentityHasher {
 pub type IdentityHashMap<K, V> = HashMap<K, V, BuildHasherDefault<IdentityHasher>>;
 /// An alias for a [`DashMap`] that uses [`IdentityHasher`].
 pub type IdentityDashMap<K, V> = DashMap<K, V, BuildHasherDefault<IdentityHasher>>;
+
+/// An index into a [`IndexedSet`].
+pub struct HashIndex<V>(u64, PhantomData<V>);
+
+impl<V> Clone for HashIndex<V> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<V> Copy for HashIndex<V> {}
+
+impl<V> HashIndex<V> {
+    /// Returns a new [`HashIndex`] using `value` as the inner value.
+    pub const fn new(value: u64) -> Self {
+        Self(value, PhantomData)
+    }
+
+    /// Gets the inner value of this [`HashIndex`].
+    pub const fn get(&self) -> u64 {
+        self.0
+    }
+}
+
+/// A wrapper for a [`HashMap`] that can be indexed directly by an item's hash.
+pub struct IndexedSet<V> {
+    inner: FxHashMap<u64, V>,
+}
+
+impl<V: Hash> Default for IndexedSet<V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<V: Hash> IndexedSet<V> {
+    /// Creates a new empty [`IndexedSet`].
+    pub fn new() -> Self {
+        Self {
+            inner: FxHashMap::default(),
+        }
+    }
+
+    /// Inserts a value into the set, and returns its index.
+    pub fn insert(&mut self, value: V) -> HashIndex<V> {
+        let hasher = self.inner.hasher();
+        let hash = HashIndex::<V>::new(hasher.hash_one(&value));
+
+        self.inner.insert(hash.get(), value);
+
+        hash
+    }
+
+    /// Returns a value from the set, provided its index.
+    pub fn get(&self, hash: HashIndex<V>) -> Option<&V> {
+        self.inner.get(&hash.get())
+    }
+}
