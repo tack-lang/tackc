@@ -20,7 +20,8 @@ macro_rules! insta_test {
             setup_insta_test!();
 
             insta::glob!($glob, |path| {
-                let input = std::fs::read_to_string(path).unwrap();
+                // This is a test, so this would be a panic-able error.
+                let input = std::fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
                 $func(input);
             });
         }
