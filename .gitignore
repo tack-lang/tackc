@@ -3,3 +3,5 @@ target
 
 corpus
 artifacts
+
+mutants.out
