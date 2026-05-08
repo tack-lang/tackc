@@ -2,6 +2,7 @@
 
 use std::{
     borrow::Cow,
+    collections::hash_map::Values,
     fs, io,
     num::NonZeroU32,
     ops::Deref,
@@ -134,7 +135,7 @@ impl Deref for File {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        &self.src
+        self.src()
     }
 }
 
@@ -162,18 +163,60 @@ pub struct FileList {
     files: FxHashMap<FileId, File>,
 }
 
-impl From<Vec<File>> for FileList {
-    fn from(value: Vec<File>) -> Self {
-        Self {
-            files: value.into_iter().map(|file| (file.id(), file)).collect(),
-        }
+impl FileList {
+    /// Creates a new [`FileList`].
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Adds a file to the list, and returns a reference to it.
+    pub fn add(&mut self, file: File) {
+        let id = file.id();
+        self.files.insert(id, file);
+    }
+
+    /// Gets a file from the list.
+    pub fn get(&self, file_id: FileId) -> Option<&File> {
+        self.files.get(&file_id)
+    }
+
+    /// Checks if a file is contained in the list.
+    pub fn contains(&self, file_id: FileId) -> bool {
+        self.files.contains_key(&file_id)
+    }
+
+    /// Creates an iterator from the list.
+    pub fn iter(&self) -> Values<'_, FileId, File> {
+        self.files.values()
+    }
+
+    /// Creates a [`FileList`] from a single [`File`].
+    pub fn from_one(file: File) -> Self {
+        let mut file_list = Self::new();
+        file_list.add(file);
+        file_list
     }
 }
 
-impl Deref for FileList {
-    type Target = FxHashMap<FileId, File>;
+impl From<Vec<File>> for FileList {
+    fn from(value: Vec<File>) -> Self {
+        value.into_iter().collect()
+    }
+}
 
-    fn deref(&self) -> &Self::Target {
-        &self.files
+impl<'a> IntoIterator for &'a FileList {
+    type Item = &'a File;
+    type IntoIter = Values<'a, FileId, File>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl FromIterator<File> for FileList {
+    fn from_iter<T: IntoIterator<Item = File>>(iter: T) -> Self {
+        Self {
+            files: iter.into_iter().map(|file| (file.id(), file)).collect(),
+        }
     }
 }

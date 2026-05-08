@@ -70,7 +70,7 @@ fn main() {
 
     let _mods = global
         .file_list()
-        .values()
+        .iter()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
         .map(|(tokens, file)| run_parser(&tokens, file, global, &debug_modes))
         .map(|(module, error)| {

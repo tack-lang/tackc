@@ -57,12 +57,12 @@ impl Diag {
             Self::Message(msg) => msg.to_string(),
             Self::WithSpan(msg, span) => {
                 assert!(
-                    global.file_list().contains_key(&span.file),
+                    global.file_list().contains(span.file),
                     "Global doesn't contain file!"
                 );
 
                 // This was just checked for.
-                let file = global.file_list().get(&span.file).expect_unreachable(); // CHECKED(Chloe)
+                let file = global.file_list().get(span.file).expect_unreachable(); // CHECKED(Chloe)
                 if let Some((line, column)) = file.line_and_column(span.start) {
                     format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
                 } else {

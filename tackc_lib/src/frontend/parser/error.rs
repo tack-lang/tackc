@@ -106,14 +106,14 @@ impl ParseError {
                 .display(global)
             }
             Self::Eof(expected, file_id) => {
-                assert!(global.file_list().contains_key(file_id), "file not found!");
+                assert!(global.file_list().contains(*file_id), "file not found!");
 
                 let expected = expected.as_ref().map_or("<ERROR>", |v| v);
                 Diag::with_span(
                     format!("unexpected EOF, expected {expected}"),
                     Span::eof(
                         // We already asserted that `global.file_list()` contains `file_id` as a key.
-                        global.file_list().get(file_id).expect_unreachable(), // CHECKED(Chloe)
+                        global.file_list().get(*file_id).expect_unreachable(), // CHECKED(Chloe)
                     ),
                 )
                 .display(global)
