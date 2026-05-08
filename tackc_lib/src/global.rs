@@ -1,12 +1,7 @@
 //! The crate containing [`Global`], tackc's global context.
 
 use std::{
-    any::{Any, type_name},
-    fmt::Debug,
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-    num::NonZeroU64,
-    slice,
+    any::{Any, type_name}, fmt::Debug, hash::{Hash, Hasher}, marker::PhantomData, num::NonZeroU64, slice, sync::atomic::{AtomicBool, Ordering}
 };
 
 use crate::{
@@ -132,6 +127,8 @@ pub struct Global {
     file_list: FileList,
 }
 
+static GLOBAL_EXISTS: AtomicBool = AtomicBool::new(false);
+
 impl Global {
     /// Allocates a new value using the inner arena.
     pub fn alloc_arena<T>(&self, val: T) -> &mut T {
@@ -150,7 +147,7 @@ impl Global {
     ///
     /// # Panics
     /// If `debug_assertions` is enabled, an extra check will be added.
-    /// If this function is called more than once, that function will panic.
+    /// If this function is called more than once, that check will fail, and the function will panic.
     pub fn new() -> &'static mut Self {
         #[cfg(debug_assertions)]
         {
@@ -159,7 +156,7 @@ impl Global {
             static USED: AtomicBool = AtomicBool::new(false);
             assert!(
                 !USED.swap(true, Ordering::AcqRel),
-                "`Global::new` should only be called once! If multiple `Global`s are needed, use `Global::create_heap()`"
+                "`Global::new` should only be called once! If multiple `Global`s are needed in one program, use `Global::create_heap()`"
             );
         }
 
@@ -168,7 +165,20 @@ impl Global {
 
     /// Creates a new `Global` on the heap. This `Global` is not 'static, in contrast to the `Global` created by [`Global::new`].
     /// If your program will only use one `Global`, and for the entire lifetime, use [`Global::new`].
+    /// 
+    /// # Panics
+    /// If a `Global` already exists, this function will panic.
     pub fn create_heap() -> Box<Self> {
+        #[cfg(debug_assertions)]
+        {
+            use std::sync::atomic::Ordering;
+
+            assert!(
+                !GLOBAL_EXISTS.swap(true, Ordering::AcqRel),
+                "Only one `Global` should exist at once!"
+            );
+        }
+
         Box::new(Self {
             current_arena: Bump::new(),
             arena: Bump::new(),
@@ -388,5 +398,11 @@ impl Global {
     /// Allocates a slice where `T: Clone` within the arena of this [`Global`] without interning it.
     pub fn alloc_slice_clone<T: Clone>(&self, src: &[T]) -> &mut [T] {
         self.arena.alloc_slice_clone(src)
+    }
+}
+
+impl Drop for Global {
+    fn drop(&mut self) {
+        GLOBAL_EXISTS.store(false, Ordering::Release);
     }
 }
