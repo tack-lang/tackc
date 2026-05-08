@@ -35,9 +35,13 @@ fn main() {
     let lock = fs::read("Cargo.lock").expect("Failed to read Cargo.lock");
     hasher.update(&lock);
 
+    let array = hasher.finalize();
+    let slice = &array.as_slice()[0..8];
+    let hash = u64::from_be_bytes(slice.try_into().unwrap());
+
     // --- Compute final hash ---
-    let hash = format!("{:x}", hasher.finalize());
-    let short = &hash[..12]; // 12-hex-char fingerprint
+    let hash_str = format!("{hash:x}");
+    let short = &hash_str[..12]; // 12-hex-char fingerprint
 
     println!("{short}");
 }
