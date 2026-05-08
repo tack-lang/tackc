@@ -1,0 +1,5 @@
+mod tests;
+
+func main() {
+    println("Hello, world!");
+}

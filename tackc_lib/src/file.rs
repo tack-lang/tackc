@@ -41,6 +41,20 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
     out
 }
 
+insta_test!(
+    line_starts_test,
+    "line-starts-tests/*",
+    run_line_starts_test
+);
+
+#[cfg(test)]
+// Since this is used in insta_test!, we can't change the signature.
+#[expect(clippy::needless_pass_by_value)] // CHECKED(Chloe)
+fn run_line_starts_test(str: String) {
+    let starts = line_starts(&str);
+    insta::assert_ron_snapshot!(starts);
+}
+
 /// The ID that files use to identify themselves.
 pub type FileId = NonZeroU32;
 

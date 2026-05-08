@@ -1,0 +1,12 @@
+---
+source: tackc_lib/src/file.rs
+input_file: tackc_lib/src/line-starts-tests/crlf.tck
+---
+[
+  0,
+  11,
+  13,
+  28,
+  59,
+  62,
+]
