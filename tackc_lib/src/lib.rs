@@ -40,3 +40,51 @@ pub mod prelude {
     pub use crate::error::prelude::*;
     pub use crate::utils::prelude::*;
 }
+
+insta_test!(ui_test, "ui-tests/*.tck", run_ui_test);
+
+#[cfg(test)]
+fn run_ui_test(src: String) {
+    use std::fmt::Write;
+    use std::path::Path;
+
+    use insta::assert_snapshot;
+
+    use crate::{
+        error::iter::IteratorExt,
+        file::{File, FileList},
+        frontend::{lexer::Lexer, parser::Parser},
+        global::Global,
+    };
+
+    let file = File::new(src, Path::new("testing.tck"));
+    let id = file.id();
+    let mut file_list = FileList::new();
+    file_list.add(file);
+
+    let mut global = Global::create_heap();
+    global.set_file_list(file_list);
+
+    // We added this file.
+    let file = global.file_list().get(id).unwrap(); // CHECKED(Chloe)
+
+    let lexer = Lexer::new(file, &global);
+    let mut lex_errors = Vec::new();
+    let tokens = lexer
+        .consume_reporter(|e| lex_errors.push(e))
+        .collect::<Vec<_>>();
+
+    let mut stdout = String::new();
+
+    for e in lex_errors {
+        _ = writeln!(stdout, "{}", e.display(&global));
+    }
+
+    let (_, parse_errors, _) = Parser::parse(&tokens, file, &global);
+
+    for e in parse_errors {
+        _ = writeln!(stdout, "{}", e.display(&global));
+    }
+
+    assert_snapshot!(stdout);
+}

@@ -1,0 +1,10 @@
+---
+source: tackc_lib/src/lib.rs
+input_file: tackc_lib/src/ui-tests/basic.tck
+---
+unterminated string
+  --> testing.tck:4:26
+expected ';', found 'fun'
+  --> testing.tck:3:1
+expected item, found 'fun'
+  --> testing.tck:3:1
