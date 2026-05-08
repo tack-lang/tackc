@@ -1195,25 +1195,17 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 }
 
-#[test]
-fn parser_test_glob() {
-    setup_insta_test!();
-
-    insta::glob!("parser/tests/*.tck", run_prog_parser_test);
-}
+insta_test!(parser_test_glob, "parser-tests/*.tck", run_parser_test);
 
 #[cfg(test)]
 use std::path::Path;
 
 #[cfg(test)]
 // No `unwrap`s in this function are documented, because all of them sidestep errors.
-fn run_prog_parser_test(path: &Path) {
-    use std::fs;
-
+fn run_parser_test(src: String) {
     use crate::file::File;
     use crate::frontend::lexer::Lexer;
 
-    let src = fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
     let file = File::new(src, Path::new("testing.tck"));
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);

@@ -1,6 +1,6 @@
 ---
 source: tackc_lib/src/frontend/parser.rs
-input_file: tackc_lib/src/frontend/parser/tests/oop.tck
+input_file: tackc_lib/src/frontend/parser-tests/oop.tck
 ---
 (AstModule(
   file: 1888024003,

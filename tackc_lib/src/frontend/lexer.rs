@@ -668,6 +668,7 @@ impl Clone for Lexer<'_> {
 proptest! {
     #[test]
     fn lexer(s in ".{1,4096}") {
+        use std::path::Path;
         use crate::file::File;
 
         let file = File::new(s, Path::new("proptest.tck"));
@@ -679,24 +680,14 @@ proptest! {
     }
 }
 
-#[test]
-fn lexer_test_glob() {
-    setup_insta_test!();
-
-    insta::glob!("lexer-tests/*.tck", run_lexer_test);
-}
+insta_test!(lexer_test_glob, "lexer-tests/*.tck", run_lexer_test);
 
 #[cfg(test)]
-use std::path::Path;
-
-// No `unwrap`s in this function are documented, because all of them sidestep errors.
-#[cfg(test)]
-fn run_lexer_test(path: &Path) {
+fn run_lexer_test(src: String) {
+    use std::path::Path;
     use crate::file::File;
 
-    let src = std::fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
-    let path = Path::new(path.file_name().unwrap()).to_path_buf(); // CHECKED(Chloe)
-    let file = File::new(src, path);
+    let file = File::new(src, Path::new("testing.tck"));
 
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);

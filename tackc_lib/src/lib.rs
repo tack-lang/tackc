@@ -13,6 +13,20 @@ macro_rules! setup_insta_test {
     };
 }
 
+macro_rules! insta_test {
+    ($name:ident, $glob:expr, $func:expr) => {
+        #[test]
+        fn $name() {
+            setup_insta_test!();
+
+            insta::glob!($glob, |path| {
+                let input = std::fs::read_to_string(path).unwrap();
+                $func(input);
+            });
+        }
+    };
+}
+
 pub mod error;
 pub mod file;
 pub mod frontend;

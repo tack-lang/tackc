@@ -7,7 +7,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/non-ascii.tck
     span: Span(
       start: 0,
       end: 50,
-      file: 3117196086,
+      file: 2120823150,
     ),
     kind: StringLit,
     lexeme: Interned(11630305010289892668, PhantomData),
@@ -16,7 +16,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/non-ascii.tck
     span: Span(
       start: 52,
       end: 109,
-      file: 3117196086,
+      file: 2120823150,
     ),
     kind: StringLit,
     lexeme: Interned(9613824617613772305, PhantomData),
