@@ -686,7 +686,7 @@ proptest! {
     }
 }
 
-insta_test!(lexer_test_glob, "lexer-tests/*.tck", run_lexer_test);
+insta_test!(lexer_test, "lexer-tests/*.tck", run_lexer_test);
 
 #[cfg(test)]
 fn run_lexer_test(src: String) {

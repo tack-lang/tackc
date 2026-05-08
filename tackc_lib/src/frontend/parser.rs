@@ -1198,7 +1198,7 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 }
 
-insta_test!(parser_test_glob, "parser-tests/*.tck", run_parser_test);
+insta_test!(parser_test, "parser-tests/*.tck", run_parser_test);
 
 #[cfg(test)]
 use std::path::Path;
