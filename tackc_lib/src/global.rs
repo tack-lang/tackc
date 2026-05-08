@@ -1,7 +1,12 @@
 //! The crate containing [`Global`], tackc's global context.
 
 use std::{
-    any::{Any, type_name}, fmt::Debug, hash::{Hash, Hasher}, marker::PhantomData, num::NonZeroU64, slice, sync::atomic::{AtomicBool, Ordering}
+    any::{Any, type_name},
+    fmt::Debug,
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+    num::NonZeroU64,
+    slice,
 };
 
 use crate::{
@@ -127,6 +132,9 @@ pub struct Global {
     file_list: FileList,
 }
 
+#[cfg(all(debug_assertions, not(test)))]
+use std::sync::atomic::AtomicBool;
+#[cfg(all(debug_assertions, not(test)))]
 static GLOBAL_EXISTS: AtomicBool = AtomicBool::new(false);
 
 impl Global {
@@ -149,7 +157,7 @@ impl Global {
     /// If `debug_assertions` is enabled, an extra check will be added.
     /// If this function is called more than once, that check will fail, and the function will panic.
     pub fn new() -> &'static mut Self {
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(test)))]
         {
             use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -165,11 +173,11 @@ impl Global {
 
     /// Creates a new `Global` on the heap. This `Global` is not 'static, in contrast to the `Global` created by [`Global::new`].
     /// If your program will only use one `Global`, and for the entire lifetime, use [`Global::new`].
-    /// 
+    ///
     /// # Panics
     /// If a `Global` already exists, this function will panic.
     pub fn create_heap() -> Box<Self> {
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(test)))]
         {
             use std::sync::atomic::Ordering;
 
@@ -401,8 +409,11 @@ impl Global {
     }
 }
 
+#[cfg(all(debug_assertions, not(test)))]
 impl Drop for Global {
     fn drop(&mut self) {
+        use std::sync::atomic::Ordering;
+
         GLOBAL_EXISTS.store(false, Ordering::Release);
     }
 }
