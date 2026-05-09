@@ -1,0 +1,9 @@
+mod tests.recovery
+
+func main() {
+    let s 5;
+
+    let b = s + ;
+
+    g(;
+}

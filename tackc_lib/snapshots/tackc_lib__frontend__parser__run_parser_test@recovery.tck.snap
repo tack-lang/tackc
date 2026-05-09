@@ -1,0 +1,248 @@
+---
+source: tackc_lib/src/frontend/parser.rs
+input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
+---
+(AstModule(
+  file: 1567630016,
+  mod_stmt: Some(ModStatement(
+    exported: false,
+    path: Some(AstPath(
+      components: [
+        Some(Interned(1505187776169212761, PhantomData)),
+        Some(Interned(7646316121219564319, PhantomData)),
+      ],
+      id: NodeId(
+        id: 1,
+        file: 1567630016,
+      ),
+    )),
+    id: NodeId(
+      id: 2,
+      file: 1567630016,
+    ),
+  )),
+  items: [
+    Some(Item(
+      kind: FuncItem(FuncItem(
+        exported: false,
+        ident: Some(Interned(11848305413092314288, PhantomData)),
+        params: [],
+        ret_type: None,
+        block: Some(Block(
+          stmts: [
+            Some(Statement(
+              kind: LetStatement(LetStatement(
+                ty: None,
+                expr: None,
+                ident: Some(Interned(5626926699492751661, PhantomData)),
+              )),
+              id: NodeId(
+                id: 3,
+                file: 1567630016,
+              ),
+            )),
+            Some(Statement(
+              kind: ExpressionStatement(ExpressionStatement(
+                expr: Expression(
+                  kind: IntLit(Interned(7161555357105607078, PhantomData)),
+                  id: NodeId(
+                    id: 4,
+                    file: 1567630016,
+                  ),
+                ),
+                semi: Some(Some(Token(
+                  span: Span(
+                    start: 45,
+                    end: 46,
+                    file: 1567630016,
+                  ),
+                  kind: Semicolon,
+                  lexeme: Interned(3447890864966814147, PhantomData),
+                ))),
+              )),
+              id: NodeId(
+                id: 5,
+                file: 1567630016,
+              ),
+            )),
+            Some(Statement(
+              kind: LetStatement(LetStatement(
+                ty: None,
+                expr: Some(None),
+                ident: Some(Interned(4206715840727021696, PhantomData)),
+              )),
+              id: NodeId(
+                id: 6,
+                file: 1567630016,
+              ),
+            )),
+            Some(Statement(
+              kind: ExpressionStatement(ExpressionStatement(
+                expr: Expression(
+                  kind: Call(Expression(
+                    kind: Ident(Interned(17842180294220602929, PhantomData)),
+                    id: NodeId(
+                      id: 7,
+                      file: 1567630016,
+                    ),
+                  ), [
+                    None,
+                  ]),
+                  id: NodeId(
+                    id: 8,
+                    file: 1567630016,
+                  ),
+                ),
+                semi: Some(None),
+              )),
+              id: NodeId(
+                id: 9,
+                file: 1567630016,
+              ),
+            )),
+          ],
+          expr: None,
+          id: NodeId(
+            id: 10,
+            file: 1567630016,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 11,
+        file: 1567630016,
+      ),
+    )),
+  ],
+  spans: {
+    NodeId(
+      id: 1,
+      file: 1567630016,
+    ): Span(
+      start: 4,
+      end: 18,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 2,
+      file: 1567630016,
+    ): Span(
+      start: 0,
+      end: 20,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 3,
+      file: 1567630016,
+    ): Span(
+      start: 38,
+      end: 44,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 4,
+      file: 1567630016,
+    ): Span(
+      start: 44,
+      end: 45,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 5,
+      file: 1567630016,
+    ): Span(
+      start: 44,
+      end: 46,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 6,
+      file: 1567630016,
+    ): Span(
+      start: 52,
+      end: 65,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 7,
+      file: 1567630016,
+    ): Span(
+      start: 71,
+      end: 72,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 8,
+      file: 1567630016,
+    ): Span(
+      start: 71,
+      end: 76,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 9,
+      file: 1567630016,
+    ): Span(
+      start: 71,
+      end: 76,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 10,
+      file: 1567630016,
+    ): Span(
+      start: 32,
+      end: 76,
+      file: 1567630016,
+    ),
+    NodeId(
+      id: 11,
+      file: 1567630016,
+    ): Span(
+      start: 20,
+      end: 76,
+      file: 1567630016,
+    ),
+  },
+), [
+  Expected(Some("\';\'"), Token(
+    span: Span(
+      start: 20,
+      end: 24,
+      file: 1567630016,
+    ),
+    kind: Func,
+    lexeme: Interned(14513702477577586159, PhantomData),
+  )),
+  Expected(Some("\';\'"), Token(
+    span: Span(
+      start: 44,
+      end: 45,
+      file: 1567630016,
+    ),
+    kind: IntLit,
+    lexeme: Interned(7161555357105607078, PhantomData),
+  )),
+  Expected(Some("expression"), Token(
+    span: Span(
+      start: 64,
+      end: 65,
+      file: 1567630016,
+    ),
+    kind: Semicolon,
+    lexeme: Interned(3447890864966814147, PhantomData),
+  )),
+  Expected(Some("expression"), Token(
+    span: Span(
+      start: 73,
+      end: 74,
+      file: 1567630016,
+    ),
+    kind: Semicolon,
+    lexeme: Interned(3447890864966814147, PhantomData),
+  )),
+  Eof(Some("\')\'"), 1567630016),
+  Eof(Some("\';\'"), 1567630016),
+  Eof(Some("statement, item, or expression"), 1567630016),
+  Eof(Some("\'}\'"), 1567630016),
+])
