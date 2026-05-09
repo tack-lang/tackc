@@ -1,5 +1,9 @@
 mod tests;
 
+imp path.to.other;
+
+const HELLO_WORLD = "Hello, world!";
+
 exp func main() {
-    println("Hello, world!");
+    println(HELLO_WORLD);
 }

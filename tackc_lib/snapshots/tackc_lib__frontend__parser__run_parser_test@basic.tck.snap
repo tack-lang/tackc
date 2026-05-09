@@ -3,28 +3,66 @@ source: tackc_lib/src/frontend/parser.rs
 input_file: tackc_lib/src/frontend/parser-tests/basic.tck
 ---
 (AstModule(
-  file: 2616890762,
+  file: 2012121647,
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(4008406373043006187, PhantomData)),
+        Some(Interned(16876077374895774202, PhantomData)),
       ],
       id: NodeId(
         id: 1,
-        file: 2616890762,
+        file: 2012121647,
       ),
     )),
     id: NodeId(
       id: 2,
-      file: 2616890762,
+      file: 2012121647,
     ),
   )),
   items: [
     Some(Item(
+      kind: ImpItem(ImpItem(
+        exported: false,
+        path: Some(AstPath(
+          components: [
+            Some(Interned(365805394974351031, PhantomData)),
+            Some(Interned(5395191083383410287, PhantomData)),
+            Some(Interned(7213919994841090624, PhantomData)),
+          ],
+          id: NodeId(
+            id: 3,
+            file: 2012121647,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 4,
+        file: 2012121647,
+      ),
+    )),
+    Some(Item(
+      kind: ConstItem(ConstItem(
+        exported: false,
+        ty: None,
+        expr: Some(Expression(
+          kind: StringLit(Interned(8470909341547293647, PhantomData)),
+          id: NodeId(
+            id: 5,
+            file: 2012121647,
+          ),
+        )),
+        ident: Some(Interned(5267153004227821378, PhantomData)),
+      )),
+      id: NodeId(
+        id: 6,
+        file: 2012121647,
+      ),
+    )),
+    Some(Item(
       kind: FuncItem(FuncItem(
         exported: true,
-        ident: Some(Interned(13444541448993416714, PhantomData)),
+        ident: Some(Interned(14986430816199639623, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -33,118 +71,150 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(3691574867306736495, PhantomData)),
+                    kind: Ident(Interned(1409961823379306446, PhantomData)),
                     id: NodeId(
-                      id: 3,
-                      file: 2616890762,
+                      id: 7,
+                      file: 2012121647,
                     ),
                   ), [
                     Some(Expression(
-                      kind: StringLit(Interned(8470909341547293647, PhantomData)),
+                      kind: Ident(Interned(2468304650323118657, PhantomData)),
                       id: NodeId(
-                        id: 4,
-                        file: 2616890762,
+                        id: 8,
+                        file: 2012121647,
                       ),
                     )),
                   ]),
                   id: NodeId(
-                    id: 5,
-                    file: 2616890762,
+                    id: 9,
+                    file: 2012121647,
                   ),
                 ),
                 semi: Some(Some(Token(
                   span: Span(
-                    start: 58,
-                    end: 59,
-                    file: 2616890762,
+                    start: 112,
+                    end: 113,
+                    file: 2012121647,
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
                 ))),
               )),
               id: NodeId(
-                id: 6,
-                file: 2616890762,
+                id: 10,
+                file: 2012121647,
               ),
             )),
           ],
           expr: None,
           id: NodeId(
-            id: 7,
-            file: 2616890762,
+            id: 11,
+            file: 2012121647,
           ),
         )),
       )),
       id: NodeId(
-        id: 8,
-        file: 2616890762,
+        id: 12,
+        file: 2012121647,
       ),
     )),
   ],
   spans: {
     NodeId(
       id: 1,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
       start: 4,
       end: 9,
-      file: 2616890762,
+      file: 2012121647,
     ),
     NodeId(
       id: 2,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
       start: 0,
       end: 10,
-      file: 2616890762,
+      file: 2012121647,
     ),
     NodeId(
       id: 3,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 34,
-      end: 41,
-      file: 2616890762,
+      start: 16,
+      end: 29,
+      file: 2012121647,
     ),
     NodeId(
       id: 4,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 42,
-      end: 57,
-      file: 2616890762,
+      start: 12,
+      end: 30,
+      file: 2012121647,
     ),
     NodeId(
       id: 5,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 34,
-      end: 58,
-      file: 2616890762,
+      start: 52,
+      end: 67,
+      file: 2012121647,
     ),
     NodeId(
       id: 6,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 34,
-      end: 59,
-      file: 2616890762,
+      start: 32,
+      end: 68,
+      file: 2012121647,
     ),
     NodeId(
       id: 7,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 28,
-      end: 61,
-      file: 2616890762,
+      start: 92,
+      end: 99,
+      file: 2012121647,
     ),
     NodeId(
       id: 8,
-      file: 2616890762,
+      file: 2012121647,
     ): Span(
-      start: 16,
-      end: 61,
-      file: 2616890762,
+      start: 100,
+      end: 111,
+      file: 2012121647,
+    ),
+    NodeId(
+      id: 9,
+      file: 2012121647,
+    ): Span(
+      start: 92,
+      end: 112,
+      file: 2012121647,
+    ),
+    NodeId(
+      id: 10,
+      file: 2012121647,
+    ): Span(
+      start: 92,
+      end: 113,
+      file: 2012121647,
+    ),
+    NodeId(
+      id: 11,
+      file: 2012121647,
+    ): Span(
+      start: 86,
+      end: 115,
+      file: 2012121647,
+    ),
+    NodeId(
+      id: 12,
+      file: 2012121647,
+    ): Span(
+      start: 74,
+      end: 115,
+      file: 2012121647,
     ),
   },
 ), [])
