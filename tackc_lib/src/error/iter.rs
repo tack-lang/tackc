@@ -158,3 +158,47 @@ pub trait IteratorExt: Iterator {
 }
 
 impl<I: Iterator> IteratorExt for I {}
+
+#[test]
+fn reporter_test() {
+    use std::cell::RefCell;
+
+    fn inner(vec: &[&[i32]], reporter: impl ReportMode) -> Vec<Result<[i32; 4], ()>> {
+        let out: RefCell<Vec<Result<[i32; 4], _>>> = RefCell::new(Vec::new());
+
+        vec.iter()
+            .map(|arr| (*arr).try_into())
+            .reporter(|_| out.borrow_mut().push(Err(())), reporter)
+            .for_each(|arr| out.borrow_mut().push(Ok(arr)));
+
+        out.into_inner()
+    }
+
+    let vec: Vec<&[i32]> = vec![
+        &[0, 2, 3, 7],
+        &[0, 4, 4],
+        &[4, 1, 3],
+        &[0, 4, 1, 5, 3],
+        &[1, 3, 2, 2],
+        &[0, 2, 3, 6, 4, 8],
+    ];
+
+    assert_eq!(
+        &inner(&vec, Skip),
+        &[
+            Ok([0, 2, 3, 7]),
+            Err(()),
+            Err(()),
+            Err(()),
+            Ok([1, 3, 2, 2]),
+            Err(())
+        ]
+    );
+
+    assert_eq!(&inner(&vec, Stop), &[Ok([0, 2, 3, 7]), Err(())]);
+
+    assert_eq!(
+        &inner(&vec, Consume),
+        &[Ok([0, 2, 3, 7]), Err(()), Err(()), Err(()), Err(())]
+    );
+}

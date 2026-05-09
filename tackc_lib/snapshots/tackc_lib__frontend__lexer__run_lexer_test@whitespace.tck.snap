@@ -1,0 +1,24 @@
+---
+source: tackc_lib/src/frontend/lexer.rs
+input_file: tackc_lib/src/frontend/lexer-tests/whitespace.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 48,
+      end: 51,
+      file: 4036141452,
+    ),
+    kind: FloatLit,
+    lexeme: Interned(7103686840766156724, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 52,
+      end: 55,
+      file: 4036141452,
+    ),
+    kind: FloatLit,
+    lexeme: Interned(4846216331872984511, PhantomData),
+  )),
+]

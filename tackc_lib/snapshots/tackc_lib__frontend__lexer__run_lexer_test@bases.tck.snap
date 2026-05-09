@@ -1,0 +1,57 @@
+---
+source: tackc_lib/src/frontend/lexer.rs
+input_file: tackc_lib/src/frontend/lexer-tests/bases.tck
+---
+[
+  Ok(Token(
+    span: Span(
+      start: 0,
+      end: 5,
+      file: 1929913544,
+    ),
+    kind: IntLit,
+    lexeme: Interned(1149442917177537678, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 6,
+      end: 11,
+      file: 1929913544,
+    ),
+    kind: IntLit,
+    lexeme: Interned(4786019749926021501, PhantomData),
+  )),
+  Err(LexError(
+    span: Span(
+      start: 12,
+      end: 16,
+      file: 1929913544,
+    ),
+    kind: InvalidInteger(8),
+  )),
+  Err(LexError(
+    span: Span(
+      start: 17,
+      end: 21,
+      file: 1929913544,
+    ),
+    kind: InvalidInteger(16),
+  )),
+  Err(LexError(
+    span: Span(
+      start: 22,
+      end: 25,
+      file: 1929913544,
+    ),
+    kind: InvalidInteger(10),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 26,
+      end: 29,
+      file: 1929913544,
+    ),
+    kind: IntLit,
+    lexeme: Interned(8695105186029240213, PhantomData),
+  )),
+]

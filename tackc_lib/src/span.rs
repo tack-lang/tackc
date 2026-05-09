@@ -198,3 +198,60 @@ fn dual_order(x: Ordering, y: Ordering) -> Option<Ordering> {
         _ => unreachable!(), // CHECKED(Chloe)
     }
 }
+
+#[test]
+fn dual_order_test() {
+    let tests = [
+        ((Ordering::Less, Ordering::Less), Some(Ordering::Less)),
+        ((Ordering::Less, Ordering::Equal), Some(Ordering::Less)),
+        ((Ordering::Less, Ordering::Greater), None),
+        ((Ordering::Equal, Ordering::Less), Some(Ordering::Less)),
+        ((Ordering::Equal, Ordering::Equal), Some(Ordering::Equal)),
+        (
+            (Ordering::Equal, Ordering::Greater),
+            Some(Ordering::Greater),
+        ),
+        ((Ordering::Greater, Ordering::Less), None),
+        (
+            (Ordering::Greater, Ordering::Equal),
+            Some(Ordering::Greater),
+        ),
+        (
+            (Ordering::Greater, Ordering::Greater),
+            Some(Ordering::Greater),
+        ),
+    ];
+
+    for ((x, y), correct) in tests {
+        assert_eq!(dual_order(x, y), correct);
+    }
+}
+
+#[test]
+fn span_test() {
+    use std::path::Path;
+
+    let text =
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Pellentesque venenatis, lacus eu viverra ornare, massa est rhoncus turpis, eu pharetra lacus risus eu enim.
+Praesent finibus nunc nec nunc ornare ultrices. Aenean volutpat odio magna, vel condimentum sapien finibus ac.
+In hac habitasse platea dictumst. Phasellus sodales nibh sit amet.";
+    let file = File::new(text, Path::new("lorem_ipsum.txt"));
+
+    let mut span = Span::new(&file);
+    span.grow_front(5);
+    assert_eq!(span.apply(&file), "Lorem");
+    span.reset();
+    span.move_forward(1);
+    span.grow_front(5);
+    assert_eq!(span.apply(&file), "ipsum");
+    span.move_backward(6);
+    assert_eq!(span.apply(&file), "Lorem");
+    span.move_forward(12);
+    assert_eq!(span.apply(&file), "dolor");
+    span.reset();
+    span.move_forward(4);
+    assert!(span.is_empty());
+    span.grow_back(3);
+    assert_eq!(span.apply(&file), "sit");
+}

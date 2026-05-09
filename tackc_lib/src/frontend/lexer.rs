@@ -270,6 +270,9 @@ pub enum ErrorKind {
     /// An error for when an exponent isn't followed by digits.
     #[error("expected at least one digit in exponent")]
     MissingExponentDigits,
+    /// An error for when an integer literal contains an invalid digit for its base.
+    #[error("invalid base {0} integer")]
+    InvalidInteger(u32),
 }
 
 /// Different integer bases representable by this lexer.
@@ -522,6 +525,17 @@ impl<'src> Lexer<'src> {
         if !self.handle_digits(prefix as u32) {
             return Err(self.make_error(ErrorKind::MissingIntegerPrefixDigits));
         }
+        if let Some(c) = self.current_byte()
+            && c.is_ascii_alphanumeric()
+        {
+            while let Some(c) = self.current_byte()
+                && c.is_ascii_alphanumeric()
+            {
+                self.next_byte();
+            }
+
+            return Err(self.make_error(ErrorKind::InvalidInteger(prefix as u32)));
+        }
 
         Ok(self.make_token(TokenKind::IntLit))
     }
@@ -571,7 +585,20 @@ impl<'src> Lexer<'src> {
                 self.next_byte();
                 self.handle_float_with_exponent()
             }
-            _ => Ok(self.make_token(TokenKind::IntLit)),
+            _ => {
+                if let Some(c) = self.current_byte()
+                    && c.is_ascii_alphanumeric()
+                {
+                    while let Some(c) = self.current_byte()
+                        && c.is_ascii_alphanumeric()
+                    {
+                        self.next_byte();
+                    }
+
+                    return Err(self.make_error(ErrorKind::InvalidInteger(10)));
+                }
+                Ok(self.make_token(TokenKind::IntLit))
+            }
         }
     }
 
