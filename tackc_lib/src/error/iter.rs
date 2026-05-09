@@ -1,10 +1,20 @@
+/// A trait for "report modes."
+/// Report modes can be used in conjunction with the [`Reporter`] iterator in order to control how they act on an error.
+pub trait ReportMode: Clone + Copy + Default {
+    /// When an error is received, this function will be called.
+    fn on_error<I, T, E, F>(iter: &mut I, callback: &mut F) -> bool
+    where
+        I: Iterator<Item = Result<T, E>>,
+        F: FnMut(E);
+}
+
 /// A report mode that ignores errors.
 #[derive(Clone, Copy, Default)]
 pub struct Skip;
 /// A report mode that stops when receiving an error.
 #[derive(Clone, Copy, Default)]
 pub struct Stop;
-/// A report mode that when receiving an errors, consumes the rest of the iterators, reporting any errors.
+/// A report mode that when receiving an errors, consumes the rest of the iterator, reporting any errors.
 #[derive(Clone, Copy, Default)]
 pub struct Consume;
 
@@ -42,16 +52,6 @@ impl ReportMode for Consume {
         }
         false
     }
-}
-
-/// A trait for "report modes."
-/// Report modes can be used in conjunction with the [`Reporter`] iterator in order to control how they act on an error.
-pub trait ReportMode: Clone + Copy + Default {
-    /// When an error is received, this function will be called.
-    fn on_error<I, T, E, F>(iter: &mut I, callback: &mut F) -> bool
-    where
-        I: Iterator<Item = Result<T, E>>,
-        F: FnMut(E);
 }
 
 /// The reporter iterator is a complex iterator adapter that can be used for error handling.
