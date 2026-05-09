@@ -379,7 +379,7 @@ impl<'src> Lexer<'src> {
     }
 
     fn current_lexeme(&self) -> &'src str {
-        self.span.apply_bytes(self.src)
+        self.span.apply(self.src)
     }
 
     const fn make_error(&mut self, ty: ErrorKind) -> LexError {
