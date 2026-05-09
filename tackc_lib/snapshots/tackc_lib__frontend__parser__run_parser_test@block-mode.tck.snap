@@ -1,0 +1,113 @@
+---
+source: tackc_lib/src/frontend/parser.rs
+input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
+---
+(AstModule(
+  file: 282922380,
+  mod_stmt: Some(ModStatement(
+    exported: false,
+    path: Some(AstPath(
+      components: [
+        Some(Interned(212912964146306516, PhantomData)),
+      ],
+      id: NodeId(
+        id: 1,
+        file: 282922380,
+      ),
+    )),
+    id: NodeId(
+      id: 2,
+      file: 282922380,
+    ),
+  )),
+  items: [
+    Some(Item(
+      kind: FuncItem(FuncItem(
+        exported: false,
+        ident: Some(Interned(17401066508119244656, PhantomData)),
+        params: [],
+        ret_type: None,
+        block: Some(Block(
+          stmts: [],
+          expr: Some(Some(Expression(
+            kind: Grouping(None),
+            id: NodeId(
+              id: 3,
+              file: 282922380,
+            ),
+          ))),
+          id: NodeId(
+            id: 4,
+            file: 282922380,
+          ),
+        )),
+      )),
+      id: NodeId(
+        id: 5,
+        file: 282922380,
+      ),
+    )),
+    None,
+  ],
+  spans: {
+    NodeId(
+      id: 1,
+      file: 282922380,
+    ): Span(
+      start: 4,
+      end: 9,
+      file: 282922380,
+    ),
+    NodeId(
+      id: 2,
+      file: 282922380,
+    ): Span(
+      start: 0,
+      end: 10,
+      file: 282922380,
+    ),
+    NodeId(
+      id: 3,
+      file: 282922380,
+    ): Span(
+      start: 26,
+      end: 31,
+      file: 282922380,
+    ),
+    NodeId(
+      id: 4,
+      file: 282922380,
+    ): Span(
+      start: 24,
+      end: 33,
+      file: 282922380,
+    ),
+    NodeId(
+      id: 5,
+      file: 282922380,
+    ): Span(
+      start: 12,
+      end: 33,
+      file: 282922380,
+    ),
+  },
+), [
+  Expected(Some("expression"), Token(
+    span: Span(
+      start: 27,
+      end: 30,
+      file: 282922380,
+    ),
+    kind: I32,
+    lexeme: Interned(1629207603688809684, PhantomData),
+  )),
+  Expected(Some("item"), Token(
+    span: Span(
+      start: 34,
+      end: 35,
+      file: 282922380,
+    ),
+    kind: LBrace,
+    lexeme: Interned(13823032201068319013, PhantomData),
+  )),
+])
