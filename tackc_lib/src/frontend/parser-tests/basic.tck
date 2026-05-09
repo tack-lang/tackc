@@ -1,5 +1,5 @@
 mod tests;
 
-func main() {
+exp func main() {
     println("Hello, world!");
 }
