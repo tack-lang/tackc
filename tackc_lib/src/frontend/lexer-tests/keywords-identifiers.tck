@@ -1,1 +1,1 @@
-func let const identifier s _func _let _const spaghetti i32 u8 i64 exp imp
+func let const identifier s _func _let _const spaghetti exp imp u8 i8 u16 i16 u32 i32 u64 i64 usize isize u128 i128

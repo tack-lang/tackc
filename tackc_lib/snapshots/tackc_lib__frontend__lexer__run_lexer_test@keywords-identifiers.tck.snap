@@ -7,7 +7,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 0,
       end: 4,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Func,
     lexeme: Interned(14513702477577586159, PhantomData),
@@ -16,7 +16,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 5,
       end: 8,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Let,
     lexeme: Interned(12960948860117005790, PhantomData),
@@ -25,7 +25,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 9,
       end: 14,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Const,
     lexeme: Interned(4021016191261256089, PhantomData),
@@ -34,7 +34,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 15,
       end: 25,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(13881270030764443163, PhantomData),
@@ -43,7 +43,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 26,
       end: 27,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(1744093692151495636, PhantomData),
@@ -52,7 +52,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 28,
       end: 33,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(16004185104431824061, PhantomData),
@@ -61,7 +61,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 34,
       end: 38,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(8810078392741492470, PhantomData),
@@ -70,7 +70,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 39,
       end: 45,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(14914455799080222655, PhantomData),
@@ -79,7 +79,7 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 46,
       end: 55,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Ident,
     lexeme: Interned(17621838748197572899, PhantomData),
@@ -88,45 +88,126 @@ input_file: tackc_lib/src/frontend/lexer-tests/keywords-identifiers.tck
     span: Span(
       start: 56,
       end: 59,
-      file: 3895847377,
-    ),
-    kind: I32,
-    lexeme: Interned(1629207603688809684, PhantomData),
-  )),
-  Ok(Token(
-    span: Span(
-      start: 60,
-      end: 62,
-      file: 3895847377,
-    ),
-    kind: U8,
-    lexeme: Interned(6133658421577569729, PhantomData),
-  )),
-  Ok(Token(
-    span: Span(
-      start: 63,
-      end: 66,
-      file: 3895847377,
-    ),
-    kind: I64,
-    lexeme: Interned(1687693054702409156, PhantomData),
-  )),
-  Ok(Token(
-    span: Span(
-      start: 67,
-      end: 70,
-      file: 3895847377,
+      file: 574576055,
     ),
     kind: Exp,
     lexeme: Interned(9467368404845537658, PhantomData),
   )),
   Ok(Token(
     span: Span(
-      start: 71,
-      end: 74,
-      file: 3895847377,
+      start: 60,
+      end: 63,
+      file: 574576055,
     ),
     kind: Imp,
     lexeme: Interned(4323320986108109594, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 64,
+      end: 66,
+      file: 574576055,
+    ),
+    kind: U8,
+    lexeme: Interned(6133658421577569729, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 67,
+      end: 69,
+      file: 574576055,
+    ),
+    kind: I8,
+    lexeme: Interned(15038311263202478257, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 70,
+      end: 73,
+      file: 574576055,
+    ),
+    kind: U16,
+    lexeme: Interned(2374884613700674349, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 74,
+      end: 77,
+      file: 574576055,
+    ),
+    kind: I16,
+    lexeme: Interned(6889969655643339078, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 78,
+      end: 81,
+      file: 574576055,
+    ),
+    kind: U32,
+    lexeme: Interned(9649840673925735140, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 82,
+      end: 85,
+      file: 574576055,
+    ),
+    kind: I32,
+    lexeme: Interned(1629207603688809684, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 86,
+      end: 89,
+      file: 574576055,
+    ),
+    kind: U64,
+    lexeme: Interned(13313381042058342671, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 90,
+      end: 93,
+      file: 574576055,
+    ),
+    kind: I64,
+    lexeme: Interned(1687693054702409156, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 94,
+      end: 99,
+      file: 574576055,
+    ),
+    kind: Ident,
+    lexeme: Interned(3852387689972282455, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 100,
+      end: 105,
+      file: 574576055,
+    ),
+    kind: Ident,
+    lexeme: Interned(12013246347195324224, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 106,
+      end: 110,
+      file: 574576055,
+    ),
+    kind: Ident,
+    lexeme: Interned(18023456213366932582, PhantomData),
+  )),
+  Ok(Token(
+    span: Span(
+      start: 111,
+      end: 115,
+      file: 574576055,
+    ),
+    kind: Ident,
+    lexeme: Interned(12036479228517885625, PhantomData),
   )),
 ]
