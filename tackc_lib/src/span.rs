@@ -187,15 +187,9 @@ impl PartialOrd for Span {
 
 fn dual_order(x: Ordering, y: Ordering) -> Option<Ordering> {
     match (x, y) {
-        (x, y) if x == y => Some(x),
-        (x, Ordering::Equal) | (Ordering::Equal, x) => Some(x),
-        (x, y) if x != y => None,
-        // The arms are exhaustive.
-        // If each ordering is equal, first arm.
-        // If one ordering is Ordering::Equal, second arm.
-        // If one is Ordering::Less and the other is Ordering::Greater, third arm.
-        // These are exhaustive.
-        _ => unreachable!(), // CHECKED(Chloe)
+        (a, b) if a == b => Some(a),
+        (Ordering::Equal, other) | (other, Ordering::Equal) => Some(other),
+        _ => None,
     }
 }
 
@@ -239,9 +233,13 @@ In hac habitasse platea dictumst. Phasellus sodales nibh sit amet.";
     let file = File::new(text, Path::new("lorem_ipsum.txt"));
 
     let mut span = Span::new(&file);
+    let span1 = span;
     span.grow_front(5);
+    let span2 = span;
     assert_eq!(span.apply(&file), "Lorem");
     span.reset();
+    let span3 = span;
+    assert!(span3 > span2);
     span.move_forward(1);
     span.grow_front(5);
     assert_eq!(span.apply(&file), "ipsum");
@@ -250,8 +248,57 @@ In hac habitasse platea dictumst. Phasellus sodales nibh sit amet.";
     span.move_forward(12);
     assert_eq!(span.apply(&file), "dolor");
     span.reset();
+    let span4 = span;
+    assert!(span1 < span4);
     span.move_forward(4);
     assert!(span.is_empty());
     span.grow_back(3);
     assert_eq!(span.apply(&file), "sit");
+    span.grow_front(6);
+    span.shrink_back(4);
+    span.shrink_front(1);
+    assert_eq!(span.apply(&file), "amet");
+    span.reset();
+    span.grow_front(1);
+    assert_eq!(span.apply(&file), ",");
+
+    let range: Range<SpanValue> = span.into();
+
+    assert_eq!(range, 26..27);
+}
+
+#[test]
+#[should_panic]
+fn non_match_same_text_test() {
+    use std::path::Path;
+
+    let file1 = File::new("file1's text", Path::new("file1.txt"));
+    let file2 = File::new("file1's text", Path::new("file2.txt"));
+
+    let span = Span::new(&file1);
+    span.apply(&file2);
+}
+
+#[test]
+#[should_panic]
+fn non_match_same_path_test() {
+    use std::path::Path;
+
+    let file1 = File::new("file1's text", Path::new("file1.txt"));
+    let file2 = File::new("file2's text", Path::new("file1.txt"));
+
+    let span = Span::new(&file1);
+    span.apply(&file2);
+}
+
+#[test]
+#[should_panic]
+fn non_fit_test() {
+    use std::path::Path;
+
+    let file1 = File::new("file1's text", Path::new("file1.txt"));
+
+    let mut span = Span::new(&file1);
+    span.grow_front(500);
+    span.apply(&file1);
 }

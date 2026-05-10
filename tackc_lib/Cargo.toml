@@ -14,7 +14,6 @@ thiserror = { workspace = true }
 nonzero = { workspace = true }
 parking_lot = { workspace = true }
 colored = { workspace = true }
-mutants = { workspace = true }
 
 [lints]
 workspace = true

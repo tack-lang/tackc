@@ -5,3 +5,4 @@ corpus
 artifacts
 
 mutants.out
+.cargo/mutants.toml

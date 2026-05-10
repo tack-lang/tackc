@@ -320,8 +320,6 @@ impl<'src> Lexer<'src> {
     }
 
     /// Returns true if the lexer is at the end of the given file.
-    // When messed with, it causes timeouts.
-    #[mutants::skip] // CHECKED(Chloe)
     pub fn at_eof(&self) -> bool {
         self.src.len() <= self.span.end as usize
     }
@@ -330,8 +328,6 @@ impl<'src> Lexer<'src> {
         self.src.as_bytes().get(self.span.end as usize).copied()
     }
 
-    // When messed with, it causes timeouts.
-    #[mutants::skip] // CHECKED(Chloe)
     fn next_byte(&mut self) -> Option<u8> {
         if self.at_eof() {
             None
@@ -342,8 +338,6 @@ impl<'src> Lexer<'src> {
         }
     }
 
-    // When messed with, it causes timeouts.
-    #[mutants::skip] // CHECKED(Chloe)
     fn peek_byte(&self) -> Option<u8> {
         self.src.as_bytes().get(self.span.end as usize + 1).copied()
     }

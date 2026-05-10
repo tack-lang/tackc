@@ -32,8 +32,6 @@ impl<T: Any + Hash + PartialEq + Debug> Internable for T {
         self.hash(&mut hasher);
     }
 
-    // This function is pertinent to hash collisions, so it's difficult to test for.
-    #[mutants::skip] // CHECKED(Chloe)
     fn dyn_eq(&self, other: &dyn Any) -> bool {
         let Some(other) = other.downcast_ref::<T>() else {
             return false;
@@ -423,6 +421,7 @@ impl Drop for Global {
 #[test]
 fn intern_test() {
     const FIBB: &[i32] = &[1, 1, 2, 3, 5, 8];
+    let strings: &[String] = &["foo".to_string(), "bar".to_string(), "baz".to_string()];
 
     let global = Global::create_heap();
     let five = global.intern(5);
@@ -431,6 +430,7 @@ fn intern_test() {
     let foo = global.intern_str("foo");
     let fibb = global.intern_slice_copy(&[1, 1, 2, 3, 5, 8]);
     let foo2 = global.intern_str("foo");
+    let strings_interned = global.intern_slice_clone(strings);
 
     assert_eq!(*five.get(&global), 5);
     assert_eq!(*two.get(&global), 2);
@@ -440,4 +440,5 @@ fn intern_test() {
     assert_eq!(fibb.get(&global), FIBB);
     assert_eq!(foo, foo2);
     assert_ne!(five, four);
+    assert_eq!(strings_interned.get(&global), strings);
 }

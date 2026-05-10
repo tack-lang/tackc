@@ -60,7 +60,7 @@ fn run_ui_test(src: String) {
     let file = File::new(src, Path::new("testing.tck"));
     let id = file.id();
     let mut file_list = FileList::new();
-    file_list.add(file);
+    file_list.insert(file);
 
     let mut global = Global::create_heap();
     global.set_file_list(file_list);

@@ -26,40 +26,41 @@ mutants = "0.0.4"
 parking_lot = "0.12.5"
 
 [workspace.lints.clippy]
-pedantic = { level = "warn", priority = 0 }
-nursery = { level = "warn", priority = 0 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
 
 # Lints to error against to force fixes without allowing #[expect]
-missing_assert_message = { level = "forbid", priority = 1 }
-multiple_unsafe_ops_per_block = { level = "forbid", priority = 1 }
-allow_attributes = { level = "forbid", priority = 1 }
-doc_include_without_cfg = { level = "forbid", priority = 1 }
-precedence_bits = { level = "forbid", priority = 1 }
-same_name_method = { level = "forbid", priority = 1 }
-semicolon_inside_block = { level = "forbid", priority = 1 }
-try_err = { level = "forbid", priority = 1 }
-undocumented_unsafe_blocks = { level = "forbid", priority = 1 }
-unused_result_ok = { level = "forbid", priority = 1 }
+missing_assert_message = "forbid"
+multiple_unsafe_ops_per_block = "forbid"
+allow_attributes = "forbid"
+doc_include_without_cfg = "forbid"
+precedence_bits = "forbid"
+same_name_method = "forbid"
+semicolon_inside_block = "forbid"
+try_err = "forbid"
+undocumented_unsafe_blocks = "forbid"
+unused_result_ok = "forbid"
 
 # Lints to error against in order to force fixes while still allowing #[expect].
-doc_paragraphs_missing_punctuation = { level = "deny", priority = 1 }
-indexing_slicing = { level = "deny", priority = 1 }
-disallowed_types = { level = "deny", priority = 1 }
+doc_paragraphs_missing_punctuation = "deny"
+indexing_slicing = "deny"
+disallowed_types = "deny"
 
 # Lints to warn against in order to require CHECKED.
-mem_forget = { level = "warn", priority = 1 }
+mem_forget = "warn"
 
 # Lints to warn against to be pedantic
-rest_pat_in_fully_bound_structs = { level = "warn", priority = 1 }
+rest_pat_in_fully_bound_structs = "warn"
 
 # Lints to warn against that aren't meant to be #[expect]ed.
-todo = { level = "warn", priority = 1 }
-dbg_macro = { level = "warn", priority = 1 }
+todo = "warn"
+dbg_macro = "warn"
 
 # Lints to allow.
-must-use-candidate = { level = "allow", priority = 1 }
+must-use-candidate = "allow"
+should-panic-without-expect = "allow"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
-missing_docs = { level = "warn", priority = 1 }
-unsafe_op_in_unsafe_fn = { level = "forbid", priority = 1 }
+missing_docs = "warn"
+unsafe_op_in_unsafe_fn = "forbid"

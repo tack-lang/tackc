@@ -2,10 +2,10 @@
 
 use std::{
     borrow::Cow,
-    collections::hash_map::Values,
+    collections::hash_map::{IntoValues, Values},
     fs, io,
     num::NonZeroU32,
-    ops::Deref,
+    ops::{Add, Deref},
     path::{Path, PathBuf},
 };
 
@@ -170,7 +170,7 @@ impl FileList {
     }
 
     /// Adds a file to the list, and returns a reference to it.
-    pub fn add(&mut self, file: File) {
+    pub fn insert(&mut self, file: File) {
         let id = file.id();
         self.files.insert(id, file);
     }
@@ -193,7 +193,7 @@ impl FileList {
     /// Creates a [`FileList`] from a single [`File`].
     pub fn from_one(file: File) -> Self {
         let mut file_list = Self::new();
-        file_list.add(file);
+        file_list.insert(file);
         file_list
     }
 }
@@ -201,6 +201,26 @@ impl FileList {
 impl From<Vec<File>> for FileList {
     fn from(value: Vec<File>) -> Self {
         value.into_iter().collect()
+    }
+}
+
+impl Add for FileList {
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        for file in rhs {
+            self.files.insert(file.id(), file);
+        }
+        self
+    }
+}
+
+impl IntoIterator for FileList {
+    type Item = File;
+    type IntoIter = IntoValues<FileId, File>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.files.into_values()
     }
 }
 
@@ -219,4 +239,33 @@ impl FromIterator<File> for FileList {
             files: iter.into_iter().map(|file| (file.id(), file)).collect(),
         }
     }
+}
+
+#[test]
+fn file_list_test() {
+    let file1 = File::new("file1", Path::new("file1.txt"));
+    let file2 = File::new("file2", Path::new("file2.txt"));
+    let file3 = File::new("file3", Path::new("file3.txt"));
+    let file1_id = file1.id();
+    let file2_id = file2.id();
+    let file3_id = file3.id();
+
+    let file_list1 = FileList::from_one(file1);
+    let file_list2 = [file2, file3].into_iter().collect::<FileList>();
+
+    assert!(!file_list2.contains(file1_id));
+
+    let file_list3 = file_list1 + file_list2;
+
+    assert!(file_list3.contains(file1_id));
+    assert!(file_list3.contains(file2_id));
+    assert!(file_list3.contains(file3_id));
+
+    let vec = file_list3
+        .into_iter()
+        .map(|file| file.id())
+        .collect::<Vec<_>>();
+    assert!(vec.contains(&file1_id));
+    assert!(vec.contains(&file2_id));
+    assert!(vec.contains(&file3_id));
 }

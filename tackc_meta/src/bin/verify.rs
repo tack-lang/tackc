@@ -14,7 +14,7 @@ use std::{
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use ignore::{DirEntry, WalkBuilder, WalkState};
 
-const DANGEROUS_PATTERNS: [(&str, &str); 11] = [
+const DANGEROUS_PATTERNS: [(&str, &str); 10] = [
     (".expect_unreachable()", "expect_unreachable()"),
     ("[expect", "#[expect]"),
     (".unwrap(", "unwrap()"),
@@ -25,7 +25,6 @@ const DANGEROUS_PATTERNS: [(&str, &str); 11] = [
     ("unreachable!", "unreachable!()"),
     ("unimplemented!", "unimplemented!()"),
     ("super", "super::*"),
-    ("#[mutants::skip]", "#[mutants::skip]"),
 ];
 
 fn main() -> io::Result<()> {

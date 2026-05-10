@@ -91,8 +91,7 @@ where
                 Ok(ok) => return Some(ok),
                 Err(e) => {
                     (self.callback)(e);
-                    if M::on_error(&mut self.iter, &mut self.callback) {
-                    } else {
+                    if !M::on_error(&mut self.iter, &mut self.callback) {
                         return None;
                     }
                 }
