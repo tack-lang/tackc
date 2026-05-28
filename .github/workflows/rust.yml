@@ -14,10 +14,10 @@ jobs:
         target:
           [
             ubuntu-latest,
-            macos-latest,
+            macos-26,
             windows-latest,
             ubuntu-24.04-arm,
-            macos-15-intel,
+            macos-26-intel,
             windows-11-arm,
           ]
         toolchain: [stable, beta, nightly]
