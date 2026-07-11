@@ -15,9 +15,19 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
         id: 1,
         file: 1567630016,
       ),
+      span: Span(
+        start: 4,
+        end: 18,
+        file: 1567630016,
+      ),
     )),
     id: NodeId(
       id: 2,
+      file: 1567630016,
+    ),
+    span: Span(
+      start: 0,
+      end: 20,
       file: 1567630016,
     ),
   )),
@@ -40,6 +50,11 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                 id: 3,
                 file: 1567630016,
               ),
+              span: Span(
+                start: 38,
+                end: 44,
+                file: 1567630016,
+              ),
             )),
             Some(Statement(
               kind: ExpressionStatement(ExpressionStatement(
@@ -47,6 +62,11 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                   kind: IntLit(Interned(7161555357105607078, PhantomData)),
                   id: NodeId(
                     id: 4,
+                    file: 1567630016,
+                  ),
+                  span: Span(
+                    start: 44,
+                    end: 45,
                     file: 1567630016,
                   ),
                 ),
@@ -64,6 +84,11 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                 id: 5,
                 file: 1567630016,
               ),
+              span: Span(
+                start: 44,
+                end: 46,
+                file: 1567630016,
+              ),
             )),
             Some(Statement(
               kind: LetStatement(LetStatement(
@@ -73,6 +98,11 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
               )),
               id: NodeId(
                 id: 6,
+                file: 1567630016,
+              ),
+              span: Span(
+                start: 52,
+                end: 65,
                 file: 1567630016,
               ),
             )),
@@ -85,11 +115,21 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                       id: 7,
                       file: 1567630016,
                     ),
+                    span: Span(
+                      start: 71,
+                      end: 72,
+                      file: 1567630016,
+                    ),
                   ), [
                     None,
                   ]),
                   id: NodeId(
                     id: 8,
+                    file: 1567630016,
+                  ),
+                  span: Span(
+                    start: 71,
+                    end: 76,
                     file: 1567630016,
                   ),
                 ),
@@ -99,11 +139,21 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                 id: 9,
                 file: 1567630016,
               ),
+              span: Span(
+                start: 71,
+                end: 76,
+                file: 1567630016,
+              ),
             )),
           ],
           expr: None,
           id: NodeId(
             id: 10,
+            file: 1567630016,
+          ),
+          span: Span(
+            start: 32,
+            end: 76,
             file: 1567630016,
           ),
         )),
@@ -112,98 +162,13 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
         id: 11,
         file: 1567630016,
       ),
+      span: Span(
+        start: 20,
+        end: 76,
+        file: 1567630016,
+      ),
     )),
   ],
-  spans: {
-    NodeId(
-      id: 1,
-      file: 1567630016,
-    ): Span(
-      start: 4,
-      end: 18,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 2,
-      file: 1567630016,
-    ): Span(
-      start: 0,
-      end: 20,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 3,
-      file: 1567630016,
-    ): Span(
-      start: 38,
-      end: 44,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 4,
-      file: 1567630016,
-    ): Span(
-      start: 44,
-      end: 45,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 5,
-      file: 1567630016,
-    ): Span(
-      start: 44,
-      end: 46,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 6,
-      file: 1567630016,
-    ): Span(
-      start: 52,
-      end: 65,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 7,
-      file: 1567630016,
-    ): Span(
-      start: 71,
-      end: 72,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 8,
-      file: 1567630016,
-    ): Span(
-      start: 71,
-      end: 76,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 9,
-      file: 1567630016,
-    ): Span(
-      start: 71,
-      end: 76,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 10,
-      file: 1567630016,
-    ): Span(
-      start: 32,
-      end: 76,
-      file: 1567630016,
-    ),
-    NodeId(
-      id: 11,
-      file: 1567630016,
-    ): Span(
-      start: 20,
-      end: 76,
-      file: 1567630016,
-    ),
-  },
 ), [
   Expected(Some("\';\'"), Token(
     span: Span(

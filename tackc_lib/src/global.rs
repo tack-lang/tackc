@@ -122,9 +122,6 @@ impl<T: Hash> Interned<[T]> {
 /// tackc's global context.
 #[derive(Debug)]
 pub struct Global {
-    /// The arena used in [`Global::alloc_arena`]. Public to allow resetting.
-    pub current_arena: Bump,
-
     arena: Bump,
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
     interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
@@ -138,11 +135,6 @@ use std::sync::atomic::AtomicBool;
 static GLOBAL_EXISTS: AtomicBool = AtomicBool::new(false);
 
 impl Global {
-    /// Allocates a new value using the inner arena.
-    pub fn alloc_arena<T>(&self, val: T) -> &mut T {
-        self.current_arena.alloc(val)
-    }
-
     /// Gets the hasher for this global context.
     ///
     /// This will always be a default [`NonZeroFxHasher`].
@@ -188,7 +180,6 @@ impl Global {
         }
 
         Box::new(Self {
-            current_arena: Bump::new(),
             arena: Bump::new(),
             interned: IdentityDashMap::default(),
             interned_strs: IdentityDashMap::default(),

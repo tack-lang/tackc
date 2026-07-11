@@ -5,6 +5,7 @@ use std::fmt::Write;
 
 use crate::{
     global::{Global, Interned},
+    span::Span,
     utils::tree::TreeItem,
 };
 use serde::Serialize;
@@ -14,17 +15,19 @@ use crate::frontend::ast::{AstPath, Block, Expression, NodeId, Symbol};
 
 /// An item.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Item<'src> {
+pub struct Item {
     /// The kind of item this is.
-    pub kind: &'src ItemKind<'src>,
+    pub kind: ItemKind,
     /// The ID of this item.
     pub id: NodeId,
+    /// The span of this item.
+    pub span: Span,
 }
 
-impl<'src> Item<'src> {
+impl Item {
     /// Create a new item using an item kind, and an ID.
-    pub const fn new(kind: &'src ItemKind<'src>, id: NodeId) -> Self {
-        Self { kind, id }
+    pub const fn new(kind: ItemKind, id: NodeId, span: Span) -> Self {
+        Self { kind, id, span }
     }
 
     /// Display the item.
@@ -46,7 +49,7 @@ impl<'src> Item<'src> {
     }
 }
 
-impl TreeItem for Item<'_> {
+impl TreeItem for Item {
     fn children(&self) -> Vec<&'_ dyn TreeItem> {
         vec![]
     }
@@ -58,29 +61,29 @@ impl TreeItem for Item<'_> {
 
 /// Different kinds of items.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub enum ItemKind<'src> {
+pub enum ItemKind {
     /// Constant definition.
-    ConstItem(&'src ConstItem<'src>),
+    ConstItem(ConstItem),
     /// Function definition.
-    FuncItem(&'src FuncItem<'src>),
+    FuncItem(FuncItem),
     /// Import declaration.
-    ImpItem(&'src ImpItem<'src>),
+    ImpItem(ImpItem),
 }
 
 /// Constant definition.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct ConstItem<'src> {
+pub struct ConstItem {
     /// Whether this item is exported.
     pub exported: bool,
     /// The optional type annotation of this definition.
-    pub ty: Option<Option<&'src Expression<'src>>>,
+    pub ty: Option<Option<Expression>>,
     /// The expression of this definition.
-    pub expr: Option<&'src Expression<'src>>,
+    pub expr: Option<Expression>,
     /// The identifier used for this definition.
     pub ident: Option<Interned<Symbol>>,
 }
 
-impl ConstItem<'_> {
+impl ConstItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
@@ -92,7 +95,7 @@ impl ConstItem<'_> {
             Some(None) => String::from(": <ERROR>"),
             None => String::new(),
         };
-        let expr = match self.expr {
+        let expr = match &self.expr {
             Some(expr) => expr.display(global),
             None => String::from("<ERROR>"),
         };
@@ -112,20 +115,20 @@ impl ConstItem<'_> {
 
 /// Function definition.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct FuncItem<'src> {
+pub struct FuncItem {
     /// Whether this item is exported.
     pub exported: bool,
     /// The identifier of this function.
     pub ident: Option<Interned<Symbol>>,
     /// The parameters for this function.
-    pub params: ThinVec<(Option<Interned<Symbol>>, Option<&'src Expression<'src>>)>,
+    pub params: ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>,
     /// The return type of this function.
-    pub ret_type: Option<Option<&'src Expression<'src>>>,
+    pub ret_type: Option<Option<Expression>>,
     /// The block for this function.
-    pub block: Option<&'src Block<'src>>,
+    pub block: Option<Block>,
 }
 
-impl FuncItem<'_> {
+impl FuncItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
@@ -147,7 +150,7 @@ impl FuncItem<'_> {
 
         params.truncate(params.len().saturating_sub(2));
 
-        let block = match self.block {
+        let block = match &self.block {
             Some(block) => block.display(global),
             None => String::from("<ERROR>"),
         };
@@ -168,17 +171,17 @@ impl FuncItem<'_> {
 
 /// Import declaration.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct ImpItem<'src> {
+pub struct ImpItem {
     /// Whether this item is exported.
     pub exported: bool,
     /// The path to be imported.
-    pub path: Option<&'src AstPath>,
+    pub path: Option<AstPath>,
 }
 
-impl ImpItem<'_> {
+impl ImpItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
-        let path = match self.path {
+        let path = match &self.path {
             Some(path) => path.display(global),
             None => String::from("<ERROR>"),
         };
@@ -188,7 +191,7 @@ impl ImpItem<'_> {
 
     fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
-        let path = match self.path {
+        let path = match &self.path {
             Some(sym) => sym.display(global),
             None => String::from("<ERROR>"),
         };

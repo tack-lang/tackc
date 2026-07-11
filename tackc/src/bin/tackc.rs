@@ -124,7 +124,7 @@ fn run_parser<'src>(
     file: &'src File,
     global: &'src Global,
     debug_modes: &DebugModes,
-) -> (AstModule<'src>, bool) {
+) -> (AstModule, bool) {
     let (module, errs, failed) = Parser::parse(tokens, file, global);
 
     if debug_modes.debug.contains(&Stage::Parser) {

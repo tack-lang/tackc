@@ -15,9 +15,19 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
         id: 1,
         file: 1888024003,
       ),
+      span: Span(
+        start: 4,
+        end: 29,
+        file: 1888024003,
+      ),
     )),
     id: NodeId(
       id: 2,
+      file: 1888024003,
+    ),
+    span: Span(
+      start: 0,
+      end: 30,
       file: 1888024003,
     ),
   )),
@@ -39,11 +49,21 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                       id: 3,
                       file: 1888024003,
                     ),
+                    span: Span(
+                      start: 50,
+                      end: 57,
+                      file: 1888024003,
+                    ),
                   ), [
                     Some(Expression(
                       kind: StringLit(Interned(14598065627300119639, PhantomData)),
                       id: NodeId(
                         id: 4,
+                        file: 1888024003,
+                      ),
+                      span: Span(
+                        start: 58,
+                        end: 62,
                         file: 1888024003,
                       ),
                     )),
@@ -54,11 +74,21 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                           id: 5,
                           file: 1888024003,
                         ),
+                        span: Span(
+                          start: 64,
+                          end: 65,
+                          file: 1888024003,
+                        ),
                       ), Expression(
                         kind: Binary(Mul, Expression(
                           kind: IntLit(Interned(9290355111161746293, PhantomData)),
                           id: NodeId(
                             id: 6,
+                            file: 1888024003,
+                          ),
+                          span: Span(
+                            start: 68,
+                            end: 69,
                             file: 1888024003,
                           ),
                         ), Expression(
@@ -67,9 +97,19 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                             id: 7,
                             file: 1888024003,
                           ),
+                          span: Span(
+                            start: 72,
+                            end: 73,
+                            file: 1888024003,
+                          ),
                         )),
                         id: NodeId(
                           id: 8,
+                          file: 1888024003,
+                        ),
+                        span: Span(
+                          start: 68,
+                          end: 73,
                           file: 1888024003,
                         ),
                       )),
@@ -77,10 +117,20 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                         id: 9,
                         file: 1888024003,
                       ),
+                      span: Span(
+                        start: 64,
+                        end: 73,
+                        file: 1888024003,
+                      ),
                     )),
                   ]),
                   id: NodeId(
                     id: 10,
+                    file: 1888024003,
+                  ),
+                  span: Span(
+                    start: 50,
+                    end: 74,
                     file: 1888024003,
                   ),
                 ),
@@ -98,11 +148,21 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                 id: 11,
                 file: 1888024003,
               ),
+              span: Span(
+                start: 50,
+                end: 75,
+                file: 1888024003,
+              ),
             )),
           ],
           expr: None,
           id: NodeId(
             id: 12,
+            file: 1888024003,
+          ),
+          span: Span(
+            start: 44,
+            end: 77,
             file: 1888024003,
           ),
         )),
@@ -111,112 +171,11 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
         id: 13,
         file: 1888024003,
       ),
+      span: Span(
+        start: 32,
+        end: 77,
+        file: 1888024003,
+      ),
     )),
   ],
-  spans: {
-    NodeId(
-      id: 1,
-      file: 1888024003,
-    ): Span(
-      start: 4,
-      end: 29,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 2,
-      file: 1888024003,
-    ): Span(
-      start: 0,
-      end: 30,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 3,
-      file: 1888024003,
-    ): Span(
-      start: 50,
-      end: 57,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 4,
-      file: 1888024003,
-    ): Span(
-      start: 58,
-      end: 62,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 5,
-      file: 1888024003,
-    ): Span(
-      start: 64,
-      end: 65,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 6,
-      file: 1888024003,
-    ): Span(
-      start: 68,
-      end: 69,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 7,
-      file: 1888024003,
-    ): Span(
-      start: 72,
-      end: 73,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 8,
-      file: 1888024003,
-    ): Span(
-      start: 68,
-      end: 73,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 9,
-      file: 1888024003,
-    ): Span(
-      start: 64,
-      end: 73,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 10,
-      file: 1888024003,
-    ): Span(
-      start: 50,
-      end: 74,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 11,
-      file: 1888024003,
-    ): Span(
-      start: 50,
-      end: 75,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 12,
-      file: 1888024003,
-    ): Span(
-      start: 44,
-      end: 77,
-      file: 1888024003,
-    ),
-    NodeId(
-      id: 13,
-      file: 1888024003,
-    ): Span(
-      start: 32,
-      end: 77,
-      file: 1888024003,
-    ),
-  },
 ), [])

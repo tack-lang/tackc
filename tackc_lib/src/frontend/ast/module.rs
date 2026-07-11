@@ -5,7 +5,6 @@ use std::fmt::Write;
 use crate::file::FileId;
 use crate::global::{Global, Interned};
 use crate::span::Span;
-use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -13,21 +12,19 @@ use crate::frontend::ast::{Item, NodeId, Symbol};
 
 /// A module represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct AstModule<'src> {
+pub struct AstModule {
     /// The file of this module.
     pub file: FileId,
     /// The module statement of this module.
-    pub mod_stmt: Option<&'src ModStatement>,
+    pub mod_stmt: Option<ModStatement>,
     /// The items of this module.
-    pub items: ThinVec<Option<&'src Item<'src>>>,
-    /// The spans of this module.
-    pub spans: Box<FxHashMap<NodeId, Span>>,
+    pub items: ThinVec<Option<Item>>,
 }
 
-impl AstModule<'_> {
+impl AstModule {
     /// Displays this module.
     pub fn display(&self, global: &Global) -> String {
-        let mod_stmt = match self.mod_stmt {
+        let mod_stmt = match &self.mod_stmt {
             Some(stmt) => stmt.display(global),
             None => String::from("<ERROR>;"),
         };
@@ -55,6 +52,8 @@ pub struct ModStatement {
     pub path: Option<AstPath>,
     /// The ID of this module statement.
     pub id: NodeId,
+    /// The span of this module statement.
+    pub span: Span,
 }
 
 impl ModStatement {
@@ -76,6 +75,8 @@ pub struct AstPath {
     pub components: ThinVec<Option<Interned<Symbol>>>,
     /// The ID of this AST node.
     pub id: NodeId,
+    /// The span of this AST node.
+    pub span: Span,
 }
 
 impl AstPath {

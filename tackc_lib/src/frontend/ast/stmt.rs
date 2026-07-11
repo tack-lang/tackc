@@ -2,23 +2,26 @@
 
 use crate::frontend::lexer::Token;
 use crate::global::{Global, Interned};
+use crate::span::Span;
 use serde::Serialize;
 
 use crate::frontend::ast::{Expression, Item, NodeId, Symbol};
 
 /// A statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Statement<'src> {
+pub struct Statement {
     /// The kind of statement this is.
-    pub kind: &'src StatementKind<'src>,
+    pub kind: StatementKind,
     /// The ID of this AST node.
     pub id: NodeId,
+    /// The span of this AST node.
+    pub span: Span,
 }
 
-impl<'src> Statement<'src> {
+impl Statement {
     /// Creates a new statement.
-    pub const fn new(kind: &'src StatementKind<'src>, id: NodeId) -> Self {
-        Self { kind, id }
+    pub const fn new(kind: StatementKind, id: NodeId, span: Span) -> Self {
+        Self { kind, id, span }
     }
 
     /// Displays this statement.
@@ -34,29 +37,29 @@ impl<'src> Statement<'src> {
 
 /// Different kinds of statements.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub enum StatementKind<'src> {
+pub enum StatementKind {
     /// Let statement.
-    LetStatement(&'src LetStatement<'src>),
+    LetStatement(LetStatement),
     /// Assignment statement.
-    AssignmentStatement(&'src AssignmentStatement<'src>),
+    AssignmentStatement(AssignmentStatement),
     /// Item, in the place of a statement.
-    Item(&'src Item<'src>),
+    Item(Item),
     /// Expression statement.
-    ExpressionStatement(&'src ExpressionStatement<'src>),
+    ExpressionStatement(ExpressionStatement),
 }
 
 /// Let statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct LetStatement<'src> {
+pub struct LetStatement {
     /// Type annotation for this let statement.
-    pub ty: Option<Option<&'src Expression<'src>>>,
+    pub ty: Option<Option<Expression>>,
     /// The default expression of this let statement.
-    pub expr: Option<Option<&'src Expression<'src>>>,
+    pub expr: Option<Option<Expression>>,
     /// The identifier of this let statement.
     pub ident: Option<Interned<Symbol>>,
 }
 
-impl LetStatement<'_> {
+impl LetStatement {
     fn display(&self, global: &Global) -> String {
         let ident = match self.ident {
             Some(ident) => ident.get(global).display(global),
@@ -78,17 +81,17 @@ impl LetStatement<'_> {
 
 /// Assignment statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct AssignmentStatement<'src> {
+pub struct AssignmentStatement {
     /// The left hand side.
-    pub lhs: &'src Expression<'src>,
+    pub lhs: Expression,
     /// The right hand side.
-    pub rhs: Option<&'src Expression<'src>>,
+    pub rhs: Option<Expression>,
 }
 
-impl AssignmentStatement<'_> {
+impl AssignmentStatement {
     fn display(&self, global: &Global) -> String {
         let lhs = self.lhs.display(global);
-        let rhs = match self.rhs {
+        let rhs = match &self.rhs {
             Some(expr) => expr.display(global),
             None => String::from("<ERROR>"),
         };
@@ -98,14 +101,14 @@ impl AssignmentStatement<'_> {
 
 /// Expression statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct ExpressionStatement<'src> {
+pub struct ExpressionStatement {
     /// The inner expression.
-    pub expr: &'src Expression<'src>,
+    pub expr: Expression,
     /// The optional semicolon.
     pub semi: Option<Option<Token>>,
 }
 
-impl ExpressionStatement<'_> {
+impl ExpressionStatement {
     fn display(&self, global: &Global) -> String {
         let stmt_str = self.expr.display(global);
         let semi = match self.semi {

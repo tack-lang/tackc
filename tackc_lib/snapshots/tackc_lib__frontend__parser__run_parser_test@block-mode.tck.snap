@@ -14,9 +14,19 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
         id: 1,
         file: 3907861227,
       ),
+      span: Span(
+        start: 4,
+        end: 9,
+        file: 3907861227,
+      ),
     )),
     id: NodeId(
       id: 2,
+      file: 3907861227,
+    ),
+    span: Span(
+      start: 0,
+      end: 10,
       file: 3907861227,
     ),
   )),
@@ -38,9 +48,19 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
                   id: 3,
                   file: 3907861227,
                 ),
+                span: Span(
+                  start: 27,
+                  end: 32,
+                  file: 3907861227,
+                ),
               )),
               id: NodeId(
                 id: 4,
+                file: 3907861227,
+              ),
+              span: Span(
+                start: 27,
+                end: 32,
                 file: 3907861227,
               ),
             ))),
@@ -48,9 +68,19 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
               id: 5,
               file: 3907861227,
             ),
+            span: Span(
+              start: 26,
+              end: 33,
+              file: 3907861227,
+            ),
           ))),
           id: NodeId(
             id: 6,
+            file: 3907861227,
+          ),
+          span: Span(
+            start: 24,
+            end: 35,
             file: 3907861227,
           ),
         )),
@@ -59,67 +89,14 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
         id: 7,
         file: 3907861227,
       ),
+      span: Span(
+        start: 12,
+        end: 35,
+        file: 3907861227,
+      ),
     )),
     None,
   ],
-  spans: {
-    NodeId(
-      id: 1,
-      file: 3907861227,
-    ): Span(
-      start: 4,
-      end: 9,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 2,
-      file: 3907861227,
-    ): Span(
-      start: 0,
-      end: 10,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 3,
-      file: 3907861227,
-    ): Span(
-      start: 27,
-      end: 32,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 4,
-      file: 3907861227,
-    ): Span(
-      start: 27,
-      end: 32,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 5,
-      file: 3907861227,
-    ): Span(
-      start: 26,
-      end: 33,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 6,
-      file: 3907861227,
-    ): Span(
-      start: 24,
-      end: 35,
-      file: 3907861227,
-    ),
-    NodeId(
-      id: 7,
-      file: 3907861227,
-    ): Span(
-      start: 12,
-      end: 35,
-      file: 3907861227,
-    ),
-  },
 ), [
   Expected(Some("statement, item, or expression"), Token(
     span: Span(

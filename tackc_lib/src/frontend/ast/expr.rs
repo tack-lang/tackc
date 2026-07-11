@@ -2,7 +2,10 @@
 
 use std::fmt::{Display, Write};
 
-use crate::global::{Global, Interned};
+use crate::{
+    global::{Global, Interned},
+    span::Span,
+};
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -10,17 +13,19 @@ use crate::frontend::ast::{Block, NodeId, Symbol};
 
 /// An expression in parsed form.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Expression<'src> {
+pub struct Expression {
     /// The kind of expression this expression is.
-    pub kind: &'src ExpressionKind<'src>,
+    pub kind: ExpressionKind,
     /// The ID of this node.
     pub id: NodeId,
+    /// The span of this node.
+    pub span: Span,
 }
 
-impl<'src> Expression<'src> {
+impl Expression {
     /// Creates a new expression.
-    pub const fn new(kind: &'src ExpressionKind<'src>, id: NodeId) -> Self {
-        Self { kind, id }
+    pub const fn new(kind: ExpressionKind, id: NodeId, span: Span) -> Self {
+        Self { kind, id, span }
     }
 
     /// Displays an expression.
@@ -87,7 +92,7 @@ impl<'src> Expression<'src> {
 
 /// Different kinds of expressions.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub enum ExpressionKind<'src> {
+pub enum ExpressionKind {
     /// Integer literal.
     IntLit(Interned<str>),
     /// Float literal.
@@ -99,26 +104,23 @@ pub enum ExpressionKind<'src> {
     /// Global identifier (starting with `.`, and referencing global scope.)
     GlobalIdent(Option<Interned<Symbol>>),
     /// Grouped expression.
-    Grouping(Option<&'src Expression<'src>>),
+    Grouping(Option<Box<Expression>>),
     /// Member access of an expression.
-    Member(&'src Expression<'src>, Option<Interned<Symbol>>),
+    Member(Box<Expression>, Option<Interned<Symbol>>),
     /// Call expression.
-    Call(
-        &'src Expression<'src>,
-        ThinVec<Option<&'src Expression<'src>>>,
-    ),
+    Call(Box<Expression>, ThinVec<Option<Expression>>),
     /// Indexing of an expression.
-    Index(&'src Expression<'src>, Option<&'src Expression<'src>>),
+    Index(Box<Expression>, Option<Box<Expression>>),
     /// Block expression.
-    Block(&'src Block<'src>),
+    Block(Box<Block>),
 
     /// Binary expression.
-    Binary(BinOp, &'src Expression<'src>, &'src Expression<'src>),
+    Binary(BinOp, Box<Expression>, Box<Expression>),
     /// Unary expression.
-    Unary(UnOp, &'src Expression<'src>),
+    Unary(UnOp, Box<Expression>),
 }
 
-impl ExpressionKind<'_> {
+impl ExpressionKind {
     /// Returns whether this expression kind ends with a block.
     pub const fn is_block(&self) -> bool {
         matches!(self, Self::Block(_))

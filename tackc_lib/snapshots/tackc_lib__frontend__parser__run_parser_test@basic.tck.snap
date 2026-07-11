@@ -14,9 +14,19 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
         id: 1,
         file: 2012121647,
       ),
+      span: Span(
+        start: 4,
+        end: 9,
+        file: 2012121647,
+      ),
     )),
     id: NodeId(
       id: 2,
+      file: 2012121647,
+    ),
+    span: Span(
+      start: 0,
+      end: 10,
       file: 2012121647,
     ),
   )),
@@ -34,10 +44,20 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
             id: 3,
             file: 2012121647,
           ),
+          span: Span(
+            start: 16,
+            end: 29,
+            file: 2012121647,
+          ),
         )),
       )),
       id: NodeId(
         id: 4,
+        file: 2012121647,
+      ),
+      span: Span(
+        start: 12,
+        end: 30,
         file: 2012121647,
       ),
     )),
@@ -51,11 +71,21 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
             id: 5,
             file: 2012121647,
           ),
+          span: Span(
+            start: 52,
+            end: 67,
+            file: 2012121647,
+          ),
         )),
         ident: Some(Interned(5267153004227821378, PhantomData)),
       )),
       id: NodeId(
         id: 6,
+        file: 2012121647,
+      ),
+      span: Span(
+        start: 32,
+        end: 68,
         file: 2012121647,
       ),
     )),
@@ -76,6 +106,11 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                       id: 7,
                       file: 2012121647,
                     ),
+                    span: Span(
+                      start: 92,
+                      end: 99,
+                      file: 2012121647,
+                    ),
                   ), [
                     Some(Expression(
                       kind: Ident(Interned(2468304650323118657, PhantomData)),
@@ -83,10 +118,20 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                         id: 8,
                         file: 2012121647,
                       ),
+                      span: Span(
+                        start: 100,
+                        end: 111,
+                        file: 2012121647,
+                      ),
                     )),
                   ]),
                   id: NodeId(
                     id: 9,
+                    file: 2012121647,
+                  ),
+                  span: Span(
+                    start: 92,
+                    end: 112,
                     file: 2012121647,
                   ),
                 ),
@@ -104,11 +149,21 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                 id: 10,
                 file: 2012121647,
               ),
+              span: Span(
+                start: 92,
+                end: 113,
+                file: 2012121647,
+              ),
             )),
           ],
           expr: None,
           id: NodeId(
             id: 11,
+            file: 2012121647,
+          ),
+          span: Span(
+            start: 86,
+            end: 115,
             file: 2012121647,
           ),
         )),
@@ -117,104 +172,11 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
         id: 12,
         file: 2012121647,
       ),
+      span: Span(
+        start: 74,
+        end: 115,
+        file: 2012121647,
+      ),
     )),
   ],
-  spans: {
-    NodeId(
-      id: 1,
-      file: 2012121647,
-    ): Span(
-      start: 4,
-      end: 9,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 2,
-      file: 2012121647,
-    ): Span(
-      start: 0,
-      end: 10,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 3,
-      file: 2012121647,
-    ): Span(
-      start: 16,
-      end: 29,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 4,
-      file: 2012121647,
-    ): Span(
-      start: 12,
-      end: 30,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 5,
-      file: 2012121647,
-    ): Span(
-      start: 52,
-      end: 67,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 6,
-      file: 2012121647,
-    ): Span(
-      start: 32,
-      end: 68,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 7,
-      file: 2012121647,
-    ): Span(
-      start: 92,
-      end: 99,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 8,
-      file: 2012121647,
-    ): Span(
-      start: 100,
-      end: 111,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 9,
-      file: 2012121647,
-    ): Span(
-      start: 92,
-      end: 112,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 10,
-      file: 2012121647,
-    ): Span(
-      start: 92,
-      end: 113,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 11,
-      file: 2012121647,
-    ): Span(
-      start: 86,
-      end: 115,
-      file: 2012121647,
-    ),
-    NodeId(
-      id: 12,
-      file: 2012121647,
-    ): Span(
-      start: 74,
-      end: 115,
-      file: 2012121647,
-    ),
-  },
 ), [])

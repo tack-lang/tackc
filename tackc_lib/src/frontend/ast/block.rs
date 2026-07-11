@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::global::Global;
+use crate::{global::Global, span::Span};
 use serde::Serialize;
 use thin_vec::ThinVec;
 
@@ -10,16 +10,18 @@ use crate::frontend::ast::{Expression, NodeId, Statement};
 
 /// Code blocks.
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Block<'src> {
+pub struct Block {
     /// The statements in this block.
-    pub stmts: ThinVec<Option<&'src Statement<'src>>>,
+    pub stmts: ThinVec<Option<Statement>>,
     /// The optional tail expression of this block.
-    pub expr: Option<Option<&'src Expression<'src>>>,
+    pub expr: Option<Option<Expression>>,
     /// The ID of this node.
     pub id: NodeId,
+    /// The span of this node.
+    pub span: Span,
 }
 
-impl Block<'_> {
+impl Block {
     /// Displays this block.
     pub fn display(&self, global: &Global) -> String {
         let mut stmts = String::new();

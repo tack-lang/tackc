@@ -15,9 +15,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
         id: 1,
         file: 3931689921,
       ),
+      span: Span(
+        start: 8,
+        end: 21,
+        file: 3931689921,
+      ),
     )),
     id: NodeId(
       id: 2,
+      file: 3931689921,
+    ),
+    span: Span(
+      start: 4,
+      end: 22,
       file: 3931689921,
     ),
   )),
@@ -77,9 +87,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                                                 id: 3,
                                                                                                 file: 3931689921,
                                                                                               ),
+                                                                                              span: Span(
+                                                                                                start: 87,
+                                                                                                end: 223,
+                                                                                                file: 3931689921,
+                                                                                              ),
                                                                                             ))),
                                                                                             id: NodeId(
                                                                                               id: 4,
+                                                                                              file: 3931689921,
+                                                                                            ),
+                                                                                            span: Span(
+                                                                                              start: 86,
+                                                                                              end: 224,
                                                                                               file: 3931689921,
                                                                                             ),
                                                                                           ))),
@@ -87,9 +107,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                                             id: 5,
                                                                                             file: 3931689921,
                                                                                           ),
+                                                                                          span: Span(
+                                                                                            start: 85,
+                                                                                            end: 225,
+                                                                                            file: 3931689921,
+                                                                                          ),
                                                                                         ))),
                                                                                         id: NodeId(
                                                                                           id: 6,
+                                                                                          file: 3931689921,
+                                                                                        ),
+                                                                                        span: Span(
+                                                                                          start: 84,
+                                                                                          end: 226,
                                                                                           file: 3931689921,
                                                                                         ),
                                                                                       ))),
@@ -97,9 +127,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                                         id: 7,
                                                                                         file: 3931689921,
                                                                                       ),
+                                                                                      span: Span(
+                                                                                        start: 83,
+                                                                                        end: 227,
+                                                                                        file: 3931689921,
+                                                                                      ),
                                                                                     ))),
                                                                                     id: NodeId(
                                                                                       id: 8,
+                                                                                      file: 3931689921,
+                                                                                    ),
+                                                                                    span: Span(
+                                                                                      start: 82,
+                                                                                      end: 228,
                                                                                       file: 3931689921,
                                                                                     ),
                                                                                   ))),
@@ -107,9 +147,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                                     id: 9,
                                                                                     file: 3931689921,
                                                                                   ),
+                                                                                  span: Span(
+                                                                                    start: 81,
+                                                                                    end: 229,
+                                                                                    file: 3931689921,
+                                                                                  ),
                                                                                 ))),
                                                                                 id: NodeId(
                                                                                   id: 10,
+                                                                                  file: 3931689921,
+                                                                                ),
+                                                                                span: Span(
+                                                                                  start: 80,
+                                                                                  end: 230,
                                                                                   file: 3931689921,
                                                                                 ),
                                                                               ))),
@@ -117,9 +167,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                                 id: 11,
                                                                                 file: 3931689921,
                                                                               ),
+                                                                              span: Span(
+                                                                                start: 79,
+                                                                                end: 231,
+                                                                                file: 3931689921,
+                                                                              ),
                                                                             ))),
                                                                             id: NodeId(
                                                                               id: 12,
+                                                                              file: 3931689921,
+                                                                            ),
+                                                                            span: Span(
+                                                                              start: 78,
+                                                                              end: 232,
                                                                               file: 3931689921,
                                                                             ),
                                                                           ))),
@@ -127,9 +187,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                             id: 13,
                                                                             file: 3931689921,
                                                                           ),
+                                                                          span: Span(
+                                                                            start: 77,
+                                                                            end: 233,
+                                                                            file: 3931689921,
+                                                                          ),
                                                                         ))),
                                                                         id: NodeId(
                                                                           id: 14,
+                                                                          file: 3931689921,
+                                                                        ),
+                                                                        span: Span(
+                                                                          start: 76,
+                                                                          end: 234,
                                                                           file: 3931689921,
                                                                         ),
                                                                       ))),
@@ -137,9 +207,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                         id: 15,
                                                                         file: 3931689921,
                                                                       ),
+                                                                      span: Span(
+                                                                        start: 75,
+                                                                        end: 235,
+                                                                        file: 3931689921,
+                                                                      ),
                                                                     ))),
                                                                     id: NodeId(
                                                                       id: 16,
+                                                                      file: 3931689921,
+                                                                    ),
+                                                                    span: Span(
+                                                                      start: 74,
+                                                                      end: 236,
                                                                       file: 3931689921,
                                                                     ),
                                                                   ))),
@@ -147,9 +227,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                     id: 17,
                                                                     file: 3931689921,
                                                                   ),
+                                                                  span: Span(
+                                                                    start: 73,
+                                                                    end: 237,
+                                                                    file: 3931689921,
+                                                                  ),
                                                                 ))),
                                                                 id: NodeId(
                                                                   id: 18,
+                                                                  file: 3931689921,
+                                                                ),
+                                                                span: Span(
+                                                                  start: 72,
+                                                                  end: 238,
                                                                   file: 3931689921,
                                                                 ),
                                                               ))),
@@ -157,9 +247,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                                 id: 19,
                                                                 file: 3931689921,
                                                               ),
+                                                              span: Span(
+                                                                start: 71,
+                                                                end: 239,
+                                                                file: 3931689921,
+                                                              ),
                                                             ))),
                                                             id: NodeId(
                                                               id: 20,
+                                                              file: 3931689921,
+                                                            ),
+                                                            span: Span(
+                                                              start: 70,
+                                                              end: 240,
                                                               file: 3931689921,
                                                             ),
                                                           ))),
@@ -167,9 +267,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                             id: 21,
                                                             file: 3931689921,
                                                           ),
+                                                          span: Span(
+                                                            start: 69,
+                                                            end: 241,
+                                                            file: 3931689921,
+                                                          ),
                                                         ))),
                                                         id: NodeId(
                                                           id: 22,
+                                                          file: 3931689921,
+                                                        ),
+                                                        span: Span(
+                                                          start: 68,
+                                                          end: 242,
                                                           file: 3931689921,
                                                         ),
                                                       ))),
@@ -177,9 +287,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                         id: 23,
                                                         file: 3931689921,
                                                       ),
+                                                      span: Span(
+                                                        start: 67,
+                                                        end: 243,
+                                                        file: 3931689921,
+                                                      ),
                                                     ))),
                                                     id: NodeId(
                                                       id: 24,
+                                                      file: 3931689921,
+                                                    ),
+                                                    span: Span(
+                                                      start: 66,
+                                                      end: 244,
                                                       file: 3931689921,
                                                     ),
                                                   ))),
@@ -187,9 +307,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                     id: 25,
                                                     file: 3931689921,
                                                   ),
+                                                  span: Span(
+                                                    start: 65,
+                                                    end: 245,
+                                                    file: 3931689921,
+                                                  ),
                                                 ))),
                                                 id: NodeId(
                                                   id: 26,
+                                                  file: 3931689921,
+                                                ),
+                                                span: Span(
+                                                  start: 64,
+                                                  end: 246,
                                                   file: 3931689921,
                                                 ),
                                               ))),
@@ -197,9 +327,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                                 id: 27,
                                                 file: 3931689921,
                                               ),
+                                              span: Span(
+                                                start: 63,
+                                                end: 247,
+                                                file: 3931689921,
+                                              ),
                                             ))),
                                             id: NodeId(
                                               id: 28,
+                                              file: 3931689921,
+                                            ),
+                                            span: Span(
+                                              start: 62,
+                                              end: 248,
                                               file: 3931689921,
                                             ),
                                           ))),
@@ -207,9 +347,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                             id: 29,
                                             file: 3931689921,
                                           ),
+                                          span: Span(
+                                            start: 61,
+                                            end: 249,
+                                            file: 3931689921,
+                                          ),
                                         ))),
                                         id: NodeId(
                                           id: 30,
+                                          file: 3931689921,
+                                        ),
+                                        span: Span(
+                                          start: 60,
+                                          end: 250,
                                           file: 3931689921,
                                         ),
                                       ))),
@@ -217,9 +367,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                         id: 31,
                                         file: 3931689921,
                                       ),
+                                      span: Span(
+                                        start: 59,
+                                        end: 251,
+                                        file: 3931689921,
+                                      ),
                                     ))),
                                     id: NodeId(
                                       id: 32,
+                                      file: 3931689921,
+                                    ),
+                                    span: Span(
+                                      start: 58,
+                                      end: 252,
                                       file: 3931689921,
                                     ),
                                   ))),
@@ -227,9 +387,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                     id: 33,
                                     file: 3931689921,
                                   ),
+                                  span: Span(
+                                    start: 57,
+                                    end: 253,
+                                    file: 3931689921,
+                                  ),
                                 ))),
                                 id: NodeId(
                                   id: 34,
+                                  file: 3931689921,
+                                ),
+                                span: Span(
+                                  start: 56,
+                                  end: 254,
                                   file: 3931689921,
                                 ),
                               ))),
@@ -237,9 +407,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                                 id: 35,
                                 file: 3931689921,
                               ),
+                              span: Span(
+                                start: 55,
+                                end: 255,
+                                file: 3931689921,
+                              ),
                             ))),
                             id: NodeId(
                               id: 36,
+                              file: 3931689921,
+                            ),
+                            span: Span(
+                              start: 54,
+                              end: 256,
                               file: 3931689921,
                             ),
                           ))),
@@ -247,9 +427,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                             id: 37,
                             file: 3931689921,
                           ),
+                          span: Span(
+                            start: 53,
+                            end: 257,
+                            file: 3931689921,
+                          ),
                         ))),
                         id: NodeId(
                           id: 38,
+                          file: 3931689921,
+                        ),
+                        span: Span(
+                          start: 52,
+                          end: 258,
                           file: 3931689921,
                         ),
                       ))),
@@ -257,9 +447,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                         id: 39,
                         file: 3931689921,
                       ),
+                      span: Span(
+                        start: 51,
+                        end: 259,
+                        file: 3931689921,
+                      ),
                     ))),
                     id: NodeId(
                       id: 40,
+                      file: 3931689921,
+                    ),
+                    span: Span(
+                      start: 50,
+                      end: 260,
                       file: 3931689921,
                     ),
                   ))),
@@ -267,9 +467,19 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                     id: 41,
                     file: 3931689921,
                   ),
+                  span: Span(
+                    start: 49,
+                    end: 261,
+                    file: 3931689921,
+                  ),
                 ))),
                 id: NodeId(
                   id: 42,
+                  file: 3931689921,
+                ),
+                span: Span(
+                  start: 48,
+                  end: 262,
                   file: 3931689921,
                 ),
               ))),
@@ -277,14 +487,29 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
                 id: 43,
                 file: 3931689921,
               ),
+              span: Span(
+                start: 47,
+                end: 263,
+                file: 3931689921,
+              ),
             ))),
             id: NodeId(
               id: 44,
               file: 3931689921,
             ),
+            span: Span(
+              start: 46,
+              end: 264,
+              file: 3931689921,
+            ),
           ))),
           id: NodeId(
             id: 45,
+            file: 3931689921,
+          ),
+          span: Span(
+            start: 40,
+            end: 266,
             file: 3931689921,
           ),
         )),
@@ -293,378 +518,13 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
         id: 46,
         file: 3931689921,
       ),
+      span: Span(
+        start: 24,
+        end: 266,
+        file: 3931689921,
+      ),
     )),
   ],
-  spans: {
-    NodeId(
-      id: 1,
-      file: 3931689921,
-    ): Span(
-      start: 8,
-      end: 21,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 2,
-      file: 3931689921,
-    ): Span(
-      start: 4,
-      end: 22,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 3,
-      file: 3931689921,
-    ): Span(
-      start: 87,
-      end: 223,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 4,
-      file: 3931689921,
-    ): Span(
-      start: 86,
-      end: 224,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 5,
-      file: 3931689921,
-    ): Span(
-      start: 85,
-      end: 225,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 6,
-      file: 3931689921,
-    ): Span(
-      start: 84,
-      end: 226,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 7,
-      file: 3931689921,
-    ): Span(
-      start: 83,
-      end: 227,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 8,
-      file: 3931689921,
-    ): Span(
-      start: 82,
-      end: 228,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 9,
-      file: 3931689921,
-    ): Span(
-      start: 81,
-      end: 229,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 10,
-      file: 3931689921,
-    ): Span(
-      start: 80,
-      end: 230,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 11,
-      file: 3931689921,
-    ): Span(
-      start: 79,
-      end: 231,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 12,
-      file: 3931689921,
-    ): Span(
-      start: 78,
-      end: 232,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 13,
-      file: 3931689921,
-    ): Span(
-      start: 77,
-      end: 233,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 14,
-      file: 3931689921,
-    ): Span(
-      start: 76,
-      end: 234,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 15,
-      file: 3931689921,
-    ): Span(
-      start: 75,
-      end: 235,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 16,
-      file: 3931689921,
-    ): Span(
-      start: 74,
-      end: 236,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 17,
-      file: 3931689921,
-    ): Span(
-      start: 73,
-      end: 237,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 18,
-      file: 3931689921,
-    ): Span(
-      start: 72,
-      end: 238,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 19,
-      file: 3931689921,
-    ): Span(
-      start: 71,
-      end: 239,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 20,
-      file: 3931689921,
-    ): Span(
-      start: 70,
-      end: 240,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 21,
-      file: 3931689921,
-    ): Span(
-      start: 69,
-      end: 241,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 22,
-      file: 3931689921,
-    ): Span(
-      start: 68,
-      end: 242,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 23,
-      file: 3931689921,
-    ): Span(
-      start: 67,
-      end: 243,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 24,
-      file: 3931689921,
-    ): Span(
-      start: 66,
-      end: 244,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 25,
-      file: 3931689921,
-    ): Span(
-      start: 65,
-      end: 245,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 26,
-      file: 3931689921,
-    ): Span(
-      start: 64,
-      end: 246,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 27,
-      file: 3931689921,
-    ): Span(
-      start: 63,
-      end: 247,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 28,
-      file: 3931689921,
-    ): Span(
-      start: 62,
-      end: 248,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 29,
-      file: 3931689921,
-    ): Span(
-      start: 61,
-      end: 249,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 30,
-      file: 3931689921,
-    ): Span(
-      start: 60,
-      end: 250,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 31,
-      file: 3931689921,
-    ): Span(
-      start: 59,
-      end: 251,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 32,
-      file: 3931689921,
-    ): Span(
-      start: 58,
-      end: 252,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 33,
-      file: 3931689921,
-    ): Span(
-      start: 57,
-      end: 253,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 34,
-      file: 3931689921,
-    ): Span(
-      start: 56,
-      end: 254,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 35,
-      file: 3931689921,
-    ): Span(
-      start: 55,
-      end: 255,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 36,
-      file: 3931689921,
-    ): Span(
-      start: 54,
-      end: 256,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 37,
-      file: 3931689921,
-    ): Span(
-      start: 53,
-      end: 257,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 38,
-      file: 3931689921,
-    ): Span(
-      start: 52,
-      end: 258,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 39,
-      file: 3931689921,
-    ): Span(
-      start: 51,
-      end: 259,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 40,
-      file: 3931689921,
-    ): Span(
-      start: 50,
-      end: 260,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 41,
-      file: 3931689921,
-    ): Span(
-      start: 49,
-      end: 261,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 42,
-      file: 3931689921,
-    ): Span(
-      start: 48,
-      end: 262,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 43,
-      file: 3931689921,
-    ): Span(
-      start: 47,
-      end: 263,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 44,
-      file: 3931689921,
-    ): Span(
-      start: 46,
-      end: 264,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 45,
-      file: 3931689921,
-    ): Span(
-      start: 40,
-      end: 266,
-      file: 3931689921,
-    ),
-    NodeId(
-      id: 46,
-      file: 3931689921,
-    ): Span(
-      start: 24,
-      end: 266,
-      file: 3931689921,
-    ),
-  },
 ), [
   Expected(Some("type"), Token(
     span: Span(
