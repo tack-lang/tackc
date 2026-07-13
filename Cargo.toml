@@ -58,6 +58,7 @@ dbg_macro = "warn"
 # Lints to allow.
 must-use-candidate = "allow"
 should-panic-without-expect = "allow"
+type-complexity = "allow"
 
 [workspace.lints.rust]
 unsafe_code = "deny"

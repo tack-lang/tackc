@@ -12,7 +12,7 @@ use nonzero::nonzero;
 use crate::file::File;
 use crate::frontend::ast::NodeId;
 use crate::frontend::lexer::{Token, TokenKind};
-use crate::global::Global;
+use crate::global::{Global, Interned};
 use crate::span::{Span, SpanValue};
 use crate::utils::UnwrapExt;
 use thin_vec::ThinVec;
@@ -413,11 +413,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                 .map_or_else(|| self.loc(), |sym| sym.get(self.global).1.end),
             self.file,
         );
-        Ok(AstPath {
-            components,
-            id: self.get_id()?,
-            span,
-        })
+        Ok(AstPath::new(components, self.get_id()?, span))
     }
 
     fn item(&mut self, recursion: u32) -> Result<Item> {
@@ -490,30 +486,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let _opening = self.expect_report(&[TokenKind::LParen], "'('");
 
-        let mut params = ThinVec::new();
-        loop {
-            if let Some(tok) = self.peek()
-                && tok.kind == TokenKind::RParen
-            {
-                break;
-            }
-
-            let ident = self.expect_report(&[TokenKind::Ident], "identifier");
-            let _colon = self.expect_report(&[TokenKind::Colon], "':'");
-            let expr = self.parse_sync(
-                Self::expression_normal,
-                &[TokenKind::Comma, TokenKind::RParen],
-                "expression",
-                recursion + 1,
-            );
-            params.push((
-                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
-                expr,
-            ));
-            if self.eat(&[TokenKind::Comma]).is_none() {
-                break;
-            }
-        }
+        let params = self.param_list_required_ident(recursion + 1)?;
 
         let _closing = self.expect_report(&[TokenKind::RParen], "')'");
         let ret_type = self
@@ -548,6 +521,64 @@ impl<'src, 'a> Parser<'src, 'a> {
             id: self.get_id()?,
             span,
         })
+    }
+
+    /*fn param_list_optional_ident(
+        &mut self,
+        recursion: u32,
+    ) -> Result<ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>> {
+        self.param_list(recursion + 1, false)
+    }*/
+
+    fn param_list_required_ident(
+        &mut self,
+        recursion: u32,
+    ) -> Result<ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>> {
+        self.param_list(recursion + 1, true)
+    }
+
+    fn param_list(
+        &mut self,
+        recursion: u32,
+        required_ident: bool,
+    ) -> Result<ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>> {
+        self.check_failed(recursion)?;
+
+        let mut params = ThinVec::new();
+        loop {
+            if let Some(tok) = self.peek()
+                && tok.kind == TokenKind::RParen
+            {
+                break;
+            }
+
+            let ident = if required_ident {
+                let ident = self.expect_report(&[TokenKind::Ident], "identifier");
+                let _colon = self.expect_report(&[TokenKind::Colon], "':'");
+                ident
+            } else {
+                let ident = self.eat(&[TokenKind::Ident]);
+                if ident.is_some() {
+                    let _colon = self.expect_report(&[TokenKind::Colon], "':'");
+                }
+                ident
+            };
+            let expr = self.parse_sync(
+                Self::expression_normal,
+                &[TokenKind::Comma, TokenKind::RParen],
+                "expression",
+                recursion + 1,
+            );
+            params.push((
+                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                expr,
+            ));
+            if self.eat(&[TokenKind::Comma]).is_none() {
+                break;
+            }
+        }
+
+        Ok(params)
     }
 
     fn imp_item(&mut self, recursion: u32) -> Result<Item> {
@@ -972,14 +1003,11 @@ impl<'src, 'a> Parser<'src, 'a> {
     fn parse_index(&mut self, lhs: Expression, recursion: u32) -> Result<Expression> {
         self.advance();
 
-        let snapshot = self.snapshot();
-        let expr_res = self.expression(BlockMode::Normal, recursion + 1);
-        let expr = self.handle_error_sync(
-            expr_res,
-            snapshot,
+        let expr = self.parse_sync(
+            Self::expression_normal,
             &[TokenKind::RBracket],
             "expression",
-            false,
+            recursion,
         );
         let closing_res = self.expect_kinds(&[TokenKind::RBracket]);
         let closing = self.report_error(closing_res, "']'");

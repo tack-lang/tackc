@@ -5,6 +5,7 @@ use std::fmt::Write;
 use crate::file::FileId;
 use crate::global::{Global, Interned};
 use crate::span::Span;
+use crate::utils::UnwrapExt;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -72,7 +73,7 @@ impl ModStatement {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstPath {
     /// The components of the path.
-    pub components: ThinVec<Option<Interned<Symbol>>>,
+    components: ThinVec<Option<Interned<Symbol>>>,
     /// The ID of this AST node.
     pub id: NodeId,
     /// The span of this AST node.
@@ -80,6 +81,58 @@ pub struct AstPath {
 }
 
 impl AstPath {
+    /// Creates a new [`AstPath`].
+    ///
+    /// # Panics
+    /// This function panics if the components is empty.
+    pub fn new(components: ThinVec<Option<Interned<Symbol>>>, id: NodeId, span: Span) -> Self {
+        assert!(
+            !components.is_empty(),
+            "AstPath.components cannot be empty!"
+        );
+
+        Self {
+            components,
+            id,
+            span,
+        }
+    }
+
+    /// Gets this path's `components` value.
+    pub fn components(&self) -> &[Option<Interned<Symbol>>] {
+        &self.components
+    }
+
+    /// Gets the first component of this path.
+    pub fn first(&self) -> Option<Interned<Symbol>> {
+        debug_assert!(
+            !self.components.is_empty(),
+            "AstPath.components shouldn't be empty!"
+        );
+
+        // This is an invariant, checked in [`AstPath::new`].
+        self.components
+            .first()
+            .expect_unreachable() // CHECKED(Chloe)
+            .as_ref()
+            .copied()
+    }
+
+    /// Gets the last component of this path.
+    pub fn last(&self) -> Option<Interned<Symbol>> {
+        debug_assert!(
+            !self.components.is_empty(),
+            "AstPath.components shouldn't be empty!"
+        );
+
+        // This is an invariant, checked in [`AstPath::new`].
+        self.components
+            .last()
+            .expect_unreachable() // CHECKED(Chloe)
+            .as_ref()
+            .copied()
+    }
+
     /// Displays this path.
     pub fn display(&self, global: &Global) -> String {
         let mut str = String::new();

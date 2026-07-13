@@ -10,7 +10,7 @@ pub trait TreeItem {
     /// Returns the name of this tree item.
     fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str>;
     /// Returns the children of this tree item.
-    fn children(&self) -> Vec<&'_ dyn TreeItem>;
+    fn children(&self) -> Vec<&dyn TreeItem>;
 }
 
 /// An extension trait for displaying tree items.
