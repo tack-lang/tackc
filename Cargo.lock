@@ -801,6 +801,7 @@ dependencies = [
  "proptest",
  "rustc-hash",
  "serde",
+ "tackc_meta",
  "thin-vec",
  "thiserror",
 ]

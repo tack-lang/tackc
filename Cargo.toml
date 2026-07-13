@@ -23,6 +23,7 @@ nonzero = "0.2.0"
 aho-corasick = "1.1"
 colored = "3.1"
 mutants = "0.0.4"
+tackc_meta = { version = "0.1.0", path = "tackc_meta" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }

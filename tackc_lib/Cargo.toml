@@ -19,3 +19,6 @@ workspace = true
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob", "ron", "serde"] }
+
+[build-dependencies]
+tackc_meta = { workspace = true }

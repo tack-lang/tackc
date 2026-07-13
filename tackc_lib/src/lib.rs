@@ -1,5 +1,10 @@
 //! The main library for tackc's code.
 
+/// The compiler hash of tackc, as reported by `tackc_meta::hash`.
+pub const COMPILER_HASH: &str = env!("TACKC_COMPILER_HASH");
+/// The compiler version of tackc, as specified in `Cargo.toml`.
+pub const COMPILER_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[cfg(test)]
 macro_rules! setup_insta_test {
     () => {

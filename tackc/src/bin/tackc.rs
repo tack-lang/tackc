@@ -26,8 +26,11 @@ struct Args {
     #[cfg_attr(not(debug_assertions), clap(skip))]
     show: Vec<Stage>,
 
-    #[clap(required = true)]
+    #[clap(required_unless_present_all = ["version"])]
     files: Vec<PathBuf>,
+
+    #[clap(short, long)]
+    version: bool,
 }
 
 struct DebugModes {
@@ -43,6 +46,16 @@ enum Stage {
 
 fn main() {
     let args = Args::parse();
+
+    if args.version {
+        println!(
+            "tackc {} ({})",
+            tackc_lib::COMPILER_VERSION,
+            tackc_lib::COMPILER_HASH,
+        );
+        return;
+    }
+
     let debug_modes = DebugModes {
         debug: args.debug,
         show: args.show,
