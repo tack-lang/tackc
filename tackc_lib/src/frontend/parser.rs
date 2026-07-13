@@ -10,7 +10,7 @@ use error::{ParseError, Result};
 use nonzero::nonzero;
 
 use crate::file::File;
-use crate::frontend::ast::NodeId;
+use crate::frontend::ast::{Function, FunctionType, NodeId};
 use crate::frontend::lexer::{Token, TokenKind};
 use crate::global::{Global, Interned};
 use crate::span::{Span, SpanValue};
@@ -1153,11 +1153,12 @@ impl<'src, 'a> Parser<'src, 'a> {
     fn primary(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
-        let tok = self.expect_kinds(&[
+        let tok = self.expect_peek(&[
             TokenKind::IntLit,
             TokenKind::FloatLit,
             TokenKind::Ident,
             TokenKind::StringLit,
+            TokenKind::Func,
         ])?;
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
@@ -1166,12 +1167,72 @@ impl<'src, 'a> Parser<'src, 'a> {
                 ExpressionKind::Ident(self.global.intern(Symbol::new(tok, self.file.id())))
             }
             TokenKind::StringLit => ExpressionKind::StringLit(tok.lexeme),
-            // `expect` will only return token kinds of the inputs, and all the inputs are arms.
+            TokenKind::Func => return self.function_type_and_expr(recursion + 1),
+            // `expect_peek` will only return token kinds of the inputs, and all the inputs are arms.
             _ => unreachable!(), // CHECKED(Chloe)
         };
+        self.advance();
         let expr = Expression::new(primary, self.get_id()?, tok.span);
 
         Ok(expr)
+    }
+
+    fn function_type_and_expr(&mut self, recursion: u32) -> Result<Expression> {
+        self.check_failed(recursion)?;
+
+        let func = self.expect_kinds(&[TokenKind::Func])?;
+
+        let _opening = self.expect_report(&[TokenKind::LParen], "'('");
+
+        let params = self.param_list_required_ident(recursion + 1)?;
+
+        let _closing = self.expect_report(&[TokenKind::RParen], "')'");
+        let ret_type = self
+            .peek()
+            .filter(|tok| tok.kind != TokenKind::LBrace && tok.kind != TokenKind::Semicolon)
+            .map(|_| {
+                self.parse_sync(
+                    Self::expression_no_blocks,
+                    &[TokenKind::LBrace, TokenKind::Semicolon],
+                    "type",
+                    recursion + 1,
+                )
+                .map(Box::new)
+            });
+
+        let next = self.expect_peek_all()?;
+
+        if next.kind == TokenKind::LBrace {
+            let block = self.block(recursion + 1)?;
+            let span = Span::new_from(func.span.start, block.span.end, self.file);
+
+            Ok(Expression {
+                kind: ExpressionKind::Function(Function {
+                    params,
+                    ret_type,
+                    block: Box::new(block),
+                }),
+                id: self.get_id()?,
+                span,
+            })
+        } else {
+            let semi = self.expect_report(&[TokenKind::Semicolon], ";");
+
+            let param_types = params.into_iter().map(|(_, ty)| ty).collect::<ThinVec<_>>();
+
+            Ok(Expression {
+                kind: ExpressionKind::FunctionType(FunctionType {
+                    params: param_types,
+                    ret_type,
+                }),
+                id: self.get_id()?,
+                span: Span::new_from(
+                    func.span.start,
+                    semi.map_or_else(|| self.loc(), |tok| tok.span.end),
+                    self.file,
+                ),
+            })
+        }
     }
 }
 

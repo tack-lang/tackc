@@ -2,10 +2,18 @@ mod statement;
 
 exp imp tack.stdlib.T;
 
+func test() {
+    let s = 5;
+}
+
 func main() {
     {
         let s = 5;
     }
+    let s: func(s: expr) expr; = func(param_1: expr) expr {
+        let s = param_1;
+        s
+    };
     {
         let s = 5;
     }

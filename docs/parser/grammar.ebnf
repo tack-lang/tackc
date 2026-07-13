@@ -44,6 +44,8 @@ Expr = Primary
     | Postfix
     | Block
     | GlobalIdent
+    | FuncExpr
+    | FuncType
     ;
 
 Postfix = MemberAccess
@@ -59,6 +61,8 @@ Call = Expr L_PAREN ArgumentList? R_PAREN ;
 Index = Expr L_BRACKET Expr R_BRACKET ;
 Block = L_BRACE Stmt* Expr? R_BRACE ;
 GlobalIdent = DOT IDENTIFIER ;
+FuncExpr = FUNC OPEN_PAREN ParameterList? CLOSE_PAREN ExprNB? Block ;
+FuncType = FUNC OPEN_PAREN ParameterList? CLOSE_PAREN ExprNB? SEMICOLON ;
 
 ArgumentList = Expr ( COMMA Expr )* COMMA? ;
 
@@ -66,6 +70,7 @@ ArgumentList = Expr ( COMMA Expr )* COMMA? ;
     Expressions that can't be confused with expressions that are followed by blocks, or blocks themselves.
     If statements are allowed, since 'if' isn't a valid expression.
     Struct declarations aren't allowed, since 'struct' is a valid expression.
+    Function expressions aren't allowed, since everything before the body of a function expression is a valid function type.
 *)
 ExprNB = Primary
     | InfixNB

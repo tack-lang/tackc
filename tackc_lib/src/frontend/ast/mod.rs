@@ -169,6 +169,8 @@ pub trait AstVisitor<'src> {
                 self.visit_expression(lhs);
                 self.visit_expression(rhs);
             }
+            ExpressionKind::Function(func) => self.visit_function(func),
+            ExpressionKind::FunctionType(func_type) => self.visit_function_type(func_type),
         }
     }
 
@@ -179,6 +181,27 @@ pub trait AstVisitor<'src> {
         }
         if let Some(Some(expr)) = &block.expr {
             self.visit_expression(expr);
+        }
+    }
+
+    /// The function called when visiting a function expression.
+    fn visit_function(&mut self, func: &'src Function) {
+        for i in func.params.iter().flat_map(|tuple| &tuple.1) {
+            self.visit_expression(i);
+        }
+        if let Some(Some(ty)) = &func.ret_type {
+            self.visit_expression(ty);
+        }
+        self.visit_block(&func.block);
+    }
+
+    /// The function called when visiting a function type.
+    fn visit_function_type(&mut self, func: &'src FunctionType) {
+        for i in func.params.iter().flatten() {
+            self.visit_expression(i);
+        }
+        if let Some(Some(ty)) = &func.ret_type {
+            self.visit_expression(ty);
         }
     }
 

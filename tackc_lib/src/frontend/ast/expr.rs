@@ -86,6 +86,8 @@ impl Expression {
                 format!("({op} {} {})", lhs.display(global), rhs.display(global))
             }
             ExpressionKind::Unary(op, rhs) => format!("({op} {})", rhs.display(global)),
+            ExpressionKind::Function(func) => func.display(global),
+            ExpressionKind::FunctionType(func_type) => func_type.display(global),
         }
     }
 }
@@ -118,6 +120,11 @@ pub enum ExpressionKind {
     Binary(BinOp, Box<Expression>, Box<Expression>),
     /// Unary expression.
     Unary(UnOp, Box<Expression>),
+
+    /// Function expression.
+    Function(Function),
+    /// Function type.
+    FunctionType(FunctionType),
 }
 
 impl ExpressionKind {
@@ -191,5 +198,77 @@ impl Display for UnOp {
             Self::Neg => write!(f, "-"),
             Self::Not => write!(f, "!"),
         }
+    }
+}
+
+/// A function in parsed form.
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct Function {
+    /// The parameters of this function.
+    pub params: ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>,
+    /// The return type of this function. If [`None`], then `void` is assumed.
+    pub ret_type: Option<Option<Box<Expression>>>,
+    /// The block of this function.
+    pub block: Box<Block>,
+}
+
+impl Function {
+    /// Displays this [`Function`].
+    pub fn display(&self, global: &Global) -> String {
+        let mut params = String::new();
+        for (ident, ty) in &self.params {
+            let ident = match ident {
+                Some(ident) => ident.get(global).display(global),
+                None => "<ERROR>",
+            };
+            let ty = match ty {
+                Some(expr) => expr.display(global),
+                None => String::from("<ERROR>"),
+            };
+            _ = write!(params, "{ident}: {ty}, ");
+        }
+        params.truncate(params.len().saturating_sub(2));
+
+        let ret_type = match &self.ret_type {
+            Some(Some(val)) => format!(" {}", val.display(global)),
+            Some(None) => " <ERROR>".to_string(),
+            None => String::new(),
+        };
+
+        let block = self.block.display(global);
+
+        format!("func ({params}){ret_type} {block}")
+    }
+}
+
+/// A function type.
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub struct FunctionType {
+    /// The types of the parameters.
+    pub params: ThinVec<Option<Expression>>,
+    /// The return type of the function.
+    pub ret_type: Option<Option<Box<Expression>>>,
+}
+
+impl FunctionType {
+    /// Displays this [`FunctionType`].
+    pub fn display(&self, global: &Global) -> String {
+        let mut params = String::new();
+        for ty in &self.params {
+            let ty = match ty {
+                Some(expr) => expr.display(global),
+                None => String::from("<ERROR>"),
+            };
+            _ = write!(params, "{ty}, ");
+        }
+        params.truncate(params.len().saturating_sub(2));
+
+        let ret_type = match &self.ret_type {
+            Some(Some(val)) => format!(" {}", val.display(global)),
+            Some(None) => " <ERROR>".to_string(),
+            None => String::new(),
+        };
+
+        format!("func ({params}){ret_type};")
     }
 }
