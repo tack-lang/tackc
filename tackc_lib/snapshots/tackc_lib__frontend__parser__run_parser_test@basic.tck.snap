@@ -3,31 +3,31 @@ source: tackc_lib/src/frontend/parser.rs
 input_file: tackc_lib/src/frontend/parser-tests/basic.tck
 ---
 (AstModule(
-  file: 2012121647,
+  file: 2542601049,
   mod_stmt: Some(ModStatement(
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(16876077374895774202, PhantomData)),
+        Some(Interned(7855059123406299685, PhantomData)),
       ],
       id: NodeId(
         id: 1,
-        file: 2012121647,
+        file: 2542601049,
       ),
       span: Span(
         start: 4,
         end: 9,
-        file: 2012121647,
+        file: 2542601049,
       ),
     )),
     id: NodeId(
       id: 2,
-      file: 2012121647,
+      file: 2542601049,
     ),
     span: Span(
       start: 0,
       end: 10,
-      file: 2012121647,
+      file: 2542601049,
     ),
   )),
   items: [
@@ -36,29 +36,29 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
         exported: false,
         path: Some(AstPath(
           components: [
-            Some(Interned(365805394974351031, PhantomData)),
-            Some(Interned(5395191083383410287, PhantomData)),
-            Some(Interned(7213919994841090624, PhantomData)),
+            Some(Interned(9791531217194428129, PhantomData)),
+            Some(Interned(14820916905603487385, PhantomData)),
+            Some(Interned(16639645817061167722, PhantomData)),
           ],
           id: NodeId(
             id: 3,
-            file: 2012121647,
+            file: 2542601049,
           ),
           span: Span(
             start: 16,
             end: 29,
-            file: 2012121647,
+            file: 2542601049,
           ),
         )),
       )),
       id: NodeId(
         id: 4,
-        file: 2012121647,
+        file: 2542601049,
       ),
       span: Span(
         start: 12,
         end: 30,
-        file: 2012121647,
+        file: 2542601049,
       ),
     )),
     Some(Item(
@@ -69,30 +69,30 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
           kind: StringLit(Interned(8470909341547293647, PhantomData)),
           id: NodeId(
             id: 5,
-            file: 2012121647,
+            file: 2542601049,
           ),
           span: Span(
             start: 52,
             end: 67,
-            file: 2012121647,
+            file: 2542601049,
           ),
         )),
-        ident: Some(Interned(5267153004227821378, PhantomData)),
+        ident: Some(Interned(14692878826447898476, PhantomData)),
       )),
       id: NodeId(
         id: 6,
-        file: 2012121647,
+        file: 2542601049,
       ),
       span: Span(
         start: 32,
         end: 68,
-        file: 2012121647,
+        file: 2542601049,
       ),
     )),
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: true,
-        ident: Some(Interned(14986430816199639623, PhantomData)),
+        ident: Some(Interned(5965412564710165106, PhantomData)),
         params: [],
         ret_type: None,
         block: Some(Block(
@@ -101,81 +101,103 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(1409961823379306446, PhantomData)),
+                    kind: Ident(Interned(10835687645599383544, PhantomData)),
                     id: NodeId(
                       id: 7,
-                      file: 2012121647,
+                      file: 2542601049,
                     ),
                     span: Span(
                       start: 92,
                       end: 99,
-                      file: 2012121647,
+                      file: 2542601049,
                     ),
                   ), [
                     Some(Expression(
-                      kind: Ident(Interned(2468304650323118657, PhantomData)),
+                      kind: Index(Expression(
+                        kind: Ident(Interned(11894030472543195755, PhantomData)),
+                        id: NodeId(
+                          id: 8,
+                          file: 2542601049,
+                        ),
+                        span: Span(
+                          start: 100,
+                          end: 111,
+                          file: 2542601049,
+                        ),
+                      ), Some(Expression(
+                        kind: IntLit(Interned(12177547797312297026, PhantomData)),
+                        id: NodeId(
+                          id: 9,
+                          file: 2542601049,
+                        ),
+                        span: Span(
+                          start: 112,
+                          end: 113,
+                          file: 2542601049,
+                        ),
+                      ))),
                       id: NodeId(
-                        id: 8,
-                        file: 2012121647,
+                        id: 10,
+                        file: 2542601049,
                       ),
                       span: Span(
                         start: 100,
-                        end: 111,
-                        file: 2012121647,
+                        end: 114,
+                        file: 2542601049,
                       ),
                     )),
                   ]),
                   id: NodeId(
-                    id: 9,
-                    file: 2012121647,
+                    id: 11,
+                    file: 2542601049,
                   ),
                   span: Span(
                     start: 92,
-                    end: 112,
-                    file: 2012121647,
+                    end: 115,
+                    file: 2542601049,
                   ),
                 ),
                 semi: Some(Some(Token(
                   span: Span(
-                    start: 112,
-                    end: 113,
-                    file: 2012121647,
+                    start: 115,
+                    end: 116,
+                    file: 2542601049,
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
                 ))),
               )),
               id: NodeId(
-                id: 10,
-                file: 2012121647,
+                id: 12,
+                file: 2542601049,
               ),
               span: Span(
                 start: 92,
-                end: 113,
-                file: 2012121647,
+                end: 116,
+                file: 2542601049,
               ),
             )),
           ],
           expr: None,
           id: NodeId(
-            id: 11,
-            file: 2012121647,
+            id: 13,
+            file: 2542601049,
           ),
           span: Span(
             start: 86,
-            end: 115,
-            file: 2012121647,
+            end: 118,
+            file: 2542601049,
           ),
         )),
       )),
       id: NodeId(
-        id: 12,
-        file: 2012121647,
+        id: 14,
+        file: 2542601049,
       ),
       span: Span(
         start: 74,
-        end: 115,
-        file: 2012121647,
+        end: 118,
+        file: 2542601049,
       ),
     )),
   ],

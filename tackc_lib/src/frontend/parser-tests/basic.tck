@@ -5,5 +5,5 @@ imp path.to.other;
 const HELLO_WORLD = "Hello, world!";
 
 exp func main() {
-    println(HELLO_WORLD);
+    println(HELLO_WORLD[0]);
 }
