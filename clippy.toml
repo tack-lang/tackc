@@ -1,3 +1,4 @@
 disallowed-types = [
     { path = "std::collections::HashMap", reason = "Prefer using FxHashMap, as HashMap is slower.", replacement = "rustc_hash::FxHashMap" },
+    { path = "std::collections::HashSet", reason = "Prefer using FxHashSet, as HashSet is slower.", replacement = "rustc_hash::FxHashSet" },
 ]
