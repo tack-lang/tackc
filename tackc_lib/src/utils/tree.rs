@@ -10,7 +10,7 @@ pub trait TreeItem {
     /// Returns the name of this tree item.
     fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str>;
     /// Returns the children of this tree item.
-    fn children(&self) -> Vec<&dyn TreeItem>;
+    fn children(&self) -> Cow<'_, [&dyn TreeItem]>;
 }
 
 /// An extension trait for displaying tree items.
@@ -33,10 +33,10 @@ pub fn render<T: TreeItem + ?Sized>(tree: &T, global: &Global) -> String {
 
     let mut content = String::new();
 
-    for child in children {
+    for child in children.as_ref() {
         i += 1;
 
-        let module_display = render(child, global);
+        let module_display = render(*child, global);
 
         if i == len {
             _ = write!(content, "\n+-- {}", module_display.replace('\n', "\n    "));

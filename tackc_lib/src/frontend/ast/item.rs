@@ -50,8 +50,8 @@ impl Item {
 }
 
 impl TreeItem for Item {
-    fn children(&self) -> Vec<&'_ dyn TreeItem> {
-        vec![]
+    fn children(&self) -> Cow<'_, [&dyn TreeItem]> {
+        (&[]).into()
     }
 
     fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str> {
