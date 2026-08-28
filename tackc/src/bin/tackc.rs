@@ -15,6 +15,7 @@ use tackc_lib::frontend::{
     parser::Parser,
 };
 use tackc_lib::global::Global;
+use tackc_lib::sema::module_analyzer;
 
 #[derive(ClapParser)]
 struct Args {
@@ -81,7 +82,7 @@ fn main() {
 
     global.set_file_list(file_list);
 
-    let _mods = global
+    let modules = global
         .file_list()
         .iter()
         .map(|file| (run_lexer(file, global, &debug_modes), file))
@@ -94,9 +95,12 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    /*if failed {
-        return;
-    }*/
+    let (mod_tree, errors) = module_analyzer::analyze(modules, global);
+    println!("{}", mod_tree.display(global));
+
+    for e in errors {
+        println!("{}", e.display(global));
+    }
 }
 
 fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
