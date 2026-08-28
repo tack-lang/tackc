@@ -1,6 +1,8 @@
 //! Modules in tackc.
 
 use std::fmt::Write;
+use std::iter::Copied;
+use std::slice::Iter;
 
 use crate::file::FileId;
 use crate::global::{Global, Interned};
@@ -147,5 +149,28 @@ impl AstPath {
 
         str.truncate(str.len().saturating_sub(1));
         str
+    }
+
+    /// Creates an iterator using the components of this path.
+    pub fn iter(&self) -> Copied<Iter<'_, Option<Interned<Symbol>>>> {
+        self.components.iter().copied()
+    }
+}
+
+impl IntoIterator for AstPath {
+    type IntoIter = thin_vec::IntoIter<Option<Interned<Symbol>>>;
+    type Item = Option<Interned<Symbol>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.components.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a AstPath {
+    type IntoIter = Copied<Iter<'a, Option<Interned<Symbol>>>>;
+    type Item = Option<Interned<Symbol>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
