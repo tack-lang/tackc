@@ -37,9 +37,9 @@ pub mod error;
 pub mod file;
 pub mod frontend;
 pub mod global;
+pub mod sema;
 pub mod span;
 pub mod utils;
-pub mod sema;
 
 /// Combines the preludes of all the other modules.
 pub mod prelude {
