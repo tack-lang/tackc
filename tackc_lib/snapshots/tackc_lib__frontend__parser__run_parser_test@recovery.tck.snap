@@ -37,13 +37,13 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
         exported: false,
         ident: Some(Interned(11848305413092314288, PhantomData)),
         params: [],
-        ret_type: None,
+        ret_type: r#None,
         block: Some(Block(
           stmts: [
             Some(Statement(
               kind: LetStatement(LetStatement(
-                ty: None,
-                expr: None,
+                ty: r#None,
+                expr: r#None,
                 ident: Some(Interned(5626926699492751661, PhantomData)),
               )),
               id: NodeId(
@@ -70,7 +70,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                     file: 1567630016,
                   ),
                 ),
-                semi: Some(Some(Token(
+                semi: r#Some(Token(
                   span: Span(
                     start: 45,
                     end: 46,
@@ -78,7 +78,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
-                ))),
+                )),
               )),
               id: NodeId(
                 id: 5,
@@ -92,8 +92,8 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
             )),
             Some(Statement(
               kind: LetStatement(LetStatement(
-                ty: None,
-                expr: Some(None),
+                ty: r#None,
+                expr: Error,
                 ident: Some(Interned(4206715840727021696, PhantomData)),
               )),
               id: NodeId(
@@ -133,7 +133,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
                     file: 1567630016,
                   ),
                 ),
-                semi: Some(None),
+                semi: Error,
               )),
               id: NodeId(
                 id: 9,
@@ -146,7 +146,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
               ),
             )),
           ],
-          expr: None,
+          expr: r#None,
           id: NodeId(
             id: 10,
             file: 1567630016,

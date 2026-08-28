@@ -3,6 +3,7 @@
 use std::fmt::{Display, Write};
 
 use crate::{
+    frontend::ast::TriState,
     global::{Global, Interned},
     span::Span,
 };
@@ -207,7 +208,7 @@ pub struct Function {
     /// The parameters of this function.
     pub params: ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>,
     /// The return type of this function. If [`None`], then `void` is assumed.
-    pub ret_type: Option<Option<Box<Expression>>>,
+    pub ret_type: TriState<Box<Expression>>,
     /// The block of this function.
     pub block: Box<Block>,
 }
@@ -230,9 +231,9 @@ impl Function {
         params.truncate(params.len().saturating_sub(2));
 
         let ret_type = match &self.ret_type {
-            Some(Some(val)) => format!(" {}", val.display(global)),
-            Some(None) => " <ERROR>".to_string(),
-            None => String::new(),
+            TriState::Some(val) => format!(" {}", val.display(global)),
+            TriState::Error => " <ERROR>".to_string(),
+            TriState::None => String::new(),
         };
 
         let block = self.block.display(global);
@@ -247,7 +248,7 @@ pub struct FunctionType {
     /// The types of the parameters.
     pub params: ThinVec<Option<Expression>>,
     /// The return type of the function.
-    pub ret_type: Option<Option<Box<Expression>>>,
+    pub ret_type: TriState<Box<Expression>>,
 }
 
 impl FunctionType {
@@ -264,9 +265,9 @@ impl FunctionType {
         params.truncate(params.len().saturating_sub(2));
 
         let ret_type = match &self.ret_type {
-            Some(Some(val)) => format!(" {}", val.display(global)),
-            Some(None) => " <ERROR>".to_string(),
-            None => String::new(),
+            TriState::Some(val) => format!(" {}", val.display(global)),
+            TriState::Error => " <ERROR>".to_string(),
+            TriState::None => String::new(),
         };
 
         format!("func ({params}){ret_type};")

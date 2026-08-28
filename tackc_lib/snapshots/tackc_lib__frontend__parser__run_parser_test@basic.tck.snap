@@ -64,7 +64,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
     Some(Item(
       kind: ConstItem(ConstItem(
         exported: false,
-        ty: None,
+        ty: r#None,
         expr: Some(Expression(
           kind: StringLit(Interned(8470909341547293647, PhantomData)),
           id: NodeId(
@@ -94,7 +94,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
         exported: true,
         ident: Some(Interned(5965412564710165106, PhantomData)),
         params: [],
-        ret_type: None,
+        ret_type: r#None,
         block: Some(Block(
           stmts: [
             Some(Statement(
@@ -157,7 +157,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                     file: 2542601049,
                   ),
                 ),
-                semi: Some(Some(Token(
+                semi: r#Some(Token(
                   span: Span(
                     start: 115,
                     end: 116,
@@ -165,7 +165,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
-                ))),
+                )),
               )),
               id: NodeId(
                 id: 12,
@@ -178,7 +178,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
               ),
             )),
           ],
-          expr: None,
+          expr: r#None,
           id: NodeId(
             id: 13,
             file: 2542601049,

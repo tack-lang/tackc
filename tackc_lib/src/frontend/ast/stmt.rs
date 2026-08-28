@@ -5,7 +5,7 @@ use crate::global::{Global, Interned};
 use crate::span::Span;
 use serde::Serialize;
 
-use crate::frontend::ast::{Expression, Item, NodeId, Symbol};
+use crate::frontend::ast::{Expression, Item, NodeId, Symbol, TriState};
 
 /// A statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -52,9 +52,9 @@ pub enum StatementKind {
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct LetStatement {
     /// Type annotation for this let statement.
-    pub ty: Option<Option<Expression>>,
+    pub ty: TriState<Expression>,
     /// The default expression of this let statement.
-    pub expr: Option<Option<Expression>>,
+    pub expr: TriState<Expression>,
     /// The identifier of this let statement.
     pub ident: Option<Interned<Symbol>>,
 }
@@ -66,14 +66,14 @@ impl LetStatement {
             None => "<ERROR>",
         };
         let ty = match &self.ty {
-            Some(Some(ty)) => format!(": {}", ty.display(global)),
-            Some(None) => String::from(": <ERROR>"),
-            None => String::new(),
+            TriState::Some(ty) => format!(": {}", ty.display(global)),
+            TriState::Error => String::from(": <ERROR>"),
+            TriState::None => String::new(),
         };
         let expr = match &self.expr {
-            Some(Some(expr)) => format!(" = {}", expr.display(global)),
-            Some(None) => String::from(" = <ERROR>"),
-            None => String::new(),
+            TriState::Some(expr) => format!(" = {}", expr.display(global)),
+            TriState::Error => String::from(" = <ERROR>"),
+            TriState::None => String::new(),
         };
         format!("let {ident}{ty}{expr};")
     }
@@ -105,15 +105,15 @@ pub struct ExpressionStatement {
     /// The inner expression.
     pub expr: Expression,
     /// The optional semicolon.
-    pub semi: Option<Option<Token>>,
+    pub semi: TriState<Token>,
 }
 
 impl ExpressionStatement {
     fn display(&self, global: &Global) -> String {
         let stmt_str = self.expr.display(global);
         let semi = match self.semi {
-            Some(_) => ";",
-            None => "",
+            TriState::Some(_) | TriState::Error => ";",
+            TriState::None => "",
         };
         format!("{stmt_str}{semi}")
     }

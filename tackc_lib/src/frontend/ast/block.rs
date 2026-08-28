@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::{global::Global, span::Span};
+use crate::{frontend::ast::TriState, global::Global, span::Span};
 use serde::Serialize;
 use thin_vec::ThinVec;
 
@@ -14,7 +14,7 @@ pub struct Block {
     /// The statements in this block.
     pub stmts: ThinVec<Option<Statement>>,
     /// The optional tail expression of this block.
-    pub expr: Option<Option<Expression>>,
+    pub expr: TriState<Expression>,
     /// The ID of this node.
     pub id: NodeId,
     /// The span of this node.
@@ -35,9 +35,9 @@ impl Block {
         stmts.truncate(stmts.len().saturating_sub(5));
 
         let expr = match &self.expr {
-            Some(Some(val)) => val.display(global).replace('\n', "\n    "),
-            Some(None) => String::from("<ERROR>"),
-            None => String::new(),
+            TriState::Some(val) => val.display(global).replace('\n', "\n    "),
+            TriState::Error => String::from("<ERROR>"),
+            TriState::None => String::new(),
         };
 
         match (stmts.is_empty(), expr.is_empty()) {

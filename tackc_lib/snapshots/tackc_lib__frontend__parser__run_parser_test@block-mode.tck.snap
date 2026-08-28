@@ -36,14 +36,14 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
         exported: false,
         ident: Some(Interned(5517798473477872181, PhantomData)),
         params: [],
-        ret_type: None,
+        ret_type: r#None,
         block: Some(Block(
           stmts: [],
-          expr: Some(Some(Expression(
+          expr: r#Some(Expression(
             kind: Grouping(Some(Expression(
               kind: Block(Block(
                 stmts: [],
-                expr: Some(None),
+                expr: Error,
                 id: NodeId(
                   id: 3,
                   file: 3907861227,
@@ -73,7 +73,7 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
               end: 33,
               file: 3907861227,
             ),
-          ))),
+          )),
           id: NodeId(
             id: 6,
             file: 3907861227,

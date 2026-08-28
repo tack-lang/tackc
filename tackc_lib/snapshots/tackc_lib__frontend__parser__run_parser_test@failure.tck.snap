@@ -37,10 +37,10 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
         exported: false,
         ident: Some(Interned(13627902254245330248, PhantomData)),
         params: [],
-        ret_type: Some(None),
+        ret_type: Error,
         block: Some(Block(
           stmts: [],
-          expr: Some(Some(Expression(
+          expr: r#Some(Expression(
             kind: Grouping(Some(Expression(
               kind: Grouping(Some(Expression(
                 kind: Grouping(Some(Expression(
@@ -502,7 +502,7 @@ input_file: tackc_lib/src/frontend/parser-tests/failure.tck
               end: 264,
               file: 3931689921,
             ),
-          ))),
+          )),
           id: NodeId(
             id: 45,
             file: 3931689921,

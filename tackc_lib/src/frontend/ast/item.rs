@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use crate::{
+    frontend::ast::TriState,
     global::{Global, Interned},
     span::Span,
     utils::tree::TreeItem,
@@ -76,7 +77,7 @@ pub struct ConstItem {
     /// Whether this item is exported.
     pub exported: bool,
     /// The optional type annotation of this definition.
-    pub ty: Option<Option<Expression>>,
+    pub ty: TriState<Expression>,
     /// The expression of this definition.
     pub expr: Option<Expression>,
     /// The identifier used for this definition.
@@ -91,9 +92,9 @@ impl ConstItem {
             None => "<ERROR>",
         };
         let ty = match &self.ty {
-            Some(Some(ty)) => format!(": {}", ty.display(global)),
-            Some(None) => String::from(": <ERROR>"),
-            None => String::new(),
+            TriState::Some(ty) => format!(": {}", ty.display(global)),
+            TriState::Error => String::from(": <ERROR>"),
+            TriState::None => String::new(),
         };
         let expr = match &self.expr {
             Some(expr) => expr.display(global),
@@ -123,7 +124,7 @@ pub struct FuncItem {
     /// The parameters for this function.
     pub params: ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>,
     /// The return type of this function.
-    pub ret_type: Option<Option<Expression>>,
+    pub ret_type: TriState<Expression>,
     /// The block for this function.
     pub block: Option<Block>,
 }

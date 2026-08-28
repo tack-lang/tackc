@@ -73,6 +73,43 @@ impl Ord for NodeId {
     }
 }
 
+/// A tri-state value for things that might not exist, or might have an error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TriState<T> {
+    /// Some type, contains a value.
+    Some(T),
+    /// None type, doesn't contain a value.
+    None,
+    /// Error type, shows an error occured.
+    Error,
+}
+
+impl<T> TriState<T> {
+    /// Converts an [`Option<T>`] to a [`TriState<T>`] by treating a [`None`] as an error.
+    pub fn from_error(option: Option<T>) -> Self {
+        match option {
+            Some(value) => Self::Some(value),
+            None => Self::Error,
+        }
+    }
+
+    /// Converts an [`Option<T>`] to a [`TriState<T>`] by treating a [`None`] as [`TriState::None`].
+    pub fn from_optional(option: Option<T>) -> Self {
+        match option {
+            Some(value) => Self::Some(value),
+            None => Self::None,
+        }
+    }
+
+    /// Converts a [`TriState<T>`] to a [`Option<T>`] by returning the value in the [`TriState::Some`] variant, if any.
+    pub fn some(self) -> Option<T> {
+        match self {
+            Self::Some(val) => Some(val),
+            Self::None | Self::Error => None,
+        }
+    }
+}
+
 /// Visitor for the AST.
 pub trait AstVisitor<'src> {
     /// The function called when visiting a module.
@@ -109,7 +146,7 @@ pub trait AstVisitor<'src> {
 
     /// The function called when visiting a constant.
     fn visit_const_item(&mut self, item: &'src ConstItem) {
-        if let Some(Some(ty)) = &item.ty {
+        if let TriState::Some(ty) = &item.ty {
             self.visit_expression(ty);
         }
 
@@ -123,7 +160,7 @@ pub trait AstVisitor<'src> {
         for i in item.params.iter().flat_map(|tuple| &tuple.1) {
             self.visit_expression(i);
         }
-        if let Some(Some(ty)) = &item.ret_type {
+        if let TriState::Some(ty) = &item.ret_type {
             self.visit_expression(ty);
         }
         if let Some(block) = &item.block {
@@ -179,7 +216,7 @@ pub trait AstVisitor<'src> {
         for stmt in block.stmts.iter().flatten() {
             self.visit_statement(stmt);
         }
-        if let Some(Some(expr)) = &block.expr {
+        if let TriState::Some(expr) = &block.expr {
             self.visit_expression(expr);
         }
     }
@@ -189,7 +226,7 @@ pub trait AstVisitor<'src> {
         for i in func.params.iter().flat_map(|tuple| &tuple.1) {
             self.visit_expression(i);
         }
-        if let Some(Some(ty)) = &func.ret_type {
+        if let TriState::Some(ty) = &func.ret_type {
             self.visit_expression(ty);
         }
         self.visit_block(&func.block);
@@ -200,7 +237,7 @@ pub trait AstVisitor<'src> {
         for i in func.params.iter().flatten() {
             self.visit_expression(i);
         }
-        if let Some(Some(ty)) = &func.ret_type {
+        if let TriState::Some(ty) = &func.ret_type {
             self.visit_expression(ty);
         }
     }
@@ -217,10 +254,10 @@ pub trait AstVisitor<'src> {
 
     /// The function called when visiting a let statement.
     fn visit_let_statement(&mut self, stmt: &'src LetStatement) {
-        if let Some(Some(ty)) = &stmt.ty {
+        if let TriState::Some(ty) = &stmt.ty {
             self.visit_expression(ty);
         }
-        if let Some(Some(expr)) = &stmt.expr {
+        if let TriState::Some(expr) = &stmt.expr {
             self.visit_expression(expr);
         }
     }

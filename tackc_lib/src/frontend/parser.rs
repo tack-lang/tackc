@@ -10,7 +10,7 @@ use error::{ParseError, Result};
 use nonzero::nonzero;
 
 use crate::file::File;
-use crate::frontend::ast::{Function, FunctionType, NodeId};
+use crate::frontend::ast::{Function, FunctionType, NodeId, TriState};
 use crate::frontend::lexer::{Token, TokenKind};
 use crate::global::{Global, Interned};
 use crate::span::{Span, SpanValue};
@@ -440,14 +440,14 @@ impl<'src, 'a> Parser<'src, 'a> {
         let const_key = self.expect_kinds(&[TokenKind::Const])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(
+            TriState::from_error(self.parse_sync(
                 Self::expression_normal,
                 &[TokenKind::Eq],
                 "type",
                 recursion + 1,
             ))
         } else {
-            None
+            TriState::None
         };
 
         let _eq = self.expect_report(&[TokenKind::Eq], "'='");
@@ -489,17 +489,16 @@ impl<'src, 'a> Parser<'src, 'a> {
         let params = self.param_list_required_ident(recursion + 1)?;
 
         let _closing = self.expect_report(&[TokenKind::RParen], "')'");
-        let ret_type = self
-            .peek()
-            .filter(|tok| tok.kind != TokenKind::LBrace)
-            .map(|_| {
-                self.parse_sync(
-                    Self::expression_no_blocks,
-                    &[TokenKind::LBrace],
-                    "type",
-                    recursion + 1,
-                )
-            });
+        let ret_type = if self.peek().is_some_and(|tok| tok.kind != TokenKind::LBrace) {
+            TriState::from_error(self.parse_sync(
+                Self::expression_no_blocks,
+                &[TokenKind::LBrace],
+                "type",
+                recursion + 1,
+            ))
+        } else {
+            TriState::None
+        };
         let block = self.parse_report(Self::block, "block", recursion + 1);
 
         let span = Span::new_from(
@@ -610,7 +609,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             if let Some(tok) = self.peek()
                 && tok.kind == TokenKind::RBrace
             {
-                break None;
+                break TriState::None;
             }
 
             match self.peek().map(|tok| tok.kind) {
@@ -628,7 +627,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                     if let Some(tok) = self.peek()
                         && tok.kind == TokenKind::RBrace
                     {
-                        break Some(Some(expr));
+                        break TriState::Some(expr);
                     }
 
                     stmts.push(self.optional_semicolon_expression_statement(expr)?);
@@ -645,7 +644,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                     if let Some(tok) = self.peek()
                         && tok.kind == TokenKind::RBrace
                     {
-                        break Some(expr);
+                        break TriState::from_error(expr);
                     }
                     stmts.push(self.semicolon_expression_statement(loc, expr)?);
                 }
@@ -654,7 +653,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                         Some("statement, item, or expression"),
                         self.file,
                     ));
-                    break None;
+                    break TriState::None;
                 }
             }
         };
@@ -708,7 +707,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let stmt = Statement::new(
             StatementKind::ExpressionStatement(ExpressionStatement {
                 expr,
-                semi: semi.map(Some),
+                semi: TriState::from_optional(semi),
             }),
             self.get_id()?,
             span,
@@ -732,7 +731,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             Some(expr) => Some(Statement::new(
                 StatementKind::ExpressionStatement(ExpressionStatement {
                     expr,
-                    semi: Some(semi),
+                    semi: TriState::from_error(semi),
                 }),
                 self.get_id()?,
                 span,
@@ -760,25 +759,25 @@ impl<'src, 'a> Parser<'src, 'a> {
         let let_key = self.expect_kinds(&[TokenKind::Let])?;
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
         let ty = if self.eat(&[TokenKind::Colon]).is_some() {
-            Some(self.parse_sync(
+            TriState::from_error(self.parse_sync(
                 Self::expression_normal,
                 &[TokenKind::Eq],
                 "type",
                 recursion + 1,
             ))
         } else {
-            None
+            TriState::None
         };
 
         let expr = if self.eat(&[TokenKind::Eq]).is_some() {
-            Some(self.parse_sync(
+            TriState::from_error(self.parse_sync(
                 Self::expression_normal,
                 &[TokenKind::Semicolon],
                 "expression",
                 recursion + 1,
             ))
         } else {
-            None
+            TriState::None
         };
 
         let semi = self.expect_report(&[TokenKind::Semicolon], "';'");
@@ -826,18 +825,15 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.check_failed(recursion)?;
 
         let semi = if expr.kind.is_block() {
-            self.eat(&[TokenKind::Semicolon])
+            TriState::from_optional(self.eat(&[TokenKind::Semicolon]))
         } else {
-            self.expect_report(&[TokenKind::Semicolon], "';'")
+            TriState::from_error(self.expect_report(&[TokenKind::Semicolon], "';'"))
         };
-        let span = semi.map_or(expr.span, |tok| {
+        let span = semi.some().map_or(expr.span, |tok| {
             Span::new_from(expr.span.start, tok.span.end, self.file)
         });
         Ok(Statement::new(
-            StatementKind::ExpressionStatement(ExpressionStatement {
-                expr,
-                semi: semi.is_some().then_some(semi),
-            }),
+            StatementKind::ExpressionStatement(ExpressionStatement { expr, semi }),
             self.get_id()?,
             span,
         ))
@@ -1187,18 +1183,22 @@ impl<'src, 'a> Parser<'src, 'a> {
         let params = self.param_list_required_ident(recursion + 1)?;
 
         let _closing = self.expect_report(&[TokenKind::RParen], "')'");
-        let ret_type = self
+        let ret_type = if self
             .peek()
-            .filter(|tok| tok.kind != TokenKind::LBrace && tok.kind != TokenKind::Semicolon)
-            .map(|_| {
+            .is_some_and(|tok| tok.kind != TokenKind::LBrace && tok.kind != TokenKind::Semicolon)
+        {
+            TriState::from_error(
                 self.parse_sync(
                     Self::expression_no_blocks,
                     &[TokenKind::LBrace, TokenKind::Semicolon],
                     "type",
                     recursion + 1,
                 )
-                .map(Box::new)
-            });
+                .map(Box::new),
+            )
+        } else {
+            TriState::None
+        };
 
         let next = self.expect_peek_all()?;
 

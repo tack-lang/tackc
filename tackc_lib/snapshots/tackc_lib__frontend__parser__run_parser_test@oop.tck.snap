@@ -37,7 +37,7 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
         exported: false,
         ident: Some(Interned(8754025525380084162, PhantomData)),
         params: [],
-        ret_type: None,
+        ret_type: r#None,
         block: Some(Block(
           stmts: [
             Some(Statement(
@@ -134,7 +134,7 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                     file: 1888024003,
                   ),
                 ),
-                semi: Some(Some(Token(
+                semi: r#Some(Token(
                   span: Span(
                     start: 74,
                     end: 75,
@@ -142,7 +142,7 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
                   ),
                   kind: Semicolon,
                   lexeme: Interned(3447890864966814147, PhantomData),
-                ))),
+                )),
               )),
               id: NodeId(
                 id: 11,
@@ -155,7 +155,7 @@ input_file: tackc_lib/src/frontend/parser-tests/oop.tck
               ),
             )),
           ],
-          expr: None,
+          expr: r#None,
           id: NodeId(
             id: 12,
             file: 1888024003,
