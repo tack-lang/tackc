@@ -16,7 +16,7 @@ use crate::{
 };
 
 use rustc_hash::FxHashSet;
-use thin_vec::{ThinVec, thin_vec};
+use thin_vec::thin_vec;
 
 /// A tree of modules, using [`ModuleNode`].
 pub struct ModuleTree {
@@ -74,7 +74,7 @@ pub struct ModuleNode {
     /// The files that make up this module.
     pub files: Vec<FileId>,
     /// The items of this module.
-    pub items: ThinVec<Option<Item>>,
+    pub items: IdentityHashMap<Interned<str>, Item>,
     /// The children of this module.
     pub nodes: IdentityHashMap<Interned<str>, Self>,
     /// Whether this module is exported or not.
@@ -113,6 +113,8 @@ impl TreeItem for ModuleNode {
 pub enum ModuleAnalyzerError {
     /// A conflict in visibillities for duplicate modules.
     ModuleVisibillityConflict(LogicalPath, Vec<FileId>),
+    /// An item name is repeated in a module.
+    DuplicateItem(LogicalPath),
 }
 
 impl ModuleAnalyzerError {
@@ -121,29 +123,36 @@ impl ModuleAnalyzerError {
     /// # Panics
     /// This function panics if the file used to produce this error is not in `global`'s file list.
     pub fn display(&self, global: &Global) -> String {
-        let Self::ModuleVisibillityConflict(path, files) = self;
-        let mut string = format!(
-            "Duplicated module {} with different visibillities! Files: ",
-            path.display(global)
-        );
+        match self {
+            Self::ModuleVisibillityConflict(path, files) => {
+                let mut string = format!(
+                    "Duplicated module {} with different visibillities! Files: ",
+                    path.display(global)
+                );
 
-        for file in files {
-            assert!(
-                global.file_list().contains(*file),
-                "Global doesn't contain file!"
-            );
+                for file in files {
+                    assert!(
+                        global.file_list().contains(*file),
+                        "Global doesn't contain file!"
+                    );
 
-            // This was asserted above.
-            let file = global.file_list().get(*file).expect_unreachable(); // CHECKED(Chloe)
+                    // This was asserted above.
+                    let file = global.file_list().get(*file).expect_unreachable(); // CHECKED(Chloe)
 
-            string += &file.path().display().to_string();
-            string += ", ";
+                    string += &file.path().display().to_string();
+                    string += ", ";
+                }
+
+                // Remove last comma
+                string.truncate(string.len() - 2);
+
+                Diag::without_span(string).display(global)
+            }
+            Self::DuplicateItem(path) => {
+                Diag::without_span(format!("duplicate item {}!", path.display(global)))
+                    .display(global)
+            }
         }
-
-        // Remove last comma
-        string.truncate(string.len() - 2);
-
-        Diag::without_span(string).display(global)
     }
 }
 
@@ -151,8 +160,9 @@ impl ModuleAnalyzerError {
 pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<ModuleAnalyzerError>) {
     let mut root = IdentityHashMap::default();
     let mut error_set = FxHashSet::default();
+    let mut errors = Vec::new();
 
-    for mut module in modules {
+    for module in modules {
         let Some(mod_stmt) = module.mod_stmt else {
             continue;
         };
@@ -166,7 +176,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
         let mut default = ModuleNode {
             path: LogicalPath::new(thin_vec![global.intern_str("<ERROR>")]),
             files: vec![],
-            items: thin_vec![],
+            items: IdentityHashMap::default(),
             nodes: IdentityHashMap::default(),
             exported: false,
             auto: true,
@@ -190,7 +200,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
                 // setting logical_path to a Some value.
                 path: logical_path.clone(), // CHECKED(Chloe)
                 files: vec![],
-                items: ThinVec::new(),
+                items: IdentityHashMap::default(),
                 nodes: IdentityHashMap::default(),
                 exported: true,
                 auto: true,
@@ -205,7 +215,12 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
         }
 
         if !node.auto {
-            node.items.append(&mut module.items);
+            for item in module.items.into_iter().flatten() {
+                let Some(name) = item.get_name(global) else {
+                    continue;
+                };
+                node.items.insert(name, item);
+            }
 
             if node.exported != exported {
                 error_set.insert(logical_path);
@@ -215,7 +230,19 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
             continue;
         }
 
-        node.items = module.items;
+        for item in module.items.into_iter().flatten() {
+            let Some(name) = item.get_name(global) else {
+                continue;
+            };
+
+            if node.items.contains_key(&name) {
+                let mut path = logical_path.clone();
+                path.push(name);
+                errors.push(ModuleAnalyzerError::DuplicateItem(path));
+            }
+
+            node.items.insert(name, item);
+        }
         node.files.push(module.file);
         node.exported = exported;
         node.auto = false;
@@ -231,6 +258,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
 
             ModuleAnalyzerError::ModuleVisibillityConflict(path, node.files.clone())
         })
+        .chain(errors)
         .collect();
 
     (tree, errors)

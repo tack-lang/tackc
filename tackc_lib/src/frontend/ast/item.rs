@@ -48,6 +48,15 @@ impl Item {
             ItemKind::ImpItem(item) => item.display_ident(global),
         }
     }
+
+    /// Gets the name of this item. This is the symbol that it's accesible by inside of it's module.
+    pub fn get_name(&self, global: &Global) -> Option<Interned<str>> {
+        match &self.kind {
+            ItemKind::ConstItem(item) => Some(item.ident?.get(global).0),
+            ItemKind::FuncItem(func) => Some(func.ident?.get(global).0),
+            ItemKind::ImpItem(imp) => imp.name(global),
+        }
+    }
 }
 
 impl TreeItem for Item {
@@ -198,5 +207,9 @@ impl ImpItem {
         };
 
         format!("{exp}imp {path}")
+    }
+
+    fn name(&self, global: &Global) -> Option<Interned<str>> {
+        Some(self.path.as_ref()?.last()?.get(global).0)
     }
 }
