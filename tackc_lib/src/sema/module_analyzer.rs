@@ -52,8 +52,10 @@ impl ModuleTree {
         }
 
         let (first, rest) = path.split_at(1);
-        // `first` represents `&path[0..1]`, which will always have a length of at least one.
-        let first = first.first().expect_unreachable(); // CHECKED(Chloe)
+        let first = first
+            .first()
+            // `first` represents `&path[0..1]`, which will always have a length of at least one.
+            .expect_unreachable(); // CHECKED(Chloe)
 
         let mut node = self.nodes.get(first)?;
         let mut nodes = &node.nodes;
@@ -136,8 +138,11 @@ impl ModuleAnalyzerError {
                         "Global doesn't contain file!"
                     );
 
-                    // This was asserted above.
-                    let file = global.file_list().get(*file).expect_unreachable(); // CHECKED(Chloe)
+                    let file = global
+                        .file_list()
+                        .get(*file)
+                        // This was asserted above.
+                        .expect_unreachable(); // CHECKED(Chloe)
 
                     string += &file.path().display().to_string();
                     string += ", ";
@@ -196,9 +201,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
             logical_path.push(str);
 
             let new_node = nodes.entry(str).or_insert(ModuleNode {
-                // If logical_path was None, the `else` branch would have been taken above,
-                // setting logical_path to a Some value.
-                path: logical_path.clone(), // CHECKED(Chloe)
+                path: logical_path.clone(),
                 files: vec![],
                 items: IdentityHashMap::default(),
                 nodes: IdentityHashMap::default(),
@@ -253,8 +256,10 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
     let errors = error_set
         .into_iter()
         .map(|path| {
-            // Paths added to the error_set always exist in the tree.
-            let node = tree.get(&path).expect_unreachable(); // CHECKED(Chloe)
+            let node = tree
+                .get(&path)
+                // Paths added to the error_set always exist in the tree.
+                .expect_unreachable(); // CHECKED(Chloe)
 
             ModuleAnalyzerError::ModuleVisibillityConflict(path, node.files.clone())
         })

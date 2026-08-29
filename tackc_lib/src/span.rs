@@ -54,9 +54,16 @@ impl Span {
         );
 
         Self {
-            // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
-            start: file.len().try_into().expect_unreachable(), // CHECKED(Chloe)
-            end: file.len().try_into().expect_unreachable(),   // CHECKED(Chloe)
+            start: file
+                .len()
+                .try_into()
+                // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
+                .expect_unreachable(), // CHECKED(Chloe)
+            end: file
+                .len()
+                .try_into()
+                // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
+                .expect_unreachable(), // CHECKED(Chloe)
             file: file.id(),
         }
     }
@@ -73,8 +80,11 @@ impl Span {
 
         Self {
             start: 0,
-            // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
-            end: file.len().try_into().expect_unreachable(), // CHECKED(Chloe)
+            end: file
+                .len()
+                .try_into()
+                // Since `file.len() <= SpanValue::MAX`, try_into() will return `Ok`.
+                .expect_unreachable(), // CHECKED(Chloe)
             file: file.id(),
         }
     }

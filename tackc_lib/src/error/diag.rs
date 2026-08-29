@@ -61,8 +61,11 @@ impl Diag {
                     "Global doesn't contain file!"
                 );
 
-                // This was just checked for.
-                let file = global.file_list().get(span.file).expect_unreachable(); // CHECKED(Chloe)
+                let file = global
+                    .file_list()
+                    .get(span.file)
+                    // This was just checked for.
+                    .expect_unreachable(); // CHECKED(Chloe)
                 if let Some((line, column)) = file.line_and_column(span.start) {
                     format!("{msg}\n  --> {}:{line}:{column}", file.path().display())
                 } else {
@@ -70,8 +73,10 @@ impl Diag {
                 }
             }
             Self::WithSpans(msg, spans) => {
-                // This is an invariant.
-                let span = spans.first().expect_unreachable(); // CHECKED(Chloe)
+                let span = spans
+                    .first()
+                    // This is an invariant.
+                    .expect_unreachable(); // CHECKED(Chloe)
 
                 Self::WithSpan(Cow::Owned(msg.to_string()), *span).display(global)
             }

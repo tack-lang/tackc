@@ -245,8 +245,11 @@ impl Global {
     pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
         assert!(self.interned.contains_key(&interned.0), "wrong Global!");
 
-        // Assertion made ensures `get` returns `Some`.
-        let val = self.interned.get(&interned.0).expect_unreachable(); // CHECKED(Chloe)
+        let val = self
+            .interned
+            .get(&interned.0)
+            // Assertion made ensures `get` returns `Some`.
+            .expect_unreachable(); // CHECKED(Chloe)
         let Some(res) = <dyn Any>::downcast_ref::<T>(&**val) else {
             Self::report_collision();
         };
@@ -294,8 +297,11 @@ impl Global {
             "wrong Global!"
         );
 
-        // We asserted that the map contains the key.
-        *self.interned_strs.get(&interned.0).expect_unreachable() // CHECKED(Chloe)
+        *self
+            .interned_strs
+            .get(&interned.0)
+            // We asserted that the map contains the key.
+            .expect_unreachable() // CHECKED(Chloe)
     }
 
     /// Interns a string value into the global map by copying its elements.
@@ -358,8 +364,11 @@ impl Global {
             "wrong Global!"
         );
 
-        // This was just checked.
-        let (len, ptr) = *self.interned_slices.get(&interned.0).expect_unreachable(); // CHECKED(Chloe)
+        let (len, ptr) = *self
+            .interned_slices
+            .get(&interned.0)
+            // This was just checked.
+            .expect_unreachable(); // CHECKED(Chloe)
         let ptr = ptr.cast::<T>();
 
         #[expect(unsafe_code)] // CHECKED(Chloe)

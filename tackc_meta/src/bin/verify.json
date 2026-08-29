@@ -1,0 +1,79 @@
+[
+    {
+        "pattern": ".expect_unreachable()",
+        "display": "expect_unreachable()",
+        "allow_checked": true
+    },
+    {
+        "pattern": "[expect",
+        "finish": "]",
+        "display": "#[expect]",
+        "allow_checked": true
+    },
+    {
+        "pattern": ".unwrap()",
+        "display": "unwrap()",
+        "allow_checked": true
+    },
+    {
+        "pattern": ".unwrap_err()",
+        "display": "unwrap_err()",
+        "allow_checked": true
+    },
+    {
+        "pattern": ".expect(",
+        "finish": ")",
+        "display": "expect()",
+        "suggestion": "use assert! for preconditions, debug_assert! for invariants, and expect_unreachable() for logically unreachable statements",
+        "allow_checked": false
+    },
+    {
+        "pattern": ".expect_err(",
+        "finish": ")",
+        "display": "expect_err()",
+        "suggestion": "use assert! for preconditions, debug_assert! for invariants, and expect_unreachable() for logically unreachable statements",
+        "allow_checked": false
+    },
+    {
+        "pattern": "panic!(",
+        "finish": ")",
+        "display": "panic!()",
+        "allow_checked": true
+    },
+    {
+        "pattern": "unreachable!(",
+        "finish": ")",
+        "display": "unreachable!()",
+        "allow_checked": true
+    },
+    {
+        "pattern": "todo!(",
+        "display": "todo!()",
+        "suggestion": "implement the feature, or leave it out",
+        "allow_checked": false
+    },
+    {
+        "pattern": "unimplemented!(",
+        "display": "unimplemented!()",
+        "suggestion": "implement the feature, or leave it out",
+        "allow_checked": false
+    },
+    {
+        "pattern": "dbg!(",
+        "display": "dbg!()",
+        "suggestion": "remove debugging",
+        "allow_checked": false
+    },
+    {
+        "pattern": "super",
+        "display": "super::*",
+        "suggestion": "use a absolute path",
+        "allow_checked": false
+    },
+    {
+        "pattern": "CHECKED",
+        "display": "Unnecesary CHECKED",
+        "suggestion": "remove it",
+        "allow_checked": false
+    }
+]

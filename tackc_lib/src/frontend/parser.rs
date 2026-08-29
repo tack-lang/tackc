@@ -1242,7 +1242,7 @@ insta_test!(parser_test, "parser-tests/*.tck", run_parser_test);
 use std::path::Path;
 
 #[cfg(test)]
-// No `unwrap`s in this function are documented, because all of them sidestep errors.
+// No `unwrap`s in this function are documented, because all of them sidestep errors, which shouldn't happen in theory.
 fn run_parser_test(src: String) {
     use crate::file::File;
     use crate::frontend::lexer::Lexer;
@@ -1251,9 +1251,9 @@ fn run_parser_test(src: String) {
     let global = Global::create_heap();
     let lexer = Lexer::new(&file, &global);
     let tokens = lexer
-        .map(
-            |res| res.unwrap(), // CHECKED(Chloe)
-        )
+        .map(|res| {
+            res.unwrap() // CHECKED(Chloe)
+        })
         .collect::<Vec<_>>();
     let (prog, err, _) = Parser::parse(&tokens, &file, &global);
     insta::assert_ron_snapshot!((prog, err));

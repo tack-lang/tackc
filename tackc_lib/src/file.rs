@@ -36,7 +36,9 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
 
         // Since `str.len() <= SpanValue::MAX`, and `i` will only ever be as large as `str.len() - 1`,
         // i will only ever be as large as `str.len()`, which `try_into()` won't return `Err` on.
-        out.push((i + 1).try_into().expect_unreachable()); // CHECKED(Chloe)
+        out.push(
+            (i + 1).try_into().expect_unreachable(), // CHECKED(Chloe)
+        );
     }
 
     out
@@ -124,7 +126,12 @@ impl File {
         // because `rposition`'s return value is only as
         // long as it's iterator, which in this case,
         // is only as long as `starts`.
-        let col_index = *starts.get(line_idx).expect_unreachable() as SpanValue; // CHECKED(Chloe)
+        let col_index = *starts
+        .get(line_idx)
+
+
+            .expect_unreachable() // CHECKED(Chloe)
+            as SpanValue;
         let col: SpanValue = index - (col_index) + 1;
 
         Some((line_num, col))

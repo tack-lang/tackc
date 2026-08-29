@@ -38,8 +38,9 @@ pub struct NonZeroHasher<H> {
 impl<H: Hasher> NonZeroHasher<H> {
     /// Returns a [`NonZeroU64`] equivilent to the hashed value.
     pub fn finish_non_zero(&self) -> NonZeroU64 {
-        // self.finish() is guaranteed to return a non-zero value.
-        NonZeroU64::new(self.finish()).expect_unreachable() // CHECKED(Chloe)
+        NonZeroU64::new(self.finish())
+            // self.finish() is guaranteed to return a non-zero value.
+            .expect_unreachable() // CHECKED(Chloe)
     }
 
     /// Returns a [`NonZeroU32`] equivilent to the hashed value.
@@ -48,8 +49,9 @@ impl<H: Hasher> NonZeroHasher<H> {
         // We are trying to truncate this.
         #[expect(clippy::cast_possible_truncation)] // CHECKED(Chloe)
         let low = value as u32;
-        // `low` could be zero at this point, so ` | u32::from(low == 0)` ensures that it won't be zero.
-        NonZeroU32::new(low | u32::from(low == 0)).expect_unreachable() // CHECKED(Chloe)
+        NonZeroU32::new(low | u32::from(low == 0))
+            // `low` could be zero at this point, so ` | u32::from(low == 0)` ensures that it won't be zero.
+            .expect_unreachable() // CHECKED(Chloe)
     }
 
     /// Creates a new [`NonZeroHasher`], using an existing hasher as the inner hasher.
@@ -124,8 +126,9 @@ impl Hasher for IdentityHasher {
             "IdentityHasher can only be used for 8-byte values!"
         );
 
-        // try_into() will always return `Ok`, since `bytes.len() == 8`.
-        let bytes = <&[u8] as TryInto<[u8; 8]>>::try_into(bytes).expect_unreachable(); // CHECKED(Chloe)
+        let bytes = <&[u8] as TryInto<[u8; 8]>>::try_into(bytes)
+            // try_into() will always return `Ok`, since `bytes.len() == 8`.
+            .expect_unreachable(); // CHECKED(Chloe)
         self.hash = u64::from_ne_bytes(bytes);
     }
 

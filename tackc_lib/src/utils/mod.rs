@@ -32,8 +32,10 @@ impl<T> UnwrapExt<T> for Option<T> {
         Self: Sized,
         T: Sized,
     {
-        // This is completely intended.
-        self.unwrap_or_else(|| unreachable!()) // CHECKED(Chloe)
+        self.unwrap_or_else(|| {
+            // This is completely intended.
+            unreachable!() // CHECKED(Chloe)
+        })
     }
 }
 
@@ -44,7 +46,9 @@ impl<T, E> UnwrapExt<T> for Result<T, E> {
         Self: Sized,
         T: Sized,
     {
-        // This is completely intended.
-        self.unwrap_or_else(|_| unreachable!()) // CHECKED(Chloe)
+        self.unwrap_or_else(|_| {
+            // This is completely intended.
+            unreachable!() // CHECKED(Chloe)
+        })
     }
 }

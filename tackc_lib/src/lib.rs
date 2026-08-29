@@ -25,8 +25,9 @@ macro_rules! insta_test {
             setup_insta_test!();
 
             insta::glob!($glob, |path| {
-                // This is a test, so this would be a panic-able error.
-                let input = std::fs::read_to_string(path).unwrap(); // CHECKED(Chloe)
+                let input = std::fs::read_to_string(path)
+                    // This is a test, so this would be a panic-able error.
+                    .unwrap(); // CHECKED(Chloe)
                 $func(input);
             });
         }
@@ -71,8 +72,11 @@ fn run_ui_test(src: String) {
     let mut global = Global::create_heap();
     global.set_file_list(file_list);
 
-    // We added this file.
-    let file = global.file_list().get(id).unwrap(); // CHECKED(Chloe)
+    let file = global
+        .file_list()
+        .get(id)
+        // We added this file.
+        .unwrap(); // CHECKED(Chloe)
 
     let lexer = Lexer::new(file, &global);
     let mut lex_errors = Vec::new();
