@@ -12,7 +12,6 @@ dashmap = { workspace = true }
 proptest = { workspace = true }
 thiserror = { workspace = true }
 nonzero = { workspace = true }
-colored = { workspace = true }
 
 [lints]
 workspace = true

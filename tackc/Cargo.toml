@@ -6,5 +6,4 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
 colored = { workspace = true }
-rustc-hash = { workspace = true }
 tackc_lib = { workspace = true }
