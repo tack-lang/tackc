@@ -3,19 +3,18 @@
 use std::path::PathBuf;
 
 use clap::{Parser as ClapParser, ValueEnum};
-
 use colored::Colorize;
-
-use tackc_lib::prelude::*;
-
-use tackc_lib::file::{File, FileList};
-use tackc_lib::frontend::{
-    ast::AstModule,
-    lexer::{Lexer, Token},
-    parser::Parser,
+use tackc_lib::{
+    file::{File, FileList},
+    frontend::{
+        ast::AstModule,
+        lexer::{Lexer, Token},
+        parser::Parser,
+    },
+    global::Global,
+    prelude::*,
+    sema::module_analyzer,
 };
-use tackc_lib::global::Global;
-use tackc_lib::sema::module_analyzer;
 
 #[derive(ClapParser)]
 struct Args {

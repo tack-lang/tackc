@@ -1,16 +1,16 @@
 //! Items in tackc.
 
-use std::borrow::Cow;
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
-use crate::{
-    frontend::ast::TriState, global::Global, span::Span, utils::intern::Interned,
-    utils::tree::TreeItem,
-};
 use serde::Serialize;
 use thin_vec::ThinVec;
 
-use crate::frontend::ast::{AstPath, Block, Expression, NodeId, Symbol};
+use crate::{
+    frontend::ast::{AstPath, Block, Expression, NodeId, Symbol, TriState},
+    global::Global,
+    span::Span,
+    utils::{intern::Interned, tree::TreeItem},
+};
 
 /// An item.
 #[derive(Debug, PartialEq, Eq, Serialize)]

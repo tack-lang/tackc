@@ -2,11 +2,14 @@
 
 use std::fmt::Write;
 
-use crate::{frontend::ast::TriState, global::Global, span::Span};
 use serde::Serialize;
 use thin_vec::ThinVec;
 
-use crate::frontend::ast::{Expression, NodeId, Statement};
+use crate::{
+    frontend::ast::{Expression, NodeId, Statement, TriState},
+    global::Global,
+    span::Span,
+};
 
 /// Code blocks.
 #[derive(Debug, PartialEq, Eq, Serialize)]

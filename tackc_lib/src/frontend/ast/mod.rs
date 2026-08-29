@@ -2,15 +2,13 @@
 #![expect(clippy::option_if_let_else)] // CHECKED(Chloe)
 //! The module for AST nodes.
 
-use std::hash::Hash;
-use std::num::NonZeroU32;
+use std::{hash::Hash, num::NonZeroU32};
 
-use crate::file::FileId;
-use crate::frontend::lexer::Token;
-use crate::global::Global;
-use crate::span::Span;
-use crate::utils::intern::Interned;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    file::FileId, frontend::lexer::Token, global::Global, span::Span, utils::intern::Interned,
+};
 
 pub mod expr;
 pub use expr::*;

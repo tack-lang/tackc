@@ -1,12 +1,16 @@
 //! Statements in tackc.
 
-use crate::frontend::lexer::Token;
-use crate::global::Global;
-use crate::span::Span;
-use crate::utils::intern::Interned;
 use serde::Serialize;
 
-use crate::frontend::ast::{Expression, Item, NodeId, Symbol, TriState};
+use crate::{
+    frontend::{
+        ast::{Expression, Item, NodeId, Symbol, TriState},
+        lexer::Token,
+    },
+    global::Global,
+    span::Span,
+    utils::intern::Interned,
+};
 
 /// A statement.
 #[derive(Debug, PartialEq, Eq, Serialize)]

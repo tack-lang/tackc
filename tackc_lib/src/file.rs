@@ -9,10 +9,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::span::SpanValue;
-use crate::utils::{UnwrapExt, hash::NonZeroFxHasherBuilder};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    span::SpanValue,
+    utils::{UnwrapExt, hash::NonZeroFxHasherBuilder},
+};
 
 /// Returns a vector corresponding to the byte indexes of the start of each line.
 ///

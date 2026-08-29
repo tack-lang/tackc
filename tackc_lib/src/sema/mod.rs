@@ -4,8 +4,10 @@ use std::{iter::Copied, ops::Deref, slice::Iter};
 
 use thin_vec::ThinVec;
 
-use crate::utils::intern::Interned;
-use crate::{global::Global, utils::UnwrapExt};
+use crate::{
+    global::Global,
+    utils::{UnwrapExt, intern::Interned},
+};
 
 pub mod module_analyzer;
 

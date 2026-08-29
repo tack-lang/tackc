@@ -3,7 +3,6 @@
 // We're using HashMap not as hashing, but as the template for putting in a new hasher.
 #[expect(clippy::disallowed_types)] // CHECKED(Chloe)
 use std::collections::HashMap;
-
 use std::{
     hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
     marker::PhantomData,

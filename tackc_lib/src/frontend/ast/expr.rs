@@ -2,11 +2,15 @@
 
 use std::fmt::{Display, Write};
 
-use crate::{frontend::ast::TriState, global::Global, span::Span, utils::intern::Interned};
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
-use crate::frontend::ast::{Block, NodeId, Symbol};
+use crate::{
+    frontend::ast::{Block, NodeId, Symbol, TriState},
+    global::Global,
+    span::Span,
+    utils::intern::Interned,
+};
 
 /// An expression in parsed form.
 #[derive(Debug, PartialEq, Eq, Serialize)]

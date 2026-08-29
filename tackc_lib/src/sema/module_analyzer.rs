@@ -2,7 +2,9 @@
 
 use std::borrow::Cow;
 
-use crate::utils::intern::Interned;
+use rustc_hash::FxHashSet;
+use thin_vec::thin_vec;
+
 use crate::{
     error::Diag,
     file::FileId,
@@ -12,12 +14,10 @@ use crate::{
     utils::{
         UnwrapExt,
         hash::IdentityHashMap,
+        intern::Interned,
         tree::{TreeItem, TreeItemExt},
     },
 };
-
-use rustc_hash::FxHashSet;
-use thin_vec::thin_vec;
 
 /// A tree of modules, using [`ModuleNode`].
 pub struct ModuleTree {

@@ -8,23 +8,23 @@ const PATH_COMPONENTS_LIMIT: usize = 32;
 
 use error::{ParseError, Result};
 use nonzero::nonzero;
-
-use crate::file::File;
-use crate::frontend::ast::{Function, FunctionType, NodeId, TriState};
-use crate::frontend::lexer::{Token, TokenKind};
-use crate::global::Global;
-use crate::span::{Span, SpanValue};
-use crate::utils::UnwrapExt;
-use crate::utils::intern::Interned;
 use thin_vec::ThinVec;
 
-use crate::frontend::{
-    ast::{
-        AssignmentStatement, AstModule, AstPath, BinOp, Block, ConstItem, Expression,
-        ExpressionKind, ExpressionStatement, FuncItem, ImpItem, Item, ItemKind, LetStatement,
-        ModStatement, Statement, StatementKind, Symbol, UnOp,
+use crate::{
+    file::File,
+    frontend::{
+        ast::{
+            AssignmentStatement, AstModule, AstPath, BinOp, Block, ConstItem, Expression,
+            ExpressionKind, ExpressionStatement, FuncItem, Function, FunctionType, ImpItem, Item,
+            ItemKind, LetStatement, ModStatement, NodeId, Statement, StatementKind, Symbol,
+            TriState, UnOp,
+        },
+        lexer::{Token, TokenKind},
+        parser::error::ErrorExt,
     },
-    parser::error::ErrorExt,
+    global::Global,
+    span::{Span, SpanValue},
+    utils::{UnwrapExt, intern::Interned},
 };
 
 /// The ways to parse, in respect to blocks.
@@ -1277,8 +1277,7 @@ use std::path::Path;
 #[cfg(test)]
 // No `unwrap`s in this function are documented, because all of them sidestep errors, which shouldn't happen in theory.
 fn run_parser_test(src: String) {
-    use crate::file::File;
-    use crate::frontend::lexer::Lexer;
+    use crate::{file::File, frontend::lexer::Lexer};
 
     let file = File::new(src, Path::new("testing.tck"));
     let global = Global::create_heap();

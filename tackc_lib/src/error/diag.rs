@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use crate::span::Span;
-use crate::{global::Global, utils::UnwrapExt};
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
+
+use crate::{global::Global, span::Span, utils::UnwrapExt};
 
 /// Diagnostic error struct.
 #[derive(Serialize, Deserialize)]

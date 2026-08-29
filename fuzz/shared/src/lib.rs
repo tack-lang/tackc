@@ -4,12 +4,12 @@
 
 use std::path::Path;
 
-use tackc_lib::prelude::*;
-
-use tackc_lib::file::File;
-use tackc_lib::frontend::lexer::Lexer;
-use tackc_lib::frontend::parser::Parser;
-use tackc_lib::global::Global;
+use tackc_lib::{
+    file::File,
+    frontend::{lexer::Lexer, parser::Parser},
+    global::Global,
+    prelude::*,
+};
 
 /// Run the main fuzzing loop.
 pub fn run(data: &[u8]) {

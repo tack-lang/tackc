@@ -2,14 +2,16 @@
 
 use std::{borrow::Cow, result::Result as StdResult};
 
-use crate::error::Diag;
-use crate::file::{File, FileId};
-use crate::frontend::lexer::Token;
-use crate::global::Global;
-use crate::span::Span;
-use crate::utils::UnwrapExt;
-
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    error::Diag,
+    file::{File, FileId},
+    frontend::lexer::Token,
+    global::Global,
+    span::Span,
+    utils::UnwrapExt,
+};
 
 /// A result alias that uses [`ParseError`] for its error type.
 pub type Result<T, E = ParseError> = StdResult<T, E>;

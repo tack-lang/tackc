@@ -2,16 +2,17 @@
 
 use std::fmt::Display;
 
-use crate::error::Diag;
-use crate::span::Span;
-use crate::utils::UnwrapExt;
 use proptest::prelude::*;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::file::File;
-use crate::global::Global;
-use crate::utils::intern::Interned;
+use crate::{
+    error::Diag,
+    file::File,
+    global::Global,
+    span::Span,
+    utils::{UnwrapExt, intern::Interned},
+};
 
 /// The struct representing tokens in tackc.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -712,8 +713,9 @@ insta_test!(lexer_test, "lexer-tests/*.tck", run_lexer_test);
 
 #[cfg(test)]
 fn run_lexer_test(src: String) {
-    use crate::file::File;
     use std::path::Path;
+
+    use crate::file::File;
 
     let file = File::new(src, Path::new("testing.tck"));
 

@@ -44,16 +44,14 @@ pub mod utils;
 
 /// Combines the preludes of all the other modules.
 pub mod prelude {
-    pub use crate::error::prelude::*;
-    pub use crate::utils::prelude::*;
+    pub use crate::{error::prelude::*, utils::prelude::*};
 }
 
 insta_test!(ui_test, "ui-tests/*.tck", run_ui_test);
 
 #[cfg(test)]
 fn run_ui_test(src: String) {
-    use std::fmt::Write;
-    use std::path::Path;
+    use std::{fmt::Write, path::Path};
 
     use insta::assert_snapshot;
 

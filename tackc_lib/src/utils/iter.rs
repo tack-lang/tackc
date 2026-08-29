@@ -1,7 +1,8 @@
 //! Various iterators and iterator adapters.
 
-use crate::utils::UnwrapExt;
 use std::array;
+
+use crate::utils::UnwrapExt;
 
 /// A iterator adapter with limited, variable, peeking functionality.
 ///

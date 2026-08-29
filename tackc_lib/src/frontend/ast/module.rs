@@ -1,18 +1,17 @@
 //! Modules in tackc.
 
-use std::fmt::Write;
-use std::iter::Copied;
-use std::slice::Iter;
+use std::{fmt::Write, iter::Copied, slice::Iter};
 
-use crate::file::FileId;
-use crate::global::Global;
-use crate::span::Span;
-use crate::utils::UnwrapExt;
-use crate::utils::intern::Interned;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
-use crate::frontend::ast::{Item, NodeId, Symbol};
+use crate::{
+    file::FileId,
+    frontend::ast::{Item, NodeId, Symbol},
+    global::Global,
+    span::Span,
+    utils::{UnwrapExt, intern::Interned},
+};
 
 /// A module represented in the AST.
 #[derive(Debug, PartialEq, Eq, Serialize)]

@@ -1,7 +1,6 @@
 //! A system for displaying trees as text.
 
-use std::borrow::Cow;
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
 use crate::global::Global;
 
