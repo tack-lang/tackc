@@ -41,6 +41,7 @@ The previous section mentioned a tool called `cargo verify`. This is a tool that
   - `panic!()`
   - `unreachable!()`
   - `unimplemented!()`
+  - `expect_unreachable()` (Custom replacement for `unwrap()` used to bypass `clippy::missing_panics_doc`)
 - `super::*` paths
   - Paths should not be relative to the module they are used in.
 
