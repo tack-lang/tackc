@@ -10,7 +10,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::file::File;
-use crate::global::{Global, Interned};
+use crate::global::Global;
+use crate::utils::intern::Interned;
 
 /// The struct representing tokens in tackc.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -167,7 +168,7 @@ impl Token {
     pub fn display(&self, global: &Global) -> String {
         match self.kind {
             TokenKind::Ident | TokenKind::StringLit | TokenKind::IntLit | TokenKind::FloatLit => {
-                self.lexeme.display(global).to_string()
+                self.lexeme.get(&global.interner).to_string()
             }
 
             ty => format!("{ty}"),
@@ -372,7 +373,7 @@ impl<'src> Lexer<'src> {
     fn make_token_with_lexeme(&mut self, kind: TokenKind, lexeme: &str) -> Token {
         let span = self.span;
         self.span.reset();
-        Token::new(span, kind, self.global.intern_str(lexeme))
+        Token::new(span, kind, self.global.interner.intern_str(lexeme))
     }
 
     fn current_lexeme(&self) -> &'src str {

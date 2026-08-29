@@ -5,9 +5,10 @@ use std::iter::Copied;
 use std::slice::Iter;
 
 use crate::file::FileId;
-use crate::global::{Global, Interned};
+use crate::global::Global;
 use crate::span::Span;
 use crate::utils::UnwrapExt;
+use crate::utils::intern::Interned;
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -141,7 +142,7 @@ impl AstPath {
 
         for component in &self.components {
             let comp = match component {
-                Some(comp) => comp.get(global).display(global),
+                Some(comp) => comp.get(&global.interner).display(global),
                 None => "<ERROR>",
             };
             _ = write!(str, "{comp}.");

@@ -8,6 +8,7 @@ pub mod prelude {
 }
 
 pub mod hash;
+pub mod intern;
 pub mod iter;
 pub mod tree;
 

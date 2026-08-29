@@ -2,11 +2,12 @@
 
 use std::borrow::Cow;
 
+use crate::utils::intern::Interned;
 use crate::{
     error::Diag,
     file::FileId,
     frontend::ast::{AstModule, Item},
-    global::{Global, Interned},
+    global::Global,
     sema::LogicalPath,
     utils::{
         UnwrapExt,
@@ -37,7 +38,7 @@ impl ModuleTree {
                 .first()
                 // This is an invariant.
                 .expect_unreachable() // CHECKED(Chloe)
-                .display(global)
+                .get(&global.interner)
         });
 
         nodes.into_iter().fold(String::new(), |val, elem| {
@@ -96,7 +97,7 @@ impl TreeItem for ModuleNode {
             .path
             .last()
             .expect_unreachable() // CHECKED(Chloe)
-            .display(global);
+            .get(&global.interner);
         let exp = if self.exported { "exp " } else { "" };
 
         format!("{exp}{path}").into()
@@ -179,7 +180,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
         // Hacky fix to ensure node is initialized,
         // this value is never actually used.
         let mut default = ModuleNode {
-            path: LogicalPath::new(thin_vec![global.intern_str("<ERROR>")]),
+            path: LogicalPath::new(thin_vec![global.interner.intern_str("<ERROR>")]),
             files: vec![],
             items: IdentityHashMap::default(),
             nodes: IdentityHashMap::default(),
@@ -196,7 +197,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
                 break;
             };
 
-            let str = component.get(global).0;
+            let str = component.get(&global.interner).0;
 
             logical_path.push(str);
 

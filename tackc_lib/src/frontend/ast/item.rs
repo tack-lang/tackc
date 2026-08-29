@@ -4,9 +4,7 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use crate::{
-    frontend::ast::TriState,
-    global::{Global, Interned},
-    span::Span,
+    frontend::ast::TriState, global::Global, span::Span, utils::intern::Interned,
     utils::tree::TreeItem,
 };
 use serde::Serialize;
@@ -52,8 +50,8 @@ impl Item {
     /// Gets the name of this item. This is the symbol that it's accesible by inside of it's module.
     pub fn get_name(&self, global: &Global) -> Option<Interned<str>> {
         match &self.kind {
-            ItemKind::ConstItem(item) => Some(item.ident?.get(global).0),
-            ItemKind::FuncItem(func) => Some(func.ident?.get(global).0),
+            ItemKind::ConstItem(item) => Some(item.ident?.get(&global.interner).0),
+            ItemKind::FuncItem(func) => Some(func.ident?.get(&global.interner).0),
             ItemKind::ImpItem(imp) => imp.name(global),
         }
     }
@@ -97,7 +95,7 @@ impl ConstItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
-            Some(ident) => ident.get(global).display(global),
+            Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
         };
         let ty = match &self.ty {
@@ -115,7 +113,7 @@ impl ConstItem {
     fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
-            Some(sym) => sym.get(global).display(global),
+            Some(sym) => sym.get(&global.interner).display(global),
             None => "<ERROR>",
         };
 
@@ -142,13 +140,13 @@ impl FuncItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
-            Some(ident) => ident.get(global).display(global),
+            Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
         };
         let mut params = String::new();
         for (ident, ty) in &self.params {
             let ident = match ident {
-                Some(ident) => ident.get(global).display(global),
+                Some(ident) => ident.get(&global.interner).display(global),
                 None => "<ERROR>",
             };
             let ty = match ty {
@@ -171,7 +169,7 @@ impl FuncItem {
     fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
-            Some(sym) => sym.get(global).display(global),
+            Some(sym) => sym.get(&global.interner).display(global),
             None => "<ERROR>",
         };
 
@@ -210,6 +208,6 @@ impl ImpItem {
     }
 
     fn name(&self, global: &Global) -> Option<Interned<str>> {
-        Some(self.path.as_ref()?.last()?.get(global).0)
+        Some(self.path.as_ref()?.last()?.get(&global.interner).0)
     }
 }

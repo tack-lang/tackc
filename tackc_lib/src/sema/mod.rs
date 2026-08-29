@@ -4,10 +4,8 @@ use std::{iter::Copied, ops::Deref, slice::Iter};
 
 use thin_vec::ThinVec;
 
-use crate::{
-    global::{Global, Interned},
-    utils::UnwrapExt,
-};
+use crate::utils::intern::Interned;
+use crate::{global::Global, utils::UnwrapExt};
 
 pub mod module_analyzer;
 
@@ -56,9 +54,9 @@ impl LogicalPath {
                     .first()
                     // If self.components was empty, the above if branch would have been taken.
                     .expect_unreachable() // CHECKED(Chloe)
-                    .display(global),
+                    .get(&global.interner),
             ),
-            |val, elem| val + "." + elem.display(global),
+            |val, elem| val + "." + elem.get(&global.interner),
         )
     }
 }

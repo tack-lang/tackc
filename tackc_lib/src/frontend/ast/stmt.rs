@@ -1,8 +1,9 @@
 //! Statements in tackc.
 
 use crate::frontend::lexer::Token;
-use crate::global::{Global, Interned};
+use crate::global::Global;
 use crate::span::Span;
+use crate::utils::intern::Interned;
 use serde::Serialize;
 
 use crate::frontend::ast::{Expression, Item, NodeId, Symbol, TriState};
@@ -62,7 +63,7 @@ pub struct LetStatement {
 impl LetStatement {
     fn display(&self, global: &Global) -> String {
         let ident = match self.ident {
-            Some(ident) => ident.get(global).display(global),
+            Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
         };
         let ty = match &self.ty {

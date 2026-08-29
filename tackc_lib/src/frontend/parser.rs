@@ -12,9 +12,10 @@ use nonzero::nonzero;
 use crate::file::File;
 use crate::frontend::ast::{Function, FunctionType, NodeId, TriState};
 use crate::frontend::lexer::{Token, TokenKind};
-use crate::global::{Global, Interned};
+use crate::global::Global;
 use crate::span::{Span, SpanValue};
 use crate::utils::UnwrapExt;
+use crate::utils::intern::Interned;
 use thin_vec::ThinVec;
 
 use crate::frontend::{
@@ -390,11 +391,19 @@ impl<'src, 'a> Parser<'src, 'a> {
 
         let mut components = ThinVec::new();
         let ident = self.expect_kinds(&[TokenKind::Ident])?;
-        components.push(Some(self.global.intern(Symbol::new(ident, self.file.id()))));
+        components.push(Some(
+            self.global
+                .interner
+                .intern(Symbol::new(ident, self.file.id())),
+        ));
 
         while self.eat(&[TokenKind::Dot]).is_some() {
             let tok = self.expect_report(&[TokenKind::Ident], "identifier");
-            let ident = tok.map(|ident| self.global.intern(Symbol::new(ident, self.file.id())));
+            let ident = tok.map(|ident| {
+                self.global
+                    .interner
+                    .intern(Symbol::new(ident, self.file.id()))
+            });
             components.push(ident);
 
             if components.len() > PATH_COMPONENTS_LIMIT {
@@ -410,7 +419,7 @@ impl<'src, 'a> Parser<'src, 'a> {
                 .last()
                 // One component was already pushed, so there has to be at least one.
                 .expect_unreachable() // CHECKED(Chloe)
-                .map_or_else(|| self.loc(), |sym| sym.get(self.global).1.end),
+                .map_or_else(|| self.loc(), |sym| sym.get(&self.global.interner).1.end),
             self.file,
         );
         Ok(AstPath::new(components, self.get_id()?, span))
@@ -471,7 +480,11 @@ impl<'src, 'a> Parser<'src, 'a> {
                 exported,
                 expr,
                 ty,
-                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                ident: ident.map(|ident| {
+                    self.global
+                        .interner
+                        .intern(Symbol::new(ident, self.file.id()))
+                }),
             }),
             self.get_id()?,
             span,
@@ -512,7 +525,11 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Item {
             kind: ItemKind::FuncItem(FuncItem {
                 exported,
-                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                ident: ident.map(|ident| {
+                    self.global
+                        .interner
+                        .intern(Symbol::new(ident, self.file.id()))
+                }),
                 params,
                 ret_type,
                 block,
@@ -569,7 +586,11 @@ impl<'src, 'a> Parser<'src, 'a> {
                 recursion + 1,
             );
             params.push((
-                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                ident.map(|ident| {
+                    self.global
+                        .interner
+                        .intern(Symbol::new(ident, self.file.id()))
+                }),
                 expr,
             ));
             if self.eat(&[TokenKind::Comma]).is_none() {
@@ -792,7 +813,11 @@ impl<'src, 'a> Parser<'src, 'a> {
             StatementKind::LetStatement(LetStatement {
                 expr,
                 ty,
-                ident: ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                ident: ident.map(|ident| {
+                    self.global
+                        .interner
+                        .intern(Symbol::new(ident, self.file.id()))
+                }),
             }),
             self.get_id()?,
             span,
@@ -1054,7 +1079,11 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Expression::new(
             ExpressionKind::Member(
                 Box::new(lhs),
-                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
+                ident.map(|ident| {
+                    self.global
+                        .interner
+                        .intern(Symbol::new(ident, self.file.id()))
+                }),
             ),
             self.get_id()?,
             span,
@@ -1138,9 +1167,11 @@ impl<'src, 'a> Parser<'src, 'a> {
             self.file,
         );
         Ok(Expression::new(
-            ExpressionKind::GlobalIdent(
-                ident.map(|ident| self.global.intern(Symbol::new(ident, self.file.id()))),
-            ),
+            ExpressionKind::GlobalIdent(ident.map(|ident| {
+                self.global
+                    .interner
+                    .intern(Symbol::new(ident, self.file.id()))
+            })),
             self.get_id()?,
             span,
         ))
@@ -1159,9 +1190,11 @@ impl<'src, 'a> Parser<'src, 'a> {
         let primary = match tok.kind {
             TokenKind::IntLit => ExpressionKind::IntLit(tok.lexeme),
             TokenKind::FloatLit => ExpressionKind::FloatLit(tok.lexeme),
-            TokenKind::Ident => {
-                ExpressionKind::Ident(self.global.intern(Symbol::new(tok, self.file.id())))
-            }
+            TokenKind::Ident => ExpressionKind::Ident(
+                self.global
+                    .interner
+                    .intern(Symbol::new(tok, self.file.id())),
+            ),
             TokenKind::StringLit => ExpressionKind::StringLit(tok.lexeme),
             TokenKind::Func => return self.function_type_and_expr(recursion + 1),
             // `expect_peek` will only return token kinds of the inputs, and all the inputs are arms.

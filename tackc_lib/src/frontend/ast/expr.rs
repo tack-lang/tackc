@@ -2,11 +2,7 @@
 
 use std::fmt::{Display, Write};
 
-use crate::{
-    frontend::ast::TriState,
-    global::{Global, Interned},
-    span::Span,
-};
+use crate::{frontend::ast::TriState, global::Global, span::Span, utils::intern::Interned};
 use serde::{Deserialize, Serialize};
 use thin_vec::ThinVec;
 
@@ -33,24 +29,24 @@ impl Expression {
     pub fn display(&self, global: &Global) -> String {
         match &self.kind {
             ExpressionKind::IntLit(sym) | ExpressionKind::FloatLit(sym) => {
-                sym.display(global).to_string()
+                sym.get(&global.interner).to_string()
             }
-            ExpressionKind::Ident(sym) => sym.get(global).display(global).to_string(),
+            ExpressionKind::Ident(sym) => sym.get(&global.interner).display(global).to_string(),
             ExpressionKind::GlobalIdent(sym) => {
                 let sym = match sym {
-                    Some(sym) => sym.get(global).display(global),
+                    Some(sym) => sym.get(&global.interner).display(global),
                     None => "<ERROR>",
                 };
                 format!(".{sym}")
             }
-            ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.display(global)),
+            ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.get(&global.interner)),
             ExpressionKind::Grouping(inner) => match inner {
                 Some(expr) => format!("({})", expr.display(global)),
                 None => String::from("(<ERROR>)"),
             },
             ExpressionKind::Member(lhs, sym) => {
                 let sym = match sym {
-                    Some(sym) => sym.get(global).display(global),
+                    Some(sym) => sym.get(&global.interner).display(global),
                     None => "<ERROR>",
                 };
                 format!("(. {} {sym})", lhs.display(global))
@@ -219,7 +215,7 @@ impl Function {
         let mut params = String::new();
         for (ident, ty) in &self.params {
             let ident = match ident {
-                Some(ident) => ident.get(global).display(global),
+                Some(ident) => ident.get(&global.interner).display(global),
                 None => "<ERROR>",
             };
             let ty = match ty {

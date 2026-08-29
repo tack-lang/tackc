@@ -1,131 +1,14 @@
 //! The crate containing [`Global`], tackc's global context.
 
-use std::{
-    any::{Any, type_name},
-    fmt::Debug,
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-    num::NonZeroU64,
-    slice,
-};
+use std::fmt::Debug;
 
-use crate::{
-    file::FileList,
-    utils::{
-        UnwrapExt,
-        hash::{IdentityDashMap, NonZeroFxHasher},
-    },
-};
-use bumpalo::Bump;
-use serde::{Deserialize, Serialize};
-
-/// A trait representing values that are able to be interned by [`Global`].
-pub trait Internable: Any + Debug {
-    /// Hash the value using the given hasher.
-    fn dyn_hash(&self, hasher: &mut dyn Hasher);
-    /// Check if the value is equal to `other`.
-    fn dyn_eq(&self, other: &dyn Any) -> bool;
-}
-
-impl<T: Any + Hash + PartialEq + Debug> Internable for T {
-    fn dyn_hash(&self, mut hasher: &mut dyn Hasher) {
-        self.hash(&mut hasher);
-    }
-
-    fn dyn_eq(&self, other: &dyn Any) -> bool {
-        let Some(other) = other.downcast_ref::<T>() else {
-            return false;
-        };
-
-        self.eq(other)
-    }
-}
-
-/// A type that represents interned values.
-#[derive(Serialize, Deserialize)]
-#[repr(transparent)]
-pub struct Interned<T: ?Sized>(NonZeroU64, PhantomData<fn() -> T>);
-
-impl<T: ?Sized> Interned<T> {
-    /// Gets the inner representation of this interned value.
-    pub const fn inner(self) -> NonZeroU64 {
-        self.0
-    }
-}
-
-impl<T: ?Sized> Hash for Interned<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u64(self.0.get());
-    }
-}
-
-impl<T: ?Sized> PartialEq for Interned<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl<T: ?Sized> Eq for Interned<T> {}
-
-impl<T: ?Sized> Debug for Interned<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Interned").field(&self.0).finish()
-    }
-}
-
-impl<T: ?Sized> Clone for Interned<T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<T: ?Sized> Copy for Interned<T> {}
-
-impl<T: Internable> Interned<T> {
-    /// Returns a reference to the interned value.
-    ///
-    /// # Panics
-    /// This function will panic if the global given was not the global used to create this interned value.
-    pub fn get(self, global: &Global) -> &T {
-        global.get_interned(self)
-    }
-}
-
-impl Interned<str> {
-    /// Returns a reference to the interned string.
-    ///
-    /// # Panics
-    /// This function will panic if the global given was not the global used to create this interned string.
-    pub fn get(self, global: &Global) -> &str {
-        global.get_interned_str(self)
-    }
-
-    /// Returns a reference to the string representation of this interned string.
-    ///
-    /// # Panics
-    /// This function will panic if the global given was not the global used to create this interned string.
-    pub fn display(self, global: &Global) -> &str {
-        self.get(global)
-    }
-}
-
-impl<T: Hash> Interned<[T]> {
-    /// Returns a reference to the interned string.
-    ///
-    /// # Panics
-    /// This function will panic if the global given was not the global used to create this interned string.
-    pub fn get(self, global: &Global) -> &[T] {
-        global.get_interned_slice(self)
-    }
-}
+use crate::{file::FileList, utils::intern::Interner};
 
 /// tackc's global context.
 #[derive(Debug)]
 pub struct Global {
-    arena: Bump,
-    interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
-    interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
-    interned_slices: IdentityDashMap<NonZeroU64, (usize, *const u8)>,
+    /// The global interner.
+    pub interner: Interner,
     file_list: FileList,
 }
 
@@ -135,13 +18,6 @@ use std::sync::atomic::AtomicBool;
 static GLOBAL_EXISTS: AtomicBool = AtomicBool::new(false);
 
 impl Global {
-    /// Gets the hasher for this global context.
-    ///
-    /// This will always be a default [`NonZeroFxHasher`].
-    pub const fn get_hasher() -> NonZeroFxHasher {
-        NonZeroFxHasher::default()
-    }
-
     /// Creates a new 'static `Global` by leaking it. Recomended for applications that compile entire files, and should hold one `Global` the entire time.
     /// Should only be called once during an entire program. For programs that need multiple `Global`s in a program, use [`Global::create_heap`].
     ///
@@ -180,10 +56,7 @@ impl Global {
         }
 
         Box::new(Self {
-            arena: Bump::new(),
-            interned: IdentityDashMap::default(),
-            interned_strs: IdentityDashMap::default(),
-            interned_slices: IdentityDashMap::default(),
+            interner: Interner::new(),
             file_list: FileList::default(),
         })
     }
@@ -197,216 +70,6 @@ impl Global {
     pub const fn file_list(&self) -> &FileList {
         &self.file_list
     }
-
-    #[inline]
-    fn intern_value<T: ?Sized>(
-        val: *const T,
-        hash: NonZeroU64,
-        map: &IdentityDashMap<NonZeroU64, &'static T>,
-    ) {
-        #[expect(unsafe_code)] // CHECKED(Chloe)
-        // SAFETY:
-        // The value is allocated in the arena and lives as long as `self`.
-        // This is safe as long as the 'static reference is only returned to callers
-        // if &self is 'static.
-        let static_ref: &'static T = unsafe { &*val };
-
-        map.insert(hash, static_ref);
-    }
-
-    /// Interns a value into the global map.
-    ///
-    /// # Panics
-    /// This function will only panic in the event of a hash collision.
-    pub fn intern<T: Internable>(&self, val: T) -> Interned<T> {
-        let mut hasher = Self::get_hasher();
-        type_name::<T>().hash(&mut hasher);
-        val.dyn_hash(&mut hasher);
-        let hash = hasher.finish_non_zero();
-
-        if let Some(interned) = self.interned.get(&hash) {
-            if interned.dyn_eq(&val) {
-                return Interned(hash, PhantomData);
-            }
-            Self::report_collision();
-        }
-
-        let ptr: *mut dyn Internable = self.alloc(val);
-
-        Self::intern_value(ptr, hash, &self.interned);
-
-        Interned(hash, PhantomData)
-    }
-
-    /// Gets a reference to the interned value represented by `interned`.
-    ///
-    /// # Panics
-    /// This function will panic if the `interned` given is from a different `Global`, or in the event of a hash collision.
-    pub fn get_interned<T: 'static>(&self, interned: Interned<T>) -> &T {
-        assert!(self.interned.contains_key(&interned.0), "wrong Global!");
-
-        let val = self
-            .interned
-            .get(&interned.0)
-            // Assertion made ensures `get` returns `Some`.
-            .expect_unreachable(); // CHECKED(Chloe)
-        let Some(res) = <dyn Any>::downcast_ref::<T>(&**val) else {
-            Self::report_collision();
-        };
-
-        // Satisfy clippy
-        drop(val);
-
-        res
-    }
-
-    /// Interns a string value into the global map.
-    ///
-    /// # Panics
-    /// This function will only panic in the event of a hash collision.
-    pub fn intern_str<S: AsRef<str>>(&self, val: S) -> Interned<str> {
-        #[inline(never)]
-        fn inner(global: &Global, val: &str) -> Interned<str> {
-            let mut hasher = Global::get_hasher();
-            val.hash(&mut hasher);
-            let hash = hasher.finish_non_zero();
-
-            if let Some(interned) = global.interned_strs.get(&hash) {
-                if *interned == val {
-                    return Interned(hash, PhantomData);
-                }
-                Global::report_collision();
-            }
-
-            let ptr: *mut str = global.alloc_str(val);
-
-            Global::intern_value(ptr, hash, &global.interned_strs);
-
-            Interned(hash, PhantomData)
-        }
-        inner(self, val.as_ref())
-    }
-
-    /// Gets a reference to the interned string value represented by `interned`.
-    ///
-    /// # Panics
-    /// This function will panic if the `interned` given is from a different `Global`.
-    pub fn get_interned_str(&self, interned: Interned<str>) -> &str {
-        assert!(
-            self.interned_strs.contains_key(&interned.0),
-            "wrong Global!"
-        );
-
-        *self
-            .interned_strs
-            .get(&interned.0)
-            // We asserted that the map contains the key.
-            .expect_unreachable() // CHECKED(Chloe)
-    }
-
-    /// Interns a string value into the global map by copying its elements.
-    ///
-    /// # Panics
-    /// This function will only panic in the event of a hash collision.
-    pub fn intern_slice_copy<T: Copy + Hash + PartialEq>(&self, val: &[T]) -> Interned<[T]> {
-        self.intern_slice(val, Self::alloc_slice_copy)
-    }
-
-    /// Interns a string value into the global map by cloning its elements.
-    ///
-    /// # Panics
-    /// This function will only panic in the event of a hash collision.
-    pub fn intern_slice_clone<T: Clone + Hash + PartialEq>(&self, val: &[T]) -> Interned<[T]> {
-        self.intern_slice(val, Self::alloc_slice_clone)
-    }
-
-    fn intern_slice<'a, T: Hash + PartialEq>(
-        &'a self,
-        val: &[T],
-        func: fn(&'a Self, &[T]) -> &'a mut [T],
-    ) -> Interned<[T]> {
-        let mut hasher = Self::get_hasher();
-        type_name::<[T]>().hash(&mut hasher);
-        val.hash(&mut hasher);
-        let hash = hasher.finish_non_zero();
-
-        if let Some(interned) = self.interned_slices.get(&hash) {
-            let (len, ptr) = *interned;
-            let ptr = ptr.cast::<T>();
-
-            #[expect(unsafe_code)] // CHECKED(Chloe)
-            // SAFETY:
-            // When inserting into the `interned_slices` map,
-            // we ensure that the pointer/length comes from a valid slice.
-            let slice = unsafe { slice::from_raw_parts(ptr, len) };
-
-            if slice == val {
-                return Interned(hash, PhantomData);
-            }
-            Self::report_collision();
-        }
-
-        let ptr = func(self, val);
-
-        self.interned_slices
-            .insert(hash, (ptr.len(), ptr.as_ptr().cast::<u8>()));
-
-        Interned(hash, PhantomData)
-    }
-
-    /// Gets a reference to the interned slice value represented by `interned`.
-    ///
-    /// # Panics
-    /// This function will panic if the `interned` given is from a different `Global`.
-    pub fn get_interned_slice<T: Hash>(&self, interned: Interned<[T]>) -> &[T] {
-        assert!(
-            self.interned_slices.contains_key(&interned.0),
-            "wrong Global!"
-        );
-
-        let (len, ptr) = *self
-            .interned_slices
-            .get(&interned.0)
-            // This was just checked.
-            .expect_unreachable(); // CHECKED(Chloe)
-        let ptr = ptr.cast::<T>();
-
-        #[expect(unsafe_code)] // CHECKED(Chloe)
-        // SAFETY:
-        // When inserting into the `interned_slices` map,
-        // we ensure that the pointer/length comes from a valid slice.
-        unsafe {
-            slice::from_raw_parts(ptr, len)
-        }
-    }
-
-    #[inline(never)]
-    #[cold]
-    fn report_collision() -> ! {
-        // Hash collisions should be treated as impossible.
-        panic!("Hash collision!"); // CHECKED(Chloe)
-    }
-
-    /// Allocates a value within the arena of this [`Global`] without interning it.
-    pub fn alloc<T>(&self, val: T) -> &mut T {
-        self.arena.alloc(val)
-    }
-
-    /// Allocates a string within the arena of this [`Global`] without interning it.
-    #[inline(never)] // `Bump::alloc_str` is huge, so don't inline.
-    pub fn alloc_str(&self, src: &str) -> &mut str {
-        self.arena.alloc_str(src)
-    }
-
-    /// Allocates a slice where `T: Copy` within the arena of this [`Global`] without interning it.
-    pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
-        self.arena.alloc_slice_copy(src)
-    }
-
-    /// Allocates a slice where `T: Clone` within the arena of this [`Global`] without interning it.
-    pub fn alloc_slice_clone<T: Clone>(&self, src: &[T]) -> &mut [T] {
-        self.arena.alloc_slice_clone(src)
-    }
 }
 
 #[cfg(all(debug_assertions, not(test)))]
@@ -416,29 +79,4 @@ impl Drop for Global {
 
         GLOBAL_EXISTS.store(false, Ordering::Release);
     }
-}
-
-#[test]
-fn intern_test() {
-    const FIBB: &[i32] = &[1, 1, 2, 3, 5, 8];
-    let strings: &[String] = &["foo".to_string(), "bar".to_string(), "baz".to_string()];
-
-    let global = Global::create_heap();
-    let five = global.intern(5);
-    let four = global.intern(4);
-    let two = global.intern(2);
-    let foo = global.intern_str("foo");
-    let fibb = global.intern_slice_copy(&[1, 1, 2, 3, 5, 8]);
-    let foo2 = global.intern_str("foo");
-    let strings_interned = global.intern_slice_clone(strings);
-
-    assert_eq!(*five.get(&global), 5);
-    assert_eq!(*two.get(&global), 2);
-    assert_eq!(*five.get(&global), 5);
-    assert_eq!(*four.get(&global), 4);
-    assert_eq!(foo.get(&global), "foo");
-    assert_eq!(fibb.get(&global), FIBB);
-    assert_eq!(foo, foo2);
-    assert_ne!(five, four);
-    assert_eq!(strings_interned.get(&global), strings);
 }

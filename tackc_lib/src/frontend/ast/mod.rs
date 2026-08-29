@@ -7,8 +7,9 @@ use std::num::NonZeroU32;
 
 use crate::file::FileId;
 use crate::frontend::lexer::Token;
-use crate::global::{Global, Interned};
+use crate::global::Global;
 use crate::span::Span;
+use crate::utils::intern::Interned;
 use serde::{Deserialize, Serialize};
 
 pub mod expr;
@@ -41,7 +42,7 @@ impl Hash for Symbol {
 impl Symbol {
     /// Displays the string of this symbol.
     pub fn display<'a>(&self, global: &'a Global) -> &'a str {
-        self.0.display(global)
+        self.0.get(&global.interner)
     }
 }
 
