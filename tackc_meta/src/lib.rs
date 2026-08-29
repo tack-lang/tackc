@@ -37,6 +37,7 @@ fn is_tack_root(dir: &Path) -> bool {
     tackc_lib.is_dir()
 }
 
+/// Written by AI, verified by human.
 pub fn hash() -> String {
     chdir_to_tack_root().expect("Failed to setup current directory!");
 

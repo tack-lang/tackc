@@ -1,5 +1,3 @@
-//! Written by AI, verified by human.
-
 use tackc_meta::hash;
 
 fn main() {
