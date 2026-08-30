@@ -65,12 +65,6 @@
         "allow_checked": false
     },
     {
-        "pattern": "super",
-        "display": "super::*",
-        "suggestion": "use a absolute path",
-        "allow_checked": false
-    },
-    {
         "pattern": "CHECKED",
         "display": "Unnecesary CHECKED",
         "suggestion": "remove it",
