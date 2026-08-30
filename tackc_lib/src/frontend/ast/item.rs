@@ -175,6 +175,11 @@ impl FuncItem {
 
         format!("{exp}func {ident}")
     }
+
+    /// Gets the name of this function.
+    pub fn get_name(&self, global: &Global) -> Option<Interned<str>> {
+        Some(self.ident?.get(&global.interner).0)
+    }
 }
 
 /// Import declaration.

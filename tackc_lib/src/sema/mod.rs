@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod module_analyzer;
+pub mod namespace_analyzer;
 
 /// A path without error components or AST/span information.
 /// Unlike [`AstPath`](crate::frontend::ast::AstPath), [`LogicalPath`] doesn't require that paths be non-empty!
@@ -19,6 +20,8 @@ pub struct LogicalPath {
 }
 
 impl LogicalPath {
+    const EMPTY: Self = Self::new(ThinVec::new());
+
     /// Creates a new [`LogicalPath`].
     pub const fn new(components: ThinVec<Interned<str>>) -> Self {
         Self { components }
@@ -61,6 +64,22 @@ impl LogicalPath {
             |val, elem| val + "." + elem.get(&global.interner),
         )
     }
+
+    /// Creates a new path with the component added to the end of it.
+    #[must_use]
+    pub fn join(&self, component: Interned<str>) -> Self {
+        self.join_non_empty(component).into_inner()
+    }
+
+    /// Creates a new non-empty path with the component added to the end of it.
+    #[must_use]
+    pub fn join_non_empty(&self, component: Interned<str>) -> NonEmptyLogicalPath {
+        let mut new = self.clone();
+        new.push(component);
+        NonEmptyLogicalPath::new(new)
+            // This path was just pushed to.
+            .expect_unreachable() // CHECKED(Chloe)
+    }
 }
 
 impl<'a> IntoIterator for &'a LogicalPath {
@@ -72,10 +91,55 @@ impl<'a> IntoIterator for &'a LogicalPath {
     }
 }
 
+impl FromIterator<Interned<str>> for LogicalPath {
+    fn from_iter<T: IntoIterator<Item = Interned<str>>>(iter: T) -> Self {
+        Self::new(iter.into_iter().collect())
+    }
+}
+
 impl Deref for LogicalPath {
     type Target = [Interned<str>];
 
     fn deref(&self) -> &Self::Target {
         &self.components
+    }
+}
+
+/// A [`LogicalPath`] with the added condition that it must be non-empty.
+pub struct NonEmptyLogicalPath(LogicalPath);
+
+impl NonEmptyLogicalPath {
+    /// Creates a new [`NonEmptyLogicalPath`].
+    pub fn new(path: LogicalPath) -> Option<Self> {
+        if path.is_empty() {
+            None
+        } else {
+            Some(Self(path))
+        }
+    }
+
+    /// Returns the first component of this path.
+    pub fn first(&self) -> Interned<str> {
+        // This is an invariant.
+        (**self).first().expect_unreachable() // CHECKED(Chloe)
+    }
+
+    /// Returns the last component of this path.
+    pub fn last(&self) -> Interned<str> {
+        // This is an invariant.
+        (**self).last().expect_unreachable() // CHECKED(Chloe)
+    }
+
+    /// Returns the inner path.
+    pub fn into_inner(self) -> LogicalPath {
+        self.0
+    }
+}
+
+impl Deref for NonEmptyLogicalPath {
+    type Target = LogicalPath;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

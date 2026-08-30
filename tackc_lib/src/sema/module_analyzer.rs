@@ -10,7 +10,7 @@ use crate::{
     file::FileId,
     frontend::ast::{AstModule, Item},
     global::Global,
-    sema::LogicalPath,
+    sema::{LogicalPath, NonEmptyLogicalPath},
     utils::{
         UnwrapExt,
         hash::IdentityHashMap,
@@ -33,13 +33,7 @@ impl ModuleTree {
         }
 
         let mut nodes = self.nodes.values().collect::<Vec<_>>();
-        nodes.sort_by_key(|val| {
-            val.path
-                .first()
-                // This is an invariant.
-                .expect_unreachable() // CHECKED(Chloe)
-                .get(&global.interner)
-        });
+        nodes.sort_by_key(|val| val.path.first().get(&global.interner));
 
         nodes.into_iter().fold(String::new(), |val, elem| {
             val + "\n" + &elem.display(global)
@@ -73,7 +67,7 @@ impl ModuleTree {
 /// A node in a tree of modules.
 pub struct ModuleNode {
     /// The path of this module. Will always be non-empty.
-    pub path: LogicalPath,
+    path: NonEmptyLogicalPath,
     /// The files that make up this module.
     pub files: Vec<FileId>,
     /// The items of this module.
@@ -85,6 +79,23 @@ pub struct ModuleNode {
     auto: bool,
 }
 
+impl ModuleNode {
+    /// Gets the name of this module.
+    pub fn get_name(&self) -> Interned<str> {
+        self.path.last()
+    }
+
+    /// Gets the path of this module, returning it by reference.
+    pub const fn path(&self) -> &NonEmptyLogicalPath {
+        &self.path
+    }
+
+    /// Gets the path of this module, returning it by value.
+    pub fn into_path(self) -> NonEmptyLogicalPath {
+        self.path
+    }
+}
+
 impl TreeItem for ModuleNode {
     fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str> {
         debug_assert!(
@@ -92,12 +103,7 @@ impl TreeItem for ModuleNode {
             "ModuleNode paths shouldn't be empty!"
         );
 
-        // This is an invariant.
-        let path = self
-            .path
-            .last()
-            .expect_unreachable() // CHECKED(Chloe)
-            .get(&global.interner);
+        let path = self.path.last().get(&global.interner);
         let exp = if self.exported { "exp " } else { "" };
 
         format!("{exp}{path}").into()
@@ -180,7 +186,11 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
         // Hacky fix to ensure node is initialized,
         // this value is never actually used.
         let mut default = ModuleNode {
-            path: LogicalPath::new(thin_vec![global.interner.intern_str("<ERROR>")]),
+            path: NonEmptyLogicalPath::new(LogicalPath::new(thin_vec![
+                global.interner.intern_str("<ERROR>")
+            ]))
+            // Since the LogicalPath passed is non-empty, Some will be returned.
+            .expect_unreachable(), // CHECKED(Chloe)
             files: vec![],
             items: IdentityHashMap::default(),
             nodes: IdentityHashMap::default(),
@@ -202,7 +212,9 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
             logical_path.push(str);
 
             let new_node = nodes.entry(str).or_insert(ModuleNode {
-                path: logical_path.clone(),
+                path: NonEmptyLogicalPath::new(logical_path.clone())
+                    // This was pushed to above.
+                    .expect_unreachable(), // CHECKED(Chloe)
                 files: vec![],
                 items: IdentityHashMap::default(),
                 nodes: IdentityHashMap::default(),

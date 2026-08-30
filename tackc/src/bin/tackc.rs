@@ -13,7 +13,7 @@ use tackc_lib::{
     },
     global::Global,
     prelude::*,
-    sema::module_analyzer,
+    sema::{module_analyzer, namespace_analyzer},
 };
 
 #[derive(ClapParser)]
@@ -95,11 +95,13 @@ fn main() {
         .collect::<Vec<_>>();
 
     let (mod_tree, errors) = module_analyzer::analyze(modules, global);
-    println!("{}", mod_tree.display(global));
 
     for e in errors {
         println!("{}", e.display(global));
     }
+
+    let namespace = namespace_analyzer::analyze(mod_tree, global);
+    println!("{}", namespace.display(global));
 }
 
 fn run_lexer(file: &File, global: &Global, debug_modes: &DebugModes) -> Vec<Token> {
