@@ -26,16 +26,8 @@ pub mod module;
 pub use module::*;
 
 /// A symbol, consisting of a interned string, a span, and a file ID.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Symbol(pub Interned<str>, pub Span, pub FileId);
-
-impl Hash for Symbol {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-        self.1.hash(state);
-        self.2.hash(state);
-    }
-}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Symbol(pub Interned<str>, pub Span);
 
 impl Symbol {
     /// Displays the string of this symbol.
@@ -46,8 +38,8 @@ impl Symbol {
 
 impl Symbol {
     /// Creates a new symbol from a token, and a file ID.
-    pub const fn new(tok: Token, file: FileId) -> Self {
-        Self(tok.lexeme, tok.span, file)
+    pub const fn new(tok: Token) -> Self {
+        Self(tok.lexeme, tok.span)
     }
 }
 
