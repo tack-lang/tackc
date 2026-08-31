@@ -137,13 +137,18 @@ impl Hasher for IdentityHasher {
     }
 }
 
-/// An alias for a [`HashMap`] that uses [`IdentityHasher`].
+/// An alias for a [`HashMap`](std::collections::HashMap) that uses [`IdentityHasher`].
 // We're using HashMap not as hashing, but as the template for putting in a new hasher.
 #[expect(clippy::disallowed_types)] // CHECKED(Chloe)
 pub type IdentityHashMap<K, V> =
     std::collections::HashMap<K, V, BuildHasherDefault<IdentityHasher>>;
 /// An alias for a [`DashMap`] that uses [`IdentityHasher`].
 pub type IdentityDashMap<K, V> = DashMap<K, V, BuildHasherDefault<IdentityHasher>>;
+
+/// An alias for a [`HashSet`](std::collections::HashSet) that uses [`IdentityHasher`].
+// We're using HashSet not as hashing, but as the template for putting in a new hasher.
+#[expect(clippy::disallowed_types)] // CHECKED(Chloe)
+pub type IdentityHashSet<T> = std::collections::HashSet<T, BuildHasherDefault<IdentityHasher>>;
 
 /// An index into a [`IndexedSet`].
 pub struct HashIndex<V>(u64, PhantomData<V>);
