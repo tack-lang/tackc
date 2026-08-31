@@ -8,7 +8,7 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(6776389003214485656, PhantomData)),
+        Some(Interned(17727237897356295833, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -34,7 +34,7 @@ input_file: tackc_lib/src/frontend/parser-tests/block-mode.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(5517798473477872181, PhantomData)),
+        ident: Some(Interned(7287204821453754096, PhantomData)),
         params: [],
         ret_type: r#None,
         block: Some(Block(

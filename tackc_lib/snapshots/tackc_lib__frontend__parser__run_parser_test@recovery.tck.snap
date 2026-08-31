@@ -8,8 +8,8 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(1505187776169212761, PhantomData)),
-        Some(Interned(7646316121219564319, PhantomData)),
+        Some(Interned(17332285147683902712, PhantomData)),
+        Some(Interned(15070728789550166730, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -35,7 +35,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: false,
-        ident: Some(Interned(11848305413092314288, PhantomData)),
+        ident: Some(Interned(15865492476908750982, PhantomData)),
         params: [],
         ret_type: r#None,
         block: Some(Block(
@@ -44,7 +44,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
               kind: LetStatement(LetStatement(
                 ty: r#None,
                 expr: r#None,
-                ident: Some(Interned(5626926699492751661, PhantomData)),
+                ident: Some(Interned(1710596307994653889, PhantomData)),
               )),
               id: NodeId(
                 id: 3,
@@ -94,7 +94,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
               kind: LetStatement(LetStatement(
                 ty: r#None,
                 expr: Error,
-                ident: Some(Interned(4206715840727021696, PhantomData)),
+                ident: Some(Interned(5050527645769858584, PhantomData)),
               )),
               id: NodeId(
                 id: 6,
@@ -110,7 +110,7 @@ input_file: tackc_lib/src/frontend/parser-tests/recovery.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(17842180294220602929, PhantomData)),
+                    kind: Ident(Interned(11385759317585687869, PhantomData)),
                     id: NodeId(
                       id: 7,
                       file: 1567630016,

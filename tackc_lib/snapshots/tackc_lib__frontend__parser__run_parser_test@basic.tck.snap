@@ -8,7 +8,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
     exported: false,
     path: Some(AstPath(
       components: [
-        Some(Interned(7855059123406299685, PhantomData)),
+        Some(Interned(12414034946435718365, PhantomData)),
       ],
       id: NodeId(
         id: 1,
@@ -36,9 +36,9 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
         exported: false,
         path: Some(AstPath(
           components: [
-            Some(Interned(9791531217194428129, PhantomData)),
-            Some(Interned(14820916905603487385, PhantomData)),
-            Some(Interned(16639645817061167722, PhantomData)),
+            Some(Interned(3164793738269129270, PhantomData)),
+            Some(Interned(14573016305239464953, PhantomData)),
+            Some(Interned(8820509491802776480, PhantomData)),
           ],
           id: NodeId(
             id: 3,
@@ -77,7 +77,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
             file: 2542601049,
           ),
         )),
-        ident: Some(Interned(14692878826447898476, PhantomData)),
+        ident: Some(Interned(5428701365987426703, PhantomData)),
       )),
       id: NodeId(
         id: 6,
@@ -92,7 +92,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
     Some(Item(
       kind: FuncItem(FuncItem(
         exported: true,
-        ident: Some(Interned(5965412564710165106, PhantomData)),
+        ident: Some(Interned(17465882359786578877, PhantomData)),
         params: [],
         ret_type: r#None,
         block: Some(Block(
@@ -101,7 +101,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
               kind: ExpressionStatement(ExpressionStatement(
                 expr: Expression(
                   kind: Call(Expression(
-                    kind: Ident(Interned(10835687645599383544, PhantomData)),
+                    kind: Ident(Interned(516218630375235559, PhantomData)),
                     id: NodeId(
                       id: 7,
                       file: 2542601049,
@@ -114,7 +114,7 @@ input_file: tackc_lib/src/frontend/parser-tests/basic.tck
                   ), [
                     Some(Expression(
                       kind: Index(Expression(
-                        kind: Ident(Interned(11894030472543195755, PhantomData)),
+                        kind: Ident(Interned(15179293864547172615, PhantomData)),
                         id: NodeId(
                           id: 8,
                           file: 2542601049,
