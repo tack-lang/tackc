@@ -42,8 +42,8 @@ pub enum ParseError {
 impl ParseError {
     /// Sets the 'expected' value of this error, if it's an [`Expected`](Self::Expected).
     pub fn set_expected(&mut self, new: &'static str) {
-        match self {
-            Self::Expected(expected, _) | Self::Eof(expected, _) => {
+        match *self {
+            Self::Expected(ref mut expected, _) | Self::Eof(ref mut expected, _) => {
                 expected.get_or_insert(new.into());
             }
             _ => {}
@@ -98,8 +98,8 @@ impl ParseError {
     /// # Panics
     /// This function panics if the file used to produce this error is not in `global`'s file list.
     pub fn display(&self, global: &Global) -> String {
-        match self {
-            Self::Expected(expected, tok) => {
+        match *self {
+            Self::Expected(ref expected, ref tok) => {
                 let expected = expected.as_ref().map_or("<ERROR>", |v| v);
                 Diag::with_span(
                     format!("expected {expected}, found '{}'", tok.display(global)),
@@ -107,8 +107,8 @@ impl ParseError {
                 )
                 .display(global)
             }
-            Self::Eof(expected, file_id) => {
-                assert!(global.file_list().contains(*file_id), "file not found!");
+            Self::Eof(ref expected, file_id) => {
+                assert!(global.file_list().contains(file_id), "file not found!");
 
                 let expected = expected.as_ref().map_or("<ERROR>", |v| v);
                 Diag::with_span(
@@ -116,14 +116,14 @@ impl ParseError {
                     Span::eof(
                         global
                             .file_list()
-                            .get(*file_id)
+                            .get(file_id)
                             // We already asserted that `global.file_list()` contains `file_id` as a key.
                             .expect_unreachable(), // CHECKED(Chloe)
                     ),
                 )
                 .display(global)
             }
-            Self::Other(msg, spans) => {
+            Self::Other(ref msg, ref spans) => {
                 Diag::with_spans(msg.to_string(), spans.clone()).display(global)
             }
             Self::ErrorLimit => String::from("error limit reached. What are you doing?"),

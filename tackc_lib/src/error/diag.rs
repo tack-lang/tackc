@@ -53,9 +53,9 @@ impl Diag {
     /// # Panics
     /// This function panics if the file given is too short for the span inside of this `Diag`, or if the global given doesn't contain the file inside of this `Diag`.
     pub fn display(&self, global: &Global) -> String {
-        match self {
-            Self::Message(msg) => msg.to_string(),
-            Self::WithSpan(msg, span) => {
+        match *self {
+            Self::Message(ref msg) => msg.to_string(),
+            Self::WithSpan(ref msg, span) => {
                 assert!(
                     global.file_list().contains(span.file),
                     "Global doesn't contain file!"
@@ -72,7 +72,7 @@ impl Diag {
                     format!("{msg}\n  --> {}:<UNKNOWN>:<UNKNOWN>", file.path().display())
                 }
             }
-            Self::WithSpans(msg, spans) => {
+            Self::WithSpans(ref msg, ref spans) => {
                 let span = spans
                     .first()
                     // This is an invariant.

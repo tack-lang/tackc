@@ -169,7 +169,7 @@ impl Token {
     pub fn display(&self, global: &Global) -> String {
         match self.kind {
             TokenKind::Ident | TokenKind::StringLit | TokenKind::IntLit | TokenKind::FloatLit => {
-                self.lexeme.get(&global.interner).to_string()
+                self.lexeme.get(&global.interner).to_owned()
             }
 
             ty => format!("{ty}"),
@@ -179,7 +179,7 @@ impl Token {
 
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match *self {
             Self::Ident => write!(f, "<Ident>"),
 
             Self::StringLit => write!(f, "<StringLit>"),
@@ -292,7 +292,7 @@ pub enum IntegerBase {
 
 impl Display for IntegerBase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match *self {
             Self::Decimal => write!(f, ""),
             Self::Binary => write!(f, "0b"),
             Self::Octal => write!(f, "0o"),
@@ -358,7 +358,7 @@ impl<'src> Lexer<'src> {
                     self.next_byte();
                     self.next_byte();
                 }
-                c if c.is_ascii_whitespace() => {
+                _ if c.is_ascii_whitespace() => {
                     self.next_byte();
                 }
                 _ => break,
@@ -466,7 +466,10 @@ impl<'src> Lexer<'src> {
         let lexeme = self.current_lexeme();
         let char_len = extra_bytes + 1;
 
-        lexeme[lexeme.len() - char_len..]
+        lexeme
+            .get(lexeme.len() - char_len..)
+            // This function parses the UTF-8 to ensure this is on a character boundry.
+            .expect_unreachable() // CHECKED(Chloe)
             .chars()
             .next()
             .expect_unreachable() // CHECKED(Chloe)
@@ -614,7 +617,7 @@ impl<'src> Lexer<'src> {
         while let Some(c) = self.current_byte() {
             match c {
                 b'_' => {}
-                c if c.is_ascii_alphanumeric() => {}
+                _ if c.is_ascii_alphanumeric() => {}
                 _ => break,
             }
             self.next_byte();
@@ -656,15 +659,15 @@ impl<'src> Lexer<'src> {
 
         match c {
             b'"' => self.handle_string_lit(),
-            c if c.is_ascii_digit() => self.handle_num_lit(c),
-            c if c.is_ascii_alphabetic() => Ok(self.handle_ident_or_keyword()),
+            _ if c.is_ascii_digit() => self.handle_num_lit(c),
+            _ if c.is_ascii_alphabetic() => Ok(self.handle_ident_or_keyword()),
             b'_' => Ok(self.handle_ident_or_keyword()),
-            c if c & 0x80 != 0 => {
+            _ if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
 
                 self.handle_double_character_or_unknown(char)
             }
-            c => self.handle_double_character_or_unknown(c as char),
+            _ => self.handle_double_character_or_unknown(c as char),
         }
     }
 }

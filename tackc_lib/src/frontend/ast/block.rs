@@ -29,16 +29,16 @@ impl Block {
     pub fn display(&self, global: &Global) -> String {
         let mut stmts = String::new();
         for stmt in &self.stmts {
-            let stmt = match stmt {
-                Some(stmt) => stmt.display(global).replace('\n', "\n    "),
+            let stmt = match *stmt {
+                Some(ref stmt) => stmt.display(global).replace('\n', "\n    "),
                 None => String::from("<ERROR>;"),
             };
             _ = write!(stmts, "{stmt}\n    ");
         }
         stmts.truncate(stmts.len().saturating_sub(5));
 
-        let expr = match &self.expr {
-            TriState::Some(val) => val.display(global).replace('\n', "\n    "),
+        let expr = match self.expr {
+            TriState::Some(ref val) => val.display(global).replace('\n', "\n    "),
             TriState::Error => String::from("<ERROR>"),
             TriState::None => String::new(),
         };

@@ -180,7 +180,7 @@ impl State<'_> {
                 let params = if func_item
                     .params
                     .iter()
-                    .any(|(val, expr)| val.is_none() || expr.is_none())
+                    .any(|&(val, ref expr)| val.is_none() || expr.is_none())
                 {
                     return None;
                 } else {

@@ -31,28 +31,28 @@ impl Item {
 
     /// Display the item.
     pub fn display(&self, global: &Global) -> String {
-        match &self.kind {
-            ItemKind::ConstItem(item) => item.display(global),
-            ItemKind::FuncItem(item) => item.display(global),
-            ItemKind::ImpItem(item) => item.display(global),
+        match self.kind {
+            ItemKind::ConstItem(ref item) => item.display(global),
+            ItemKind::FuncItem(ref item) => item.display(global),
+            ItemKind::ImpItem(ref item) => item.display(global),
         }
     }
 
     /// Displays the 'identifier' version of this item. This includes whether the item is exported, the kind of item it is, and it's name or path.
     pub fn display_ident(&self, global: &Global) -> String {
-        match &self.kind {
-            ItemKind::ConstItem(item) => item.display_ident(global),
-            ItemKind::FuncItem(item) => item.display_ident(global),
-            ItemKind::ImpItem(item) => item.display_ident(global),
+        match self.kind {
+            ItemKind::ConstItem(ref item) => item.display_ident(global),
+            ItemKind::FuncItem(ref item) => item.display_ident(global),
+            ItemKind::ImpItem(ref item) => item.display_ident(global),
         }
     }
 
     /// Gets the name of this item. This is the symbol that it's accesible by inside of it's module.
     pub fn get_name(&self, global: &Global) -> Option<Interned<str>> {
-        match &self.kind {
-            ItemKind::ConstItem(item) => Some(item.ident?.get(&global.interner).0),
-            ItemKind::FuncItem(func) => Some(func.ident?.get(&global.interner).0),
-            ItemKind::ImpItem(imp) => imp.name(global),
+        match self.kind {
+            ItemKind::ConstItem(ref item) => Some(item.ident?.get(&global.interner).0),
+            ItemKind::FuncItem(ref func) => Some(func.ident?.get(&global.interner).0),
+            ItemKind::ImpItem(ref imp) => imp.name(global),
         }
     }
 }
@@ -98,13 +98,13 @@ impl ConstItem {
             Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
         };
-        let ty = match &self.ty {
-            TriState::Some(ty) => format!(": {}", ty.display(global)),
+        let ty = match self.ty {
+            TriState::Some(ref ty) => format!(": {}", ty.display(global)),
             TriState::Error => String::from(": <ERROR>"),
             TriState::None => String::new(),
         };
-        let expr = match &self.expr {
-            Some(expr) => expr.display(global),
+        let expr = match self.expr {
+            Some(ref expr) => expr.display(global),
             None => String::from("<ERROR>"),
         };
         format!("{exp}const {ident}{ty} = {expr};")
@@ -144,13 +144,13 @@ impl FuncItem {
             None => "<ERROR>",
         };
         let mut params = String::new();
-        for (ident, ty) in &self.params {
+        for &(ident, ref ty) in &self.params {
             let ident = match ident {
                 Some(ident) => ident.get(&global.interner).display(global),
                 None => "<ERROR>",
             };
-            let ty = match ty {
-                Some(expr) => expr.display(global),
+            let ty = match *ty {
+                Some(ref expr) => expr.display(global),
                 None => String::from("<ERROR>"),
             };
             _ = write!(params, "{ident}: {ty}, ");
@@ -158,8 +158,8 @@ impl FuncItem {
 
         params.truncate(params.len().saturating_sub(2));
 
-        let block = match &self.block {
-            Some(block) => block.display(global),
+        let block = match self.block {
+            Some(ref block) => block.display(global),
             None => String::from("<ERROR>"),
         };
 
@@ -194,8 +194,8 @@ pub struct ImpItem {
 impl ImpItem {
     fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
-        let path = match &self.path {
-            Some(path) => path.display(global),
+        let path = match self.path {
+            Some(ref path) => path.display(global),
             None => String::from("<ERROR>"),
         };
 
@@ -204,8 +204,8 @@ impl ImpItem {
 
     fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
-        let path = match &self.path {
-            Some(sym) => sym.display(global),
+        let path = match self.path {
+            Some(ref sym) => sym.display(global),
             None => String::from("<ERROR>"),
         };
 

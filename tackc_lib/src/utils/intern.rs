@@ -345,7 +345,7 @@ impl Interner {
 #[test]
 fn intern_test() {
     const FIBB: &[i32] = &[1, 1, 2, 3, 5, 8];
-    let strings: &[String] = &["foo".to_string(), "bar".to_string(), "baz".to_string()];
+    let strings: &[String] = &["foo".to_owned(), "bar".to_owned(), "baz".to_owned()];
 
     let interner = Interner::new();
     let five = interner.intern(5);

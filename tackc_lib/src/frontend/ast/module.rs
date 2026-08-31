@@ -27,15 +27,15 @@ pub struct AstModule {
 impl AstModule {
     /// Displays this module.
     pub fn display(&self, global: &Global) -> String {
-        let mod_stmt = match &self.mod_stmt {
-            Some(stmt) => stmt.display(global),
+        let mod_stmt = match self.mod_stmt {
+            Some(ref stmt) => stmt.display(global),
             None => String::from("<ERROR>;"),
         };
 
         let mut stmts = String::new();
         for item in &self.items {
-            let displayed = match item {
-                Some(item) => item.display(global),
+            let displayed = match *item {
+                Some(ref item) => item.display(global),
                 None => String::from("<ERROR>"),
             };
             _ = writeln!(stmts, "{displayed}");
@@ -63,8 +63,8 @@ impl ModStatement {
     /// Displays this mod statement.
     pub fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
-        let path = match &self.path {
-            Some(path) => path.display(global),
+        let path = match self.path {
+            Some(ref path) => path.display(global),
             None => String::from("<ERROR>"),
         };
         format!("{exp}mod {path};")
@@ -140,7 +140,7 @@ impl AstPath {
         let mut str = String::new();
 
         for component in &self.components {
-            let comp = match component {
+            let comp = match *component {
                 Some(comp) => comp.get(&global.interner).display(global),
                 None => "<ERROR>",
             };

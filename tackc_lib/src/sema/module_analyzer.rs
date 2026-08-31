@@ -132,8 +132,8 @@ impl ModuleAnalyzerError {
     /// # Panics
     /// This function panics if the file used to produce this error is not in `global`'s file list.
     pub fn display(&self, global: &Global) -> String {
-        match self {
-            Self::ModuleVisibillityConflict(path, files) => {
+        match *self {
+            Self::ModuleVisibillityConflict(ref path, ref files) => {
                 let mut string = format!(
                     "Duplicated module {} with different visibillities! Files: ",
                     path.display(global)
@@ -160,7 +160,7 @@ impl ModuleAnalyzerError {
 
                 Diag::without_span(string).display(global)
             }
-            Self::DuplicateItem(path) => {
+            Self::DuplicateItem(ref path) => {
                 Diag::without_span(format!("duplicate item {}!", path.display(global)))
                     .display(global)
             }
@@ -200,7 +200,7 @@ pub fn analyze(modules: Vec<AstModule>, global: &Global) -> (ModuleTree, Vec<Mod
 
         let mut nodes = &mut root;
         let mut node = &mut default;
-        let mut logical_path: LogicalPath = LogicalPath::new(thin_vec![]);
+        let mut logical_path = LogicalPath::new(thin_vec![]);
 
         for component in &path {
             let Some(component) = component else {

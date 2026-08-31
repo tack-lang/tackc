@@ -78,7 +78,7 @@ impl<'src, 'a> Parser<'src, 'a> {
             failed_recursion: false,
             failed_error: false,
 
-            next_open: nonzero!(1u32),
+            next_open: nonzero!(1_u32),
 
             global,
         }
@@ -142,23 +142,21 @@ impl<'src, 'a> Parser<'src, 'a> {
     }
 
     fn expect_peek(&self, kinds: &[TokenKind]) -> Result<Token> {
-        self.expect_peek_all().and_then(|token| {
-            if kinds.contains(&token.kind) {
-                Ok(token)
-            } else {
-                Err(ParseError::expected(None, token))
-            }
-        })
+        let token = self.expect_peek_all()?;
+        if kinds.contains(&token.kind) {
+            Ok(token)
+        } else {
+            Err(ParseError::expected(None, token))
+        }
     }
 
     fn expect_peek2(&self, kinds: &[TokenKind]) -> Result<Token> {
-        self.expect_peek2_all().and_then(|token| {
-            if kinds.contains(&token.kind) {
-                Ok(token)
-            } else {
-                Err(ParseError::expected(None, token))
-            }
-        })
+        let token = self.expect_peek2_all()?;
+        if kinds.contains(&token.kind) {
+            Ok(token)
+        } else {
+            Err(ParseError::expected(None, token))
+        }
     }
 
     fn expect_peek_all(&self) -> Result<Token> {
@@ -959,7 +957,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         let mut lhs = next(self, mode, recursion + 1)?;
         let mut ops = Vec::new();
         while let Some(peeked) = self.peek() {
-            let Some((_, op)) = tokens.iter().find(|(tok, _)| peeked.kind == *tok) else {
+            let Some(&(_, op)) = tokens.iter().find(|&&(tok, _)| peeked.kind == tok) else {
                 break;
             };
 
@@ -967,14 +965,14 @@ impl<'src, 'a> Parser<'src, 'a> {
             let rhs = next(self, mode, recursion + 1)?;
             let span = Span::new_from(lhs.span.start, rhs.span.end, self.file);
             lhs = Expression::new(
-                ExpressionKind::Binary(*op, Box::new(lhs), Box::new(rhs)),
+                ExpressionKind::Binary(op, Box::new(lhs), Box::new(rhs)),
                 self.get_id()?,
                 span,
             );
 
             if comparison
                 && let Some(peeked2) = self.peek()
-                && let Some((_, _)) = tokens.iter().find(|(tok, _)| peeked2.kind == *tok)
+                && tokens.iter().any(|&(tok, _)| peeked2.kind == tok)
             {
                 ops.push(peeked);
                 ops.push(peeked2);

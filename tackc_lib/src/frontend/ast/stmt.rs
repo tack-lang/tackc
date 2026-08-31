@@ -31,11 +31,11 @@ impl Statement {
 
     /// Displays this statement.
     pub fn display(&self, global: &Global) -> String {
-        match &self.kind {
-            StatementKind::LetStatement(stmt) => stmt.display(global),
-            StatementKind::AssignmentStatement(stmt) => stmt.display(global),
-            StatementKind::Item(item) => item.display(global),
-            StatementKind::ExpressionStatement(stmt) => stmt.display(global),
+        match self.kind {
+            StatementKind::LetStatement(ref stmt) => stmt.display(global),
+            StatementKind::AssignmentStatement(ref stmt) => stmt.display(global),
+            StatementKind::Item(ref item) => item.display(global),
+            StatementKind::ExpressionStatement(ref stmt) => stmt.display(global),
         }
     }
 }
@@ -70,13 +70,13 @@ impl LetStatement {
             Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
         };
-        let ty = match &self.ty {
-            TriState::Some(ty) => format!(": {}", ty.display(global)),
+        let ty = match self.ty {
+            TriState::Some(ref ty) => format!(": {}", ty.display(global)),
             TriState::Error => String::from(": <ERROR>"),
             TriState::None => String::new(),
         };
-        let expr = match &self.expr {
-            TriState::Some(expr) => format!(" = {}", expr.display(global)),
+        let expr = match self.expr {
+            TriState::Some(ref expr) => format!(" = {}", expr.display(global)),
             TriState::Error => String::from(" = <ERROR>"),
             TriState::None => String::new(),
         };
@@ -96,8 +96,8 @@ pub struct AssignmentStatement {
 impl AssignmentStatement {
     fn display(&self, global: &Global) -> String {
         let lhs = self.lhs.display(global);
-        let rhs = match &self.rhs {
-            Some(expr) => expr.display(global),
+        let rhs = match self.rhs {
+            Some(ref expr) => expr.display(global),
             None => String::from("<ERROR>"),
         };
         format!("{lhs} = {rhs};")

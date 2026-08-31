@@ -31,11 +31,11 @@ impl Expression {
 
     /// Displays an expression.
     pub fn display(&self, global: &Global) -> String {
-        match &self.kind {
+        match self.kind {
             ExpressionKind::IntLit(sym) | ExpressionKind::FloatLit(sym) => {
-                sym.get(&global.interner).to_string()
+                sym.get(&global.interner).to_owned()
             }
-            ExpressionKind::Ident(sym) => sym.get(&global.interner).display(global).to_string(),
+            ExpressionKind::Ident(sym) => sym.get(&global.interner).display(global).to_owned(),
             ExpressionKind::GlobalIdent(sym) => {
                 let sym = match sym {
                     Some(sym) => sym.get(&global.interner).display(global),
@@ -44,22 +44,22 @@ impl Expression {
                 format!(".{sym}")
             }
             ExpressionKind::StringLit(sym) => format!("\"{}\"", sym.get(&global.interner)),
-            ExpressionKind::Grouping(inner) => match inner {
-                Some(expr) => format!("({})", expr.display(global)),
+            ExpressionKind::Grouping(ref inner) => match *inner {
+                Some(ref expr) => format!("({})", expr.display(global)),
                 None => String::from("(<ERROR>)"),
             },
-            ExpressionKind::Member(lhs, sym) => {
+            ExpressionKind::Member(ref lhs, sym) => {
                 let sym = match sym {
                     Some(sym) => sym.get(&global.interner).display(global),
                     None => "<ERROR>",
                 };
                 format!("(. {} {sym})", lhs.display(global))
             }
-            ExpressionKind::Call(lhs, args) => {
+            ExpressionKind::Call(ref lhs, ref args) => {
                 let mut arg_list = String::new();
                 for expr in args {
-                    let expr = match expr {
-                        Some(e) => e.display(global),
+                    let expr = match *expr {
+                        Some(ref e) => e.display(global),
                         None => String::from("<ERROR>"),
                     };
                     _ = write!(arg_list, "{expr}, ");
@@ -74,21 +74,21 @@ impl Expression {
 
                 format!("(call {}{})", lhs.display(global), formatted_args)
             }
-            ExpressionKind::Index(lhs, index) => {
-                let index = match index {
-                    Some(expr) => expr.display(global),
+            ExpressionKind::Index(ref lhs, ref index) => {
+                let index = match *index {
+                    Some(ref expr) => expr.display(global),
                     None => String::from("<ERROR>"),
                 };
                 format!("(index {} {index})", lhs.display(global))
             }
-            ExpressionKind::Block(block) => block.display(global),
+            ExpressionKind::Block(ref block) => block.display(global),
 
-            ExpressionKind::Binary(op, lhs, rhs) => {
+            ExpressionKind::Binary(op, ref lhs, ref rhs) => {
                 format!("({op} {} {})", lhs.display(global), rhs.display(global))
             }
-            ExpressionKind::Unary(op, rhs) => format!("({op} {})", rhs.display(global)),
-            ExpressionKind::Function(func) => func.display(global),
-            ExpressionKind::FunctionType(func_type) => func_type.display(global),
+            ExpressionKind::Unary(op, ref rhs) => format!("({op} {})", rhs.display(global)),
+            ExpressionKind::Function(ref func) => func.display(global),
+            ExpressionKind::FunctionType(ref func_type) => func_type.display(global),
         }
     }
 }
@@ -166,7 +166,7 @@ pub enum BinOp {
 
 impl Display for BinOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match *self {
             Self::Add => write!(f, "+"),
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
@@ -195,7 +195,7 @@ pub enum UnOp {
 
 impl Display for UnOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match *self {
             Self::Neg => write!(f, "-"),
             Self::Not => write!(f, "!"),
         }
@@ -217,22 +217,22 @@ impl Function {
     /// Displays this [`Function`].
     pub fn display(&self, global: &Global) -> String {
         let mut params = String::new();
-        for (ident, ty) in &self.params {
+        for &(ident, ref ty) in &self.params {
             let ident = match ident {
                 Some(ident) => ident.get(&global.interner).display(global),
                 None => "<ERROR>",
             };
-            let ty = match ty {
-                Some(expr) => expr.display(global),
+            let ty = match *ty {
+                Some(ref expr) => expr.display(global),
                 None => String::from("<ERROR>"),
             };
             _ = write!(params, "{ident}: {ty}, ");
         }
         params.truncate(params.len().saturating_sub(2));
 
-        let ret_type = match &self.ret_type {
-            TriState::Some(val) => format!(" {}", val.display(global)),
-            TriState::Error => " <ERROR>".to_string(),
+        let ret_type = match self.ret_type {
+            TriState::Some(ref val) => format!(" {}", val.display(global)),
+            TriState::Error => " <ERROR>".to_owned(),
             TriState::None => String::new(),
         };
 
@@ -256,17 +256,17 @@ impl FunctionType {
     pub fn display(&self, global: &Global) -> String {
         let mut params = String::new();
         for ty in &self.params {
-            let ty = match ty {
-                Some(expr) => expr.display(global),
+            let ty = match *ty {
+                Some(ref expr) => expr.display(global),
                 None => String::from("<ERROR>"),
             };
             _ = write!(params, "{ty}, ");
         }
         params.truncate(params.len().saturating_sub(2));
 
-        let ret_type = match &self.ret_type {
-            TriState::Some(val) => format!(" {}", val.display(global)),
-            TriState::Error => " <ERROR>".to_string(),
+        let ret_type = match self.ret_type {
+            TriState::Some(ref val) => format!(" {}", val.display(global)),
+            TriState::Error => " <ERROR>".to_owned(),
             TriState::None => String::new(),
         };
 

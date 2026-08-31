@@ -30,7 +30,7 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
         match b {
             b'\n' => {}
             b'\r' => {
-                if let Some((_, b'\n')) = bytes.peek() {
+                if let Some(&(_, b'\n')) = bytes.peek() {
                     bytes.next();
                 }
             }

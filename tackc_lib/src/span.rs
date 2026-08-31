@@ -179,7 +179,17 @@ impl Span {
             "file is too short to have the span applied"
         );
         assert!(self.matches(file), "file doesn't match span's file");
-        &file[(self.start as usize)..(self.end as usize)]
+        assert!(
+            file.is_char_boundary(self.start as usize),
+            "span start isn't a char boundry!"
+        );
+        assert!(
+            file.is_char_boundary(self.end as usize),
+            "span end isn't a char boundry!"
+        );
+        file.get((self.start as usize)..(self.end as usize))
+            // This was asserted above.
+            .expect_unreachable() // CHECKED(Chloe)
     }
 }
 

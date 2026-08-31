@@ -17,7 +17,9 @@ pub trait UnwrapExt<T> {
     /// Can be used to avoid triggering [`clippy::missing_panics_doc`](https://rust-lang.github.io/rust-clippy/master/index.html#missing_panics_doc).
     ///
     /// # Safety
-    /// While this function is 100% safe (and should stay that way), this function should not be called unless you can be 100% sure that the value will have a value.
+    /// While this function is 100% safe (and should stay that way), this function should not be called unless you can be 100% sure that the it won't panic.
+    // This gives useful information.
+    #[expect(clippy::unnecessary_safety_doc)] // CHECKED(Chloe)
     fn expect_unreachable(self) -> T
     where
         Self: Sized,
