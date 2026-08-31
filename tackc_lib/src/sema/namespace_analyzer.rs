@@ -19,14 +19,14 @@ use crate::{
     },
 };
 
-/// A [`Namespace`] without a name.
-pub struct AnonymousNamespace {
-    /// The children of the namespace.
+/// A namespace, holds items, and other namespaces.
+pub struct Namespace {
+    /// The children of this namespace.
     pub children: IdentityHashMap<Interned<str>, NamespaceChild>,
 }
 
-impl AnonymousNamespace {
-    /// Displays this [`AnonymousNamespace`].
+impl Namespace {
+    /// Displays this [`Namespace`].
     pub fn display(&self, global: &Global) -> String {
         let mut out = String::new();
 
@@ -38,12 +38,6 @@ impl AnonymousNamespace {
 
         out
     }
-}
-
-/// A namespace, holds items, and other namespaces.
-pub struct Namespace {
-    /// The children of this namespace.
-    pub children: IdentityHashMap<Interned<str>, NamespaceChild>,
 }
 
 /// A child of a namespace.
@@ -109,8 +103,8 @@ struct State<'a> {
     global: &'a Global,
 }
 
-/// Analyzes the [`ModuleTree`], turning it into an [`AnonymousNamespace`].
-pub fn analyze(modules: ModuleTree, global: &Global) -> AnonymousNamespace {
+/// Analyzes the [`ModuleTree`], turning it into a [`Namespace`].
+pub fn analyze(modules: ModuleTree, global: &Global) -> Namespace {
     let mut children = IdentityHashMap::default();
 
     let state = State { global };
@@ -119,7 +113,7 @@ pub fn analyze(modules: ModuleTree, global: &Global) -> AnonymousNamespace {
         state.analyze_module(&mut children, module, &LogicalPath::EMPTY);
     }
 
-    AnonymousNamespace { children }
+    Namespace { children }
 }
 
 impl State<'_> {
