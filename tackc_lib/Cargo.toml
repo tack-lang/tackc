@@ -13,6 +13,7 @@ dashmap = { workspace = true }
 proptest = { workspace = true }
 thiserror = { workspace = true }
 nonzero = { workspace = true }
+derive_more = { workspace = true, features = ["full"] }
 
 [lints]
 workspace = true
