@@ -53,11 +53,11 @@ impl ModuleTree {
             // `first` represents `&path[0..1]`, which will always have a length of at least one.
             .expect_unreachable(); // CHECKED(Chloe)
 
-        let mut node = self.nodes.get(&first.identifier()?)?;
+        let mut node = self.nodes.get(&first.try_unwrap_identifier().ok()?)?;
         let mut nodes = &node.nodes;
 
         for &next in rest {
-            node = nodes.get(&next.identifier()?)?;
+            node = nodes.get(&next.try_unwrap_identifier().ok()?)?;
             nodes = &node.nodes;
         }
 

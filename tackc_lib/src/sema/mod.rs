@@ -2,7 +2,7 @@
 
 use std::{iter::Copied, num::NonZeroU64, ops::Deref, slice::Iter};
 
-use derive_more::derive::From;
+use derive_more::{IsVariant, TryUnwrap, Unwrap, derive::From};
 use thin_vec::ThinVec;
 
 use crate::{
@@ -14,7 +14,7 @@ pub mod module_analyzer;
 pub mod namespace_analyzer;
 
 /// A component of a path.
-#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, From)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, From, Unwrap, TryUnwrap, IsVariant)]
 pub enum PathComponent {
     /// An identifier.
     Identifier(Interned<str>),
@@ -25,27 +25,6 @@ pub enum PathComponent {
 }
 
 impl PathComponent {
-    /// Returns the identifier representation of this component, if applicable.
-    pub const fn identifier(self) -> Option<Interned<str>> {
-        match self {
-            Self::Identifier(ident) => Some(ident),
-            Self::Idx(_) | Self::Function => None,
-        }
-    }
-
-    /// Returns the index representation of this component, if applicable.
-    pub const fn idx(self) -> Option<NonZeroU64> {
-        match self {
-            Self::Idx(idx) => Some(idx),
-            Self::Identifier(_) | Self::Function => None,
-        }
-    }
-
-    /// Returns whether or not this component is a function component.
-    pub const fn is_func(self) -> bool {
-        matches!(self, Self::Function)
-    }
-
     /// Displays this component, either as an identifier, or as an index starting with `_`.
     pub fn display(self, global: &Global) -> String {
         match self {

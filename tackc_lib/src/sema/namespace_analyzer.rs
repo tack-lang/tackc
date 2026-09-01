@@ -227,7 +227,7 @@ impl State<'_> {
                     .expect_unreachable(); // CHECKED(Chloe)
                 let name = pointed_path
                     .last()
-                    .identifier()
+                    .try_unwrap_identifier()
                     // `imp_path` was created from an AstPath, which doesn't contain `Idx` components.
                     .expect_unreachable(); // CHECKED(Chloe)
                 let imp_path = namespace_path.join_non_empty(name);
