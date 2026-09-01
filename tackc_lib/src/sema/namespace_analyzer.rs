@@ -10,7 +10,7 @@ use crate::{
     },
     global::Global,
     sema::{
-        LogicalPath, NonEmptyLogicalPath,
+        LogicalPath, NonEmptyLogicalPath, PathComponent,
         module_analyzer::{ModuleNode, ModuleTree},
     },
     utils::{
@@ -25,7 +25,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Namespace {
     /// The children of this namespace.
-    pub children: IdentityHashMap<Interned<str>, NamespaceChild>,
+    pub children: IdentityHashMap<PathComponent, NamespaceChild>,
 }
 
 impl Namespace {
@@ -49,7 +49,7 @@ pub struct NamespaceChild {
     /// The path to this child, ignoring any re-exports.
     pub path: NonEmptyLogicalPath,
     /// The name this child can be accessed by. Usually the last component of `path`.
-    pub name: Interned<str>,
+    pub name: PathComponent,
     /// The value of this child.
     pub value: NamespaceExpression,
     /// Whether or not this child is exported.
@@ -60,11 +60,11 @@ impl TreeItem for NamespaceChild {
     fn name<'a>(&'a self, global: &'a Global) -> std::borrow::Cow<'a, str> {
         match self.value {
             NamespaceExpression::Namespace(_) => {
-                let name = self.name.get(&global.interner);
+                let name = self.name.display(global);
                 let exp = if self.exported { "exp " } else { "" };
                 format!("{exp}namespace {name}").into()
             }
-            _ => self.name.get(&global.interner).into(),
+            _ => self.name.display(global).into(),
         }
     }
 
@@ -158,7 +158,7 @@ impl State<'_> {
     /// Analyzes a module, and adds it to the namespace given.
     fn analyze_module(
         &self,
-        namespace: &mut IdentityHashMap<Interned<str>, NamespaceChild>,
+        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
         module: ModuleNode,
         namespace_path: &LogicalPath,
     ) {
@@ -176,10 +176,10 @@ impl State<'_> {
         }
 
         namespace.insert(
-            name,
+            name.into(),
             NamespaceChild {
                 path,
-                name,
+                name: name.into(),
                 value: NamespaceExpression::Namespace(Namespace { children }),
                 exported: module.exported,
             },
@@ -189,7 +189,7 @@ impl State<'_> {
     /// Analyzes an item, and adds it to the given namespace.
     fn analyze_item(
         &self,
-        namespace: &mut IdentityHashMap<Interned<str>, NamespaceChild>,
+        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
         item: Item,
         namespace_path: &LogicalPath,
     ) -> Option<()> {
@@ -198,9 +198,9 @@ impl State<'_> {
                 let name = item.ident?.get(&self.global.interner).0;
                 let path = namespace_path.join_non_empty(name);
                 namespace.insert(
-                    name,
+                    name.into(),
                     NamespaceChild {
-                        name,
+                        name: name.into(),
                         value: NamespaceExpression::Expression(item.expr?),
                         exported: item.exported,
                         path,
@@ -233,9 +233,9 @@ impl State<'_> {
                 let imp_path = namespace_path.join_non_empty(name);
 
                 namespace.insert(
-                    name,
+                    name.into(),
                     NamespaceChild {
-                        name,
+                        name: name.into(),
                         path: imp_path,
                         value: NamespaceExpression::Path(pointed_path),
                         exported: imp_item.exported,
@@ -250,7 +250,7 @@ impl State<'_> {
     /// Analyzes a function, and adds it to the given namespace.
     fn analyze_function(
         &self,
-        namespace: &mut IdentityHashMap<Interned<str>, NamespaceChild>,
+        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
         func_item: FuncItem,
         namespace_path: &LogicalPath,
     ) -> Option<()> {
@@ -353,9 +353,9 @@ impl State<'_> {
         };
 
         namespace.insert(
-            name,
+            name.into(),
             NamespaceChild {
-                name,
+                name: name.into(),
                 path,
                 value: NamespaceExpression::Function(func),
                 exported: func_item.exported,
