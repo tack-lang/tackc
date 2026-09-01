@@ -20,6 +20,8 @@ pub enum PathComponent {
     Identifier(Interned<str>),
     /// An index. Used in special cases where the compiler needs a path to something, but can't use an identifier.
     Idx(NonZeroU64),
+    /// An inner function component. Used to refer to the inner function of a namespace.
+    Function,
 }
 
 impl PathComponent {
@@ -27,16 +29,21 @@ impl PathComponent {
     pub const fn identifier(self) -> Option<Interned<str>> {
         match self {
             Self::Identifier(ident) => Some(ident),
-            Self::Idx(_) => None,
+            Self::Idx(_) | Self::Function => None,
         }
     }
 
     /// Returns the index representation of this component, if applicable.
     pub const fn idx(self) -> Option<NonZeroU64> {
         match self {
-            Self::Identifier(_) => None,
             Self::Idx(idx) => Some(idx),
+            Self::Identifier(_) | Self::Function => None,
         }
+    }
+
+    /// Returns whether or not this component is a function component.
+    pub const fn is_func(self) -> bool {
+        matches!(self, Self::Function)
     }
 
     /// Displays this component, either as an identifier, or as an index starting with `_`.
@@ -44,6 +51,7 @@ impl PathComponent {
         match self {
             Self::Identifier(ident) => ident.get(&global.interner).to_owned(),
             Self::Idx(idx) => format!("_{idx}"),
+            Self::Function => "_inner".to_owned(),
         }
     }
 }
