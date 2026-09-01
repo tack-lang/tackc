@@ -90,7 +90,7 @@ pub enum NamespaceExpression {
     /// A function.
     Function(NamespaceFunction),
     /// A path, used for `imp` statements.
-    Path(LogicalPath),
+    Path(NonEmptyLogicalPath),
     /// A namespace.
     Namespace(Namespace),
     /// A let binding, used in a function.
@@ -221,11 +221,12 @@ impl State<'_> {
                     .into_iter()
                     .flatten()
                     .map(|sym| sym.get(&self.global.interner).0)
-                    .collect::<LogicalPath>();
+                    .collect::<LogicalPath>()
+                    .into_non_empty()
+                    // `ast_path` is an AstPath without any `None` components, which are required to be non-empty.
+                    .expect_unreachable(); // CHECKED(Chloe)
                 let name = pointed_path
                     .last()
-                    // `pointed_path` was created from an AstPath without any `None` components, which are required to be non-empty.
-                    .expect_unreachable() // CHECKED(Chloe)
                     .identifier()
                     // `imp_path` was created from an AstPath, which doesn't contain `Idx` components.
                     .expect_unreachable(); // CHECKED(Chloe)

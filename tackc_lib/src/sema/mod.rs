@@ -106,17 +106,22 @@ impl LogicalPath {
     /// Creates a new path with the component added to the end of it.
     #[must_use]
     pub fn join<T: Into<PathComponent>>(&self, component: T) -> Self {
-        self.join_non_empty(component).into_inner()
+        let mut path = self.clone();
+        path.push(component.into());
+        path
     }
 
     /// Creates a new non-empty path with the component added to the end of it.
     #[must_use]
     pub fn join_non_empty<T: Into<PathComponent>>(&self, component: T) -> NonEmptyLogicalPath {
-        let mut new = self.clone();
-        new.push(component);
-        NonEmptyLogicalPath::new(new)
-            // This path was just pushed to.
+        self.join(component)
+            .into_non_empty()
+            // The path was just joined to.
             .expect_unreachable() // CHECKED(Chloe)
+    }
+
+    pub fn into_non_empty(&self) -> Option<NonEmptyLogicalPath> {
+        NonEmptyLogicalPath::new(self.clone())
     }
 }
 
