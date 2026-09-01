@@ -9,9 +9,11 @@ use crate::utils::UnwrapExt;
 /// `K` is the limit to how far the iterator can be peeked, so the farthest element that can be peeked is the `K`th element.
 #[derive(Debug, Clone)]
 pub struct Peekable<I: Iterator, const K: usize> {
+    /// The inner iterator of this [`Peekable`].
     iter: I,
-    // None represents "iterator not checked," Some(None) represents "iterator returned None," and Some(Some(T)) represents "iterator returned Some(T)."
-    // All Some values will be at beginning, since there can't be holes in the iterator.
+    /// The next items of the iterator.
+    /// None represents "iterator not checked," Some(None) represents "iterator returned None," and Some(Some(T)) represents "iterator returned Some(T)."
+    /// All Some values will be at beginning, since there can't be holes in the iterator.
     #[expect(clippy::option_option)] // CHECKED(Chloe)
     next: [Option<Option<I::Item>>; K],
 }

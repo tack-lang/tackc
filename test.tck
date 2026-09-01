@@ -3,7 +3,17 @@ mod statement;
 exp imp tack.stdlib.T;
 
 func test() {
-    tack.t.T
+    let ret = {
+        {
+            let ret = tack.t.T;
+        }
+        {
+            let other = 5;
+            other
+        }
+    };
+
+    ret
 }
 
 func main() {

@@ -28,6 +28,7 @@ impl NonZeroFxHasher {
 ///
 /// [npo]: https://doc.rust-lang.org/std/option/index.html#representation
 pub struct NonZeroHasher<H> {
+    /// The inner hasher of this [`NonZeroHasher`].
     inner: H,
 }
 
@@ -110,6 +111,7 @@ impl BuildHasher for NonZeroFxHasherBuilder {
 /// A hasher that will do nothing with the value to hash. If given a value greater than 8 bytes, the hasher will panic.
 #[derive(Default)]
 pub struct IdentityHasher {
+    /// The 'hash' of this identity hasher.
     hash: u64,
 }
 
@@ -173,8 +175,9 @@ impl<V> HashIndex<V> {
     }
 }
 
-/// A wrapper for a [`HashMap`] that can be indexed directly by an item's hash.
+/// A wrapper for a [`HashMap`](std::collections::HashMap) that can be indexed directly by an item's hash.
 pub struct IndexedSet<V> {
+    /// The hash map backing this indexed set.
     inner: FxHashMap<u64, V>,
 }
 

@@ -99,10 +99,13 @@ fn run_line(
     let file = File::open(dir.path()).expect("Error opening file!");
     let reader = BufReader::new(file);
 
+    let mut previous = String::new();
+
     for (i, line) in reader.lines().enumerate() {
         let line = line.expect("Error reading file!");
 
         let Some(result) = searcher.find(&line) else {
+            previous = line;
             continue;
         };
 
@@ -142,6 +145,15 @@ fn run_line(
             error.store(true, Ordering::SeqCst);
             eprintln!(
                 "{}:{}: CHECKED area is too large!",
+                dir.path().display(),
+                i + 1
+            );
+        }
+
+        if !previous.contains("//") {
+            // Warning, not an error.
+            eprintln!(
+                "{}:{}: CHECKED missing explanation!",
                 dir.path().display(),
                 i + 1
             );

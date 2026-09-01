@@ -65,7 +65,8 @@ pub struct LetStatement {
 }
 
 impl LetStatement {
-    fn display(&self, global: &Global) -> String {
+    /// Displays this statement.
+    pub fn display(&self, global: &Global) -> String {
         let ident = match self.ident {
             Some(ident) => ident.get(&global.interner).display(global),
             None => "<ERROR>",
@@ -94,6 +95,7 @@ pub struct AssignmentStatement {
 }
 
 impl AssignmentStatement {
+    /// Displays this statement.
     fn display(&self, global: &Global) -> String {
         let lhs = self.lhs.display(global);
         let rhs = match self.rhs {
@@ -114,6 +116,7 @@ pub struct ExpressionStatement {
 }
 
 impl ExpressionStatement {
+    /// Displays this statement.
     fn display(&self, global: &Global) -> String {
         let stmt_str = self.expr.display(global);
         let semi = match self.semi {

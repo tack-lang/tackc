@@ -18,6 +18,7 @@ macro_rules! setup_insta_test {
     };
 }
 
+/// Sets up a test using [`insta`].
 macro_rules! insta_test {
     ($name:ident, $glob:expr, $func:expr) => {
         #[test]

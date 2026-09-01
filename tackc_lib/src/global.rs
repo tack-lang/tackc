@@ -9,13 +9,14 @@ use crate::{file::FileList, utils::intern::Interner};
 pub struct Global {
     /// The global interner.
     pub interner: Interner,
+    /// The global file list.
     file_list: FileList,
 }
 
-#[cfg(all(debug_assertions, not(test)))]
-use std::sync::atomic::AtomicBool;
-#[cfg(all(debug_assertions, not(test)))]
-static GLOBAL_EXISTS: AtomicBool = AtomicBool::new(false);
+/// If this is `true`, a [`Global`] currently exists, and a new one should not be created.
+/// This check is only enabled in debug mode.
+#[cfg(debug_assertions)]
+static GLOBAL_EXISTS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 impl Global {
     /// Creates a new 'static `Global` by leaking it. Recomended for applications that compile entire files, and should hold one `Global` the entire time.
@@ -25,7 +26,7 @@ impl Global {
     /// If `debug_assertions` is enabled, an extra check will be added.
     /// If this function is called more than once, that check will fail, and the function will panic.
     pub fn new() -> &'static mut Self {
-        #[cfg(all(debug_assertions, not(test)))]
+        #[cfg(debug_assertions)]
         {
             use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -45,7 +46,7 @@ impl Global {
     /// # Panics
     /// If a `Global` already exists, this function will panic.
     pub fn create_heap() -> Box<Self> {
-        #[cfg(all(debug_assertions, not(test)))]
+        #[cfg(debug_assertions)]
         {
             use std::sync::atomic::Ordering;
 
@@ -72,7 +73,7 @@ impl Global {
     }
 }
 
-#[cfg(all(debug_assertions, not(test)))]
+#[cfg(debug_assertions)]
 impl Drop for Global {
     fn drop(&mut self) {
         use std::sync::atomic::Ordering;

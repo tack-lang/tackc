@@ -306,8 +306,11 @@ impl Display for IntegerBase {
 /// `Lexer`'s `Iterator` implementation returns `None` when `next_token` returns `Ok` with a token kind of [`TokenKind::Eof`].
 /// `Lexer` should be easily cloneable.
 pub struct Lexer<'src> {
+    /// The source file this lexer is parsing.
     src: &'src File,
+    /// The span the lexer is pointing to.
     span: Span,
+    /// The global context given to the parser.
     global: &'src Global,
 }
 
@@ -326,10 +329,14 @@ impl<'src> Lexer<'src> {
         self.src.len() <= self.span.end as usize
     }
 
+    /// Gets the byte at the end of the pointed to area.
+    /// Similar to `src[ptr]`.
     fn current_byte(&self) -> Option<u8> {
         self.src.as_bytes().get(self.span.end as usize).copied()
     }
 
+    /// Advances the pointed to area, and returns the byte at the end of the pointed to area before the function was called.
+    /// Similar to `src[ptr++]`.
     fn next_byte(&mut self) -> Option<u8> {
         if self.at_eof() {
             None
@@ -340,10 +347,14 @@ impl<'src> Lexer<'src> {
         }
     }
 
+    /// Gets the byte after the pointed to area.
+    /// Similar to `src[ptr + 1]`.
     fn peek_byte(&self) -> Option<u8> {
         self.src.as_bytes().get(self.span.end as usize + 1).copied()
     }
 
+    /// Moves the pointed to area to the next character after whitespace and comments.
+    /// After calling, `span` will be empty.
     fn skip_whitespace_and_comments(&mut self) {
         while let Some(c) = self.current_byte() {
             match c {
@@ -367,20 +378,27 @@ impl<'src> Lexer<'src> {
         self.span.reset();
     }
 
+    /// Creates a token with kind `kind`, using the lexeme currently pointed to by the lexer.
+    /// The span is then reset to point to the end of the current span.
     fn make_token(&mut self, kind: TokenKind) -> Token {
         self.make_token_with_lexeme(kind, self.current_lexeme())
     }
 
+    /// Creates a token with kind `kind`, with a custom lexeme.
+    /// The span is then reset to point to the end of the current span.
     fn make_token_with_lexeme(&mut self, kind: TokenKind, lexeme: &str) -> Token {
         let span = self.span;
         self.span.reset();
         Token::new(span, kind, self.global.interner.intern_str(lexeme))
     }
 
+    /// Gets the lexeme currently pointed to by the lexer.
     fn current_lexeme(&self) -> &'src str {
         self.span.apply(self.src)
     }
 
+    /// Creates an error of type `ty` using the current span.
+    /// The span is then reset to point to the end of the current span.
     const fn make_error(&mut self, ty: ErrorKind) -> LexError {
         let span = self.span;
         self.span.reset();
@@ -388,7 +406,8 @@ impl<'src> Lexer<'src> {
         LexError { span, kind: ty }
     }
 
-    fn handle_double_character_or_unknown(&mut self, c1: char) -> Result<Token, LexError> {
+    /// Handles simple tokens or unknown tokens.
+    fn handle_simple_or_unknown(&mut self, c1: char) -> Result<Token, LexError> {
         let c2 = self.current_byte();
         let ty = match (c1, c2) {
             ('(', _) => TokenKind::LParen,
@@ -472,9 +491,14 @@ impl<'src> Lexer<'src> {
             .expect_unreachable() // CHECKED(Chloe)
             .chars()
             .next()
+            // `extra_bytes` is 0..4, meaning `char_len` is 1..5.
+            // For `next` to return None, `lexeme.len() - char_len >= lexeme.len()` has to be true.
+            // Since subtacting 1..5 from a number cannot overflow, and 1..5 != 0,
+            // `lexeme.len() - char_len >= lexeme.len()` must be false
             .expect_unreachable() // CHECKED(Chloe)
     }
 
+    /// Handles a string literal token after consuming a '"' character.
     fn handle_string_lit(&mut self) -> Result<Token, LexError> {
         let mut string = String::new();
         loop {
@@ -494,6 +518,10 @@ impl<'src> Lexer<'src> {
         Ok(self.make_token_with_lexeme(TokenKind::StringLit, &string))
     }
 
+    /// Consume digits in a certain radix.
+    ///
+    /// # Returns
+    /// `true` if one or more digits were consumed, `false` otherwise.
     fn handle_digits(&mut self, radix: u32) -> bool {
         #[inline]
         fn current_is_digit(lexer: &Lexer<'_>, radix: u32) -> bool {
@@ -516,7 +544,8 @@ impl<'src> Lexer<'src> {
         true
     }
 
-    fn handle_int_lit_before_prefix(&mut self, prefix: IntegerBase) -> Result<Token, LexError> {
+    /// Handles an integer literal after the prefix character is handled.
+    fn handle_int_lit_after_prefix(&mut self, prefix: IntegerBase) -> Result<Token, LexError> {
         // Don't, `next_token` does this.
         //self.next_byte(); // skip '0'
 
@@ -539,6 +568,7 @@ impl<'src> Lexer<'src> {
         Ok(self.make_token(TokenKind::IntLit))
     }
 
+    /// Handles a number literal.
     fn handle_num_lit(&mut self, c: u8) -> Result<Token, LexError> {
         // Prefixed integer literals (0b, 0o, 0x)
         if let (b'0', Some(prefix)) = (c, self.current_byte()) {
@@ -549,7 +579,7 @@ impl<'src> Lexer<'src> {
                 _ => None,
             };
             if let Some(p) = prefix {
-                return self.handle_int_lit_before_prefix(p);
+                return self.handle_int_lit_after_prefix(p);
             }
         }
 
@@ -601,6 +631,7 @@ impl<'src> Lexer<'src> {
         }
     }
 
+    /// Handles a float after `e` has been consumed.
     fn handle_float_with_exponent(&mut self) -> Result<Token, LexError> {
         if let Some(b'-' | b'+') = self.current_byte() {
             self.next_byte();
@@ -613,6 +644,7 @@ impl<'src> Lexer<'src> {
         Ok(self.make_token(TokenKind::FloatLit))
     }
 
+    /// Handles an identifier or a keyword.
     fn handle_ident_or_keyword(&mut self) -> Token {
         while let Some(c) = self.current_byte() {
             match c {
@@ -665,9 +697,9 @@ impl<'src> Lexer<'src> {
             _ if c & 0x80 != 0 => {
                 let char = self.handle_utf8_extras(c);
 
-                self.handle_double_character_or_unknown(char)
+                self.handle_simple_or_unknown(char)
             }
-            _ => self.handle_double_character_or_unknown(c as char),
+            _ => self.handle_simple_or_unknown(c as char),
         }
     }
 }

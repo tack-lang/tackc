@@ -3,7 +3,9 @@
 pub mod error;
 use std::num::NonZeroU32;
 
+/// The limit on recursion in the parser. Once this limit is reached, the compiler will throw a fatal error.
 const RECURSION_LIMIT: u32 = 300;
+/// The limit on path length in the parser. Once this limit is reached, the compiler will throw a fatal error.
 const PATH_COMPONENTS_LIMIT: usize = 32;
 
 use error::{ParseError, Result};
@@ -43,31 +45,45 @@ impl BlockMode {
     }
 }
 
+/// A snapshot of the parser's state.
 #[derive(Debug, Clone, Copy)]
 struct ParserSnapshot {
+    /// A pointer to where the parser was in the `tokens` list.
     ptr: usize,
-    open: NonZeroU32,
+    /// The next open node ID.
+    next_open: NonZeroU32,
+    /// Whether or not the parser was in a failure mode.
     failed: bool,
 }
 
 /// The state of a parser.
-pub struct Parser<'src, 'a> {
+pub struct Parser<'src, 'token> {
+    /// The file this parser is parsing.
     file: &'src File,
-    tokens: &'a [Token],
+    /// The tokens created from the file.
+    tokens: &'token [Token],
+    /// A pointer to the parser's location in the `tokens` list.
     ptr: usize,
+    /// A list of errors accumulated while parsing.
     errors: Vec<ParseError>,
 
+    /// Whether or not the parser has hit a fatal error.
     failed: bool,
+    /// Whether or not the parser has hit the recursion limit.
     failed_recursion: bool,
+    /// Whether or not the parser has hit the error limit.
     failed_error: bool,
 
+    /// The next open node ID.
     next_open: NonZeroU32,
 
+    /// The global context given to the parser.
     global: &'src Global,
 }
 
-impl<'src, 'a> Parser<'src, 'a> {
-    const fn new(tokens: &'a [Token], file: &'src File, global: &'src Global) -> Self {
+impl<'src, 'token> Parser<'src, 'token> {
+    /// Creates a new parser.
+    const fn new(tokens: &'token [Token], file: &'src File, global: &'src Global) -> Self {
         Parser {
             file,
             tokens,
@@ -84,6 +100,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Checks whether the parser has failed or not. Should be called at the beginning of most functions in the parser.
     fn check_failed(&mut self, recursion: u32) -> Result<()> {
         if recursion > RECURSION_LIMIT {
             self.errors.push(ParseError::recursion_limit());
@@ -97,36 +114,46 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Creates a snapshot of the parser's state.
     const fn snapshot(&self) -> ParserSnapshot {
         ParserSnapshot {
             ptr: self.ptr,
-            open: self.next_open,
+            next_open: self.next_open,
             failed: self.failed,
         }
     }
 
+    /// Restores a snapshot of the parser's state.
     const fn restore(&mut self, snapshot: ParserSnapshot) {
-        let ParserSnapshot { ptr, open, failed } = snapshot;
+        let ParserSnapshot {
+            ptr,
+            next_open,
+            failed,
+        } = snapshot;
         if failed {
             return;
         }
 
         self.ptr = ptr;
-        self.next_open = open;
+        self.next_open = next_open;
     }
 
+    /// Gets the token being pointed to, if any.
     fn peek(&self) -> Option<Token> {
         self.tokens.get(self.ptr).copied()
     }
 
+    /// Gets the token after the token being pointed to, if any.
     fn peek2(&self) -> Option<Token> {
         self.tokens.get(self.ptr + 1).copied()
     }
 
+    /// Returns whether or not the parser is at the end of the token list.
     fn at_eof(&self) -> bool {
         self.peek().is_none()
     }
 
+    /// If the next token is in `kinds`, this function will consume it and return it. Otherwise, it will return None.
     fn eat(&mut self, kinds: &[TokenKind]) -> Option<Token> {
         self.peek()
             .filter(|tok| kinds.contains(&tok.kind))
@@ -135,12 +162,14 @@ impl<'src, 'a> Parser<'src, 'a> {
             })
     }
 
+    /// This function expects the next token to be in `kinds`, consumes it if it's there, and throws an error if it's not.
     fn expect_kinds(&mut self, kinds: &[TokenKind]) -> Result<Token> {
         self.expect_peek(kinds).inspect(|_| {
             self.advance();
         })
     }
 
+    /// This function expects the next token to be in `kinds`, and throws an error if it's not.
     fn expect_peek(&self, kinds: &[TokenKind]) -> Result<Token> {
         let token = self.expect_peek_all()?;
         if kinds.contains(&token.kind) {
@@ -150,6 +179,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// This function expects the token after the next token to be in `kinds`, and throws an error if it's not.
     fn expect_peek2(&self, kinds: &[TokenKind]) -> Result<Token> {
         let token = self.expect_peek2_all()?;
         if kinds.contains(&token.kind) {
@@ -159,20 +189,24 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// This function expects the next token to exist, and throws an error if it doesn't.
     fn expect_peek_all(&self) -> Result<Token> {
         self.peek().ok_or_else(|| ParseError::eof(None, self.file))
     }
 
+    /// This function expects the token after the next token to exist, and throws an error if it doesn't.
     fn expect_peek2_all(&self) -> Result<Token> {
         self.peek2().ok_or_else(|| ParseError::eof(None, self.file))
     }
 
+    /// This function returns the current token, and advances the parser to the next token.
     fn advance(&mut self) -> Option<Token> {
         let tok = self.peek();
         self.ptr += 1;
         tok
     }
 
+    /// This function returns the next availible [`NodeId`], throwing an error if there is none.
     const fn get_id(&mut self) -> Result<NodeId> {
         let open = NodeId {
             id: self.next_open,
@@ -186,6 +220,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(open)
     }
 
+    /// This function pushes an error to the error list.
     fn push_err(&mut self, e: ParseError) {
         if self.errors.len() > 100 && !self.failed_error {
             self.failed = true;
@@ -198,12 +233,14 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.errors.push(e);
     }
 
+    /// This function reports `err` with `expected` if `err` is [`Err`].
     fn report_error<T>(&mut self, err: Result<T>, expected: &'static str) -> Option<T> {
         err.set_expected(expected)
             .map_err(|e| self.push_err(e))
             .ok()
     }
 
+    /// This function handles an error and synchronizes the parser.
     fn handle_error_sync<T>(
         &mut self,
         err: Result<T>,
@@ -222,6 +259,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.report_error(err, expected)
     }
 
+    /// This function synchronizes the parser, using `cancel` as the token to stop at.
     fn synchronize(&mut self, cancel: &[TokenKind]) {
         let mut depth: u32 = 0;
 
@@ -245,6 +283,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// This function synchronizes by skipping the next block.
     fn synchronize_skip_next_block(&mut self) {
         self.synchronize(&[TokenKind::LBrace]);
         self.advance();
@@ -252,16 +291,19 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.advance();
     }
 
+    /// Returns the location at which the parser is currently located.
     fn loc(&self) -> SpanValue {
         self.peek()
-            .map_or_else(|| Span::eof(self.file).end, |tok| tok.span.start)
+            .map_or_else(|| Span::eof(self.file).start, |tok| tok.span.start)
     }
 
+    /// This function runs [`Self::expect_kinds`], and then [`Self::report_error`] on the result.
     fn expect_report(&mut self, kinds: &[TokenKind], expected: &'static str) -> Option<Token> {
         let tok_res = self.expect_kinds(kinds);
         self.report_error(tok_res, expected)
     }
 
+    /// Parses a value using `func`, then synchronizes on failure using `cancel` and `expected`.
     fn parse_sync<T: 'src, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
@@ -274,6 +316,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.handle_error_sync(res, snapshot, cancel, expected, false)
     }
 
+    /// Parses a value using `func`, then synchronizes on failure using `cancel` and `expected`, while skipping a `cancel` token if it's the next one.
     fn parse_sync_skip<T: 'src, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
@@ -286,6 +329,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.handle_error_sync(res, snapshot, cancel, expected, true)
     }
 
+    /// Parses using `func`, and reports the result.
     fn parse_report<T, P: FnOnce(&mut Self, u32) -> Result<T>>(
         &mut self,
         func: P,
@@ -302,7 +346,7 @@ impl<'src, 'a> Parser<'src, 'a> {
     /// This function returns three things. An [`AstModule`], a [`Vec`] of [`ParseErrors`](ParseError), and a bool to represent whether the parser "failed" or not.
     /// If the parser failed, that means it reached an error that it couldn't recover from. This is rare, and should probably halt execution.
     pub fn parse(
-        tokens: &'a [Token],
+        tokens: &'token [Token],
         file: &'src File,
         global: &'src Global,
     ) -> (AstModule, Vec<ParseError>, bool) {
@@ -312,6 +356,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         (module, p.errors, p.failed)
     }
 
+    /// Parses a delimited list.
     fn delimited<T: 'src>(
         &mut self,
         seperator: TokenKind,
@@ -338,10 +383,12 @@ impl<'src, 'a> Parser<'src, 'a> {
         args
     }
 
+    /// Parses a visibility. Returns true if `exp`, and false if not.
     fn visibility(&mut self) -> bool {
         self.eat(&[TokenKind::Exp]).is_some()
     }
 
+    /// Parses a module.
     fn module(&mut self, recursion: u32) -> AstModule {
         let mod_stmt_res = self.mod_statement(recursion + 1);
         let mod_stmt = self.report_error(mod_stmt_res, "`mod` statement");
@@ -365,6 +412,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Parses a mod statement.
     fn mod_statement(&mut self, recursion: u32) -> Result<ModStatement> {
         let exported = self.visibility();
         let mod_key = self.expect_kinds(&[TokenKind::Mod])?;
@@ -384,6 +432,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         })
     }
 
+    /// Parses an [`AstPath`].
     fn path(&mut self, recursion: u32) -> Result<AstPath> {
         self.check_failed(recursion)?;
 
@@ -415,6 +464,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(AstPath::new(components, self.get_id()?, span))
     }
 
+    /// Parses an item.
     fn item(&mut self, recursion: u32) -> Result<Item> {
         self.check_failed(recursion)?;
 
@@ -432,6 +482,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Parses a `const` item.
     fn const_item(&mut self, recursion: u32) -> Result<Item> {
         self.check_failed(recursion)?;
 
@@ -477,6 +528,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a `func` item.
     fn func_item(&mut self, recursion: u32) -> Result<Item> {
         self.check_failed(recursion)?;
 
@@ -521,13 +573,15 @@ impl<'src, 'a> Parser<'src, 'a> {
         })
     }
 
-    /*fn param_list_optional_ident(
+    /*/// Parses a parameter list with identifiers being optional.
+    fn param_list_optional_ident(
         &mut self,
         recursion: u32,
     ) -> Result<ThinVec<(Option<Interned<Symbol>>, Option<Expression>)>> {
         self.param_list(recursion + 1, false)
     }*/
 
+    /// Parses a parameter list with identifiers being required.
     fn param_list_required_ident(
         &mut self,
         recursion: u32,
@@ -535,6 +589,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         self.param_list(recursion + 1, true)
     }
 
+    /// Parses a parameter list.
     fn param_list(
         &mut self,
         recursion: u32,
@@ -579,6 +634,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(params)
     }
 
+    /// Parses a `imp` item.
     fn imp_item(&mut self, recursion: u32) -> Result<Item> {
         self.check_failed(recursion)?;
 
@@ -599,6 +655,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         })
     }
 
+    /// Parses a block.
     fn block(&mut self, recursion: u32) -> Result<Block> {
         self.check_failed(recursion)?;
 
@@ -672,6 +729,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         })
     }
 
+    /// Parses a statement ending in a semicolon.
     fn semicolon_statement(&mut self, recursion: u32) -> Option<Statement> {
         self.parse_sync(
             Self::statement,
@@ -681,6 +739,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         )
     }
 
+    /// Parses a statement not ending a semicolon.
     fn no_semicolon_statement(&mut self, recursion: u32) -> Option<Statement> {
         let snapshot = self.snapshot();
         let stmt_res = self.statement(recursion + 1);
@@ -692,6 +751,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         stmt
     }
 
+    /// Parses a statement which may or may not end in a semicolon.
     fn optional_semicolon_expression_statement(
         &mut self,
         expr: Expression,
@@ -714,6 +774,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Some(stmt))
     }
 
+    /// Parses an expression statement ending with a semicolon, given the expression.
     fn semicolon_expression_statement(
         &mut self,
         loc: u32,
@@ -741,6 +802,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(statement)
     }
 
+    /// Parses a statement.
     fn statement(&mut self, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -752,6 +814,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Parses a let statement.
     fn let_statement(&mut self, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -798,6 +861,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses an item statement.
     fn item_statement(&mut self, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -810,6 +874,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a statement starting with an expression.
     fn statement_starting_with_expression(&mut self, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -820,6 +885,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         }
     }
 
+    /// Parses an expression statement.
     fn expression_statement(&mut self, expr: Expression, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -838,6 +904,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses an assignment statement.
     fn assignment_statement(&mut self, lhs: Expression, recursion: u32) -> Result<Statement> {
         self.check_failed(recursion)?;
 
@@ -862,20 +929,24 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses an expression in normal mode.
     #[inline]
     fn expression_normal(&mut self, recursion: u32) -> Result<Expression> {
         self.expression(BlockMode::Normal, recursion)
     }
 
+    /// Parses an expression in no block mode.
     #[inline]
     fn expression_no_blocks(&mut self, recursion: u32) -> Result<Expression> {
         self.expression(BlockMode::NoBlocks, recursion)
     }
 
+    /// Parses an expression.
     fn expression(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.comparison(mode, recursion)
     }
 
+    /// Parses a comparison expression.
     fn comparison(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
@@ -893,6 +964,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         )
     }
 
+    /// Parses a term expression.
     fn term(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
@@ -906,6 +978,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         )
     }
 
+    /// Parses a factor expression.
     fn factor(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.binary_expr(
             &[
@@ -919,6 +992,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         )
     }
 
+    /// Parses a binary expression.
     #[inline]
     fn binary_expr(
         &mut self,
@@ -963,6 +1037,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(lhs)
     }
 
+    /// Parses a unary expression.
     fn unary(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -980,6 +1055,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(Expression::new(kind, self.get_id()?, span))
     }
 
+    /// Parses a postfix expression.
     fn postfix(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -995,6 +1071,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(lhs)
     }
 
+    /// Parses a indexing expression.
     fn parse_index(&mut self, lhs: Expression, recursion: u32) -> Result<Expression> {
         self.advance();
 
@@ -1019,6 +1096,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a call expression.
     fn parse_call(&mut self, lhs: Expression, recursion: u32) -> Result<Expression> {
         self.advance();
         let args = self.delimited(
@@ -1042,6 +1120,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a member access expression.
     fn parse_access(&mut self, lhs: Expression) -> Result<Expression> {
         self.advance();
         let ident = self.expect_report(&[TokenKind::Ident], "identifier");
@@ -1060,6 +1139,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a grouping expression.
     fn grouping(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -1087,6 +1167,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(expr)
     }
 
+    /// Parses a block expression.
     fn block_expr(&mut self, mode: BlockMode, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -1109,6 +1190,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a global identifier.
     fn global_ident(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -1145,6 +1227,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         ))
     }
 
+    /// Parses a primary expression.
     fn primary(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -1172,6 +1255,7 @@ impl<'src, 'a> Parser<'src, 'a> {
         Ok(expr)
     }
 
+    /// Parses a function type, or a function expression.
     fn function_type_and_expr(&mut self, recursion: u32) -> Result<Expression> {
         self.check_failed(recursion)?;
 
@@ -1241,7 +1325,6 @@ insta_test!(parser_test, "parser-tests/*.tck", run_parser_test);
 use std::path::Path;
 
 #[cfg(test)]
-// No `unwrap`s in this function are documented, because all of them sidestep errors, which shouldn't happen in theory.
 fn run_parser_test(src: String) {
     use crate::{file::File, frontend::lexer::Lexer};
 
@@ -1250,6 +1333,7 @@ fn run_parser_test(src: String) {
     let lexer = Lexer::new(&file, &global);
     let tokens = lexer
         .map(|res| {
+            // Panic on error
             res.unwrap() // CHECKED(Chloe)
         })
         .collect::<Vec<_>>();

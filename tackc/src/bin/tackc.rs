@@ -95,6 +95,7 @@ fn main() {
         .collect::<Vec<_>>();
 
     let (mod_tree, errors) = module_analyzer::analyze(modules, global);
+    //println!("{:#?}", mod_tree);
 
     for e in errors {
         println!("{}", e.display(global));

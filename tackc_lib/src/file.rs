@@ -37,10 +37,12 @@ pub fn line_starts(str: &str) -> Vec<SpanValue> {
             _ => continue,
         }
 
-        // Since `str.len() <= SpanValue::MAX`, and `i` will only ever be as large as `str.len() - 1`,
-        // i will only ever be as large as `str.len()`, which `try_into()` won't return `Err` on.
         out.push(
-            (i + 1).try_into().expect_unreachable(), // CHECKED(Chloe)
+            (i + 1)
+                .try_into()
+                // Since `str.len() <= SpanValue::MAX`, and `i` will only ever be as large as `str.len() - 1`,
+                // i will only ever be as large as `str.len()`, which `try_into()` won't return `Err` on.
+                .expect_unreachable(), // CHECKED(Chloe)
         );
     }
 
@@ -64,12 +66,17 @@ fn run_line_starts_test(str: String) {
 /// The ID that files use to identify themselves.
 pub type FileId = NonZeroU32;
 
-/// A file in tackc.
+/// A file in tackc. Usually in the global's [`FileList`].
 #[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct File {
+    /// The source of this file.
     src: Cow<'static, str>,
+    /// The path of this file.
     path: Cow<'static, Path>,
+    /// The location where each line starts in the file.
+    /// Used to calculate line/column information.
     line_starts: Vec<SpanValue>,
+    /// The ID of this file. Used to uniquely identify this file.
     id: FileId,
 }
 
@@ -125,14 +132,12 @@ impl File {
         let line_idx = starts.iter().rposition(|&start| start <= index)?;
 
         let line_num: SpanValue = (line_idx + 1).try_into().ok()?;
-        // `line_idx` is only as large as `starts.len()`
-        // because `rposition`'s return value is only as
-        // long as it's iterator, which in this case,
-        // is only as long as `starts`.
         let col_index = *starts
-        .get(line_idx)
-
-
+            .get(line_idx)
+            // `line_idx` is only as large as `starts.len()`
+            // because `rposition`'s return value is only as
+            // long as it's iterator, which in this case,
+            // is only as long as `starts`.
             .expect_unreachable() // CHECKED(Chloe)
             as SpanValue;
         let col: SpanValue = index - (col_index) + 1;
@@ -170,6 +175,7 @@ impl TryFrom<&'static Path> for File {
 /// A map of [`FileId`]s to [`File`].
 #[derive(Debug, Default)]
 pub struct FileList {
+    /// The inner map.
     files: FxHashMap<FileId, File>,
 }
 

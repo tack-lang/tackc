@@ -56,8 +56,11 @@ impl ReportMode for Consume {
 
 /// The reporter iterator is a complex iterator adapter that can be used for error handling.
 pub struct Reporter<I, F, M> {
+    /// The inner iterator.
     iter: I,
+    /// The callback.
     callback: F,
+    /// The mode.
     mode: M,
 }
 

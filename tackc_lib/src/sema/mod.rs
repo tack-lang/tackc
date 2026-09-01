@@ -1,7 +1,8 @@
 //! Semantic analysis for tackc. See `docs/architecture.md` for more.
 
-use std::{iter::Copied, ops::Deref, slice::Iter};
+use std::{iter::Copied, num::NonZeroU64, ops::Deref, slice::Iter};
 
+use derive_more::derive::From;
 use thin_vec::ThinVec;
 
 use crate::{
@@ -12,33 +13,72 @@ use crate::{
 pub mod module_analyzer;
 pub mod namespace_analyzer;
 
+/// A component of a path.
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, From)]
+pub enum PathComponent {
+    /// An identifier.
+    Identifier(Interned<str>),
+    /// An index. Used in special cases where the compiler needs a path to something, but can't use an identifier.
+    Idx(NonZeroU64),
+}
+
+impl PathComponent {
+    /// Returns the identifier representation of this component, if applicable.
+    pub const fn identifier(self) -> Option<Interned<str>> {
+        match self {
+            Self::Identifier(ident) => Some(ident),
+            Self::Idx(_) => None,
+        }
+    }
+
+    /// Returns the index representation of this component, if applicable.
+    pub const fn idx(self) -> Option<NonZeroU64> {
+        match self {
+            Self::Identifier(_) => None,
+            Self::Idx(idx) => Some(idx),
+        }
+    }
+
+    /// Displays this component, either as an identifier, or as an index starting with `_`.
+    pub fn display(self, global: &Global) -> String {
+        match self {
+            Self::Identifier(ident) => ident.get(&global.interner).to_owned(),
+            Self::Idx(idx) => format!("_{idx}"),
+        }
+    }
+}
+
 /// A path without error components or AST/span information.
 /// Unlike [`AstPath`](crate::frontend::ast::AstPath), [`LogicalPath`] doesn't require that paths be non-empty!
-#[derive(Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, Default, PartialEq, Eq)]
 pub struct LogicalPath {
-    components: ThinVec<Interned<str>>,
+    /// The components of this path.
+    pub components: ThinVec<PathComponent>,
 }
 
 impl LogicalPath {
-    const EMPTY: Self = Self::new(ThinVec::new());
+    /// An empty logical path, usable in a const context.
+    pub const EMPTY: Self = Self::new();
 
     /// Creates a new [`LogicalPath`].
-    pub const fn new(components: ThinVec<Interned<str>>) -> Self {
-        Self { components }
+    pub const fn new() -> Self {
+        Self {
+            components: ThinVec::new(),
+        }
     }
 
     /// Pushes a new component to this path.
-    pub fn push(&mut self, component: Interned<str>) {
-        self.components.push(component);
+    pub fn push<T: Into<PathComponent>>(&mut self, component: T) {
+        self.components.push(component.into());
     }
 
     /// Returns the first component of this path, if there.
-    pub fn first(&self) -> Option<Interned<str>> {
+    pub fn first(&self) -> Option<PathComponent> {
         self.components.first().copied()
     }
 
     /// Returns the last component of this path, if there.
-    pub fn last(&self) -> Option<Interned<str>> {
+    pub fn last(&self) -> Option<PathComponent> {
         self.components.last().copied()
     }
 
@@ -54,26 +94,24 @@ impl LogicalPath {
         }
 
         self.components.iter().copied().skip(1).fold(
-            String::from(
-                self.components
-                    .first()
-                    // If self.components was empty, the above if branch would have been taken.
-                    .expect_unreachable() // CHECKED(Chloe)
-                    .get(&global.interner),
-            ),
-            |val, elem| val + "." + elem.get(&global.interner),
+            self.components
+                .first()
+                // If self.components was empty, the above if branch would have been taken.
+                .expect_unreachable() // CHECKED(Chloe)
+                .display(global),
+            |val, elem| val + "." + &elem.display(global),
         )
     }
 
     /// Creates a new path with the component added to the end of it.
     #[must_use]
-    pub fn join(&self, component: Interned<str>) -> Self {
+    pub fn join<T: Into<PathComponent>>(&self, component: T) -> Self {
         self.join_non_empty(component).into_inner()
     }
 
     /// Creates a new non-empty path with the component added to the end of it.
     #[must_use]
-    pub fn join_non_empty(&self, component: Interned<str>) -> NonEmptyLogicalPath {
+    pub fn join_non_empty<T: Into<PathComponent>>(&self, component: T) -> NonEmptyLogicalPath {
         let mut new = self.clone();
         new.push(component);
         NonEmptyLogicalPath::new(new)
@@ -84,28 +122,35 @@ impl LogicalPath {
 
 impl<'a> IntoIterator for &'a LogicalPath {
     type IntoIter = Copied<Iter<'a, Self::Item>>;
-    type Item = Interned<str>;
+    type Item = PathComponent;
 
     fn into_iter(self) -> Self::IntoIter {
         self.components.iter().copied()
     }
 }
 
-impl FromIterator<Interned<str>> for LogicalPath {
-    fn from_iter<T: IntoIterator<Item = Interned<str>>>(iter: T) -> Self {
-        Self::new(iter.into_iter().collect())
+impl<I: Into<PathComponent>> FromIterator<I> for LogicalPath {
+    fn from_iter<T: IntoIterator<Item = I>>(iter: T) -> Self {
+        Self::from(iter.into_iter().map(Into::into).collect::<ThinVec<_>>())
     }
 }
 
 impl Deref for LogicalPath {
-    type Target = [Interned<str>];
+    type Target = [PathComponent];
 
     fn deref(&self) -> &Self::Target {
         &self.components
     }
 }
 
+impl<T: Into<PathComponent>> From<ThinVec<T>> for LogicalPath {
+    fn from(value: ThinVec<T>) -> Self {
+        value.into_iter().collect()
+    }
+}
+
 /// A [`LogicalPath`] with the added condition that it must be non-empty.
+#[derive(Debug, Clone)]
 pub struct NonEmptyLogicalPath(LogicalPath);
 
 impl NonEmptyLogicalPath {
@@ -119,13 +164,13 @@ impl NonEmptyLogicalPath {
     }
 
     /// Returns the first component of this path.
-    pub fn first(&self) -> Interned<str> {
+    pub fn first(&self) -> PathComponent {
         // This is an invariant.
         (**self).first().expect_unreachable() // CHECKED(Chloe)
     }
 
     /// Returns the last component of this path.
-    pub fn last(&self) -> Interned<str> {
+    pub fn last(&self) -> PathComponent {
         // This is an invariant.
         (**self).last().expect_unreachable() // CHECKED(Chloe)
     }
@@ -133,6 +178,12 @@ impl NonEmptyLogicalPath {
     /// Returns the inner path.
     pub fn into_inner(self) -> LogicalPath {
         self.0
+    }
+
+    /// Joins a path component onto this path.
+    #[must_use]
+    pub fn join<T: Into<PathComponent>>(&self, component: T) -> Self {
+        self.join_non_empty(component)
     }
 }
 

@@ -112,9 +112,9 @@ impl AstPath {
             "AstPath.components shouldn't be empty!"
         );
 
-        // This is an invariant, checked in [`AstPath::new`].
         self.components
             .first()
+            // This is an invariant.
             .expect_unreachable() // CHECKED(Chloe)
             .as_ref()
             .copied()
@@ -127,9 +127,9 @@ impl AstPath {
             "AstPath.components shouldn't be empty!"
         );
 
-        // This is an invariant, checked in [`AstPath::new`].
         self.components
             .last()
+            // This is an invariant.
             .expect_unreachable() // CHECKED(Chloe)
             .as_ref()
             .copied()

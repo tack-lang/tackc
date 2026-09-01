@@ -99,6 +99,15 @@ impl<T> TriState<T> {
             Self::None | Self::Error => None,
         }
     }
+
+    /// Turns a [`&TriState<T>`](TriState) into a [`TriState<&T>`].
+    pub const fn as_ref(&self) -> TriState<&T> {
+        match *self {
+            Self::Some(ref val) => TriState::Some(val),
+            Self::Error => TriState::Error,
+            Self::None => TriState::None,
+        }
+    }
 }
 
 /// Visitor for the AST.

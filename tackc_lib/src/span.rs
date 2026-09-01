@@ -205,6 +205,7 @@ impl PartialOrd for Span {
     }
 }
 
+/// A function to create one [`Ordering`] from two. Uses a model of two spans being testing for ordering.
 fn dual_order(x: Ordering, y: Ordering) -> Option<Ordering> {
     match (x, y) {
         (a, b) if a == b => Some(a),

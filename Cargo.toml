@@ -24,6 +24,7 @@ colored = "3.1"
 tackc_meta = { version = "0.1.0", path = "tackc_meta" }
 anyhow = "1.0.104"
 serde_json = "1.0.151"
+derive_more = "2.1.1"
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
@@ -38,7 +39,6 @@ precedence_bits = "forbid"
 same_name_method = "forbid"
 semicolon_inside_block = "forbid"
 try_err = "forbid"
-undocumented_unsafe_blocks = "forbid"
 unused_result_ok = "forbid"
 mixed_read_write_in_expression = "forbid"
 mutex_atomic = "forbid"
@@ -46,13 +46,19 @@ mutex_integer = "forbid"
 pathbuf_init_then_push = "forbid"
 pattern_type_mismatch = "forbid"
 rc_mutex = "forbid"
-rest_pat_in_fully_bound_structs = "forbid"
 return_and_then = "forbid"
 unseparated_literal_suffix = "forbid"
 shadow_same = "forbid"
 str_to_string = "forbid"
 string_lit_chars_any = "forbid"
 unnecessary_rest_pattern = "forbid"
+as_pointer_underscore = "forbid"
+as_underscore = "forbid"
+clone_on_ref_ptr = "forbid"
+if_then_some_else_none = "forbid"
+impl_trait_in_params = "forbid"
+let_underscore_must_use = "forbid"
+map_with_unused_argument_over_ranges = "forbid"
 
 # Lints to error against in order to force fixes while still allowing #[expect].
 doc_paragraphs_missing_punctuation = "deny"
@@ -63,9 +69,12 @@ non_zero_suggestions = "deny"
 rc_buffer = "deny"
 redundant_type_annotations = "deny"
 string_slice = "deny"
+decimal_literal_representation = "deny"
+exit = "deny"
 
 # Lints to warn against in order to require CHECKED.
 mem_forget = "warn"
+cfg_not_test = "warn"
 
 # Lints to warn against that aren't meant to be #[expect]ed.
 todo = "warn"
@@ -74,6 +83,11 @@ dbg_macro = "warn"
 unnecessary_safety_comment = "warn"
 unnecessary_safety_doc = "warn"
 unnecessary_self_imports = "warn"
+
+# Lints to warn against to be pedantic
+rest_pat_in_fully_bound_structs = "warn"
+lossy_float_literal = "warn"
+missing_docs_in_private_items = "warn"
 
 # Lints to allow.
 must_use_candidate = "allow"

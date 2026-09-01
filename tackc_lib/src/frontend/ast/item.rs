@@ -92,7 +92,8 @@ pub struct ConstItem {
 }
 
 impl ConstItem {
-    fn display(&self, global: &Global) -> String {
+    /// Displays this item.
+    pub fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
             Some(ident) => ident.get(&global.interner).display(global),
@@ -110,7 +111,8 @@ impl ConstItem {
         format!("{exp}const {ident}{ty} = {expr};")
     }
 
-    fn display_ident(&self, global: &Global) -> String {
+    /// Displays the identifier and visibillity of this item.
+    pub fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
             Some(sym) => sym.get(&global.interner).display(global),
@@ -137,7 +139,8 @@ pub struct FuncItem {
 }
 
 impl FuncItem {
-    fn display(&self, global: &Global) -> String {
+    /// Displays this item.
+    pub fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
             Some(ident) => ident.get(&global.interner).display(global),
@@ -166,7 +169,8 @@ impl FuncItem {
         format!("{exp}func {ident}({params}) {block}")
     }
 
-    fn display_ident(&self, global: &Global) -> String {
+    /// Displays the identifier and visibillity of this item.
+    pub fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let ident = match self.ident {
             Some(sym) => sym.get(&global.interner).display(global),
@@ -192,7 +196,8 @@ pub struct ImpItem {
 }
 
 impl ImpItem {
-    fn display(&self, global: &Global) -> String {
+    /// Displays this item.
+    pub fn display(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let path = match self.path {
             Some(ref path) => path.display(global),
@@ -202,7 +207,8 @@ impl ImpItem {
         format!("{exp}imp {path};")
     }
 
-    fn display_ident(&self, global: &Global) -> String {
+    /// Displays the identifier and visibillity of this item.
+    pub fn display_ident(&self, global: &Global) -> String {
         let exp = if self.exported { "exp " } else { "" };
         let path = match self.path {
             Some(ref sym) => sym.display(global),
@@ -212,7 +218,8 @@ impl ImpItem {
         format!("{exp}imp {path}")
     }
 
-    fn name(&self, global: &Global) -> Option<Interned<str>> {
+    /// Gets the name of this item. For [`ImpItem`], this is defined as the last component of the path.
+    pub fn name(&self, global: &Global) -> Option<Interned<str>> {
         Some(self.path.as_ref()?.last()?.get(&global.interner).0)
     }
 }

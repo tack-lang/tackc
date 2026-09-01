@@ -2,6 +2,7 @@
 
 use std::{
     any::{Any, type_name},
+    borrow::Cow,
     fmt::Debug,
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -12,9 +13,13 @@ use std::{
 use bumpalo::Bump;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{
-    UnwrapExt,
-    hash::{IdentityDashMap, NonZeroFxHasher},
+use crate::{
+    global::Global,
+    utils::{
+        UnwrapExt,
+        hash::{IdentityDashMap, NonZeroFxHasher},
+        tree::TreeItem,
+    },
 };
 
 /// A trait representing values that are able to be interned by [`Interner`].
@@ -99,6 +104,16 @@ impl Interned<str> {
     }
 }
 
+impl TreeItem for Interned<str> {
+    fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str> {
+        self.get(&global.interner).into()
+    }
+
+    fn children(&self) -> Cow<'_, [&dyn TreeItem]> {
+        (&[]).into()
+    }
+}
+
 impl<T: Hash> Interned<[T]> {
     /// Returns a reference to the interned string.
     ///
@@ -112,9 +127,13 @@ impl<T: Hash> Interned<[T]> {
 /// A struct for interning and deduplicating values.
 #[derive(Debug, Default)]
 pub struct Interner {
+    /// The arena where interned values are stored.
     arena: Bump,
+    /// The map where interned [`Internable`] values are stored.
     interned: IdentityDashMap<NonZeroU64, &'static dyn Internable>,
+    /// The map where interned [`str`] values are stored.
     interned_strs: IdentityDashMap<NonZeroU64, &'static str>,
+    /// The map where interned slices are stored.
     interned_slices: IdentityDashMap<NonZeroU64, (usize, *const u8)>,
 }
 
@@ -131,17 +150,18 @@ impl Interner {
         NonZeroFxHasher::default()
     }
 
+    /// Interns a value into the given map.
     #[inline]
     fn intern_value<T: ?Sized>(
         val: *const T,
         hash: NonZeroU64,
         map: &IdentityDashMap<NonZeroU64, &'static T>,
     ) {
-        #[expect(unsafe_code)] // CHECKED(Chloe)
         // SAFETY:
         // The value is allocated in the arena and lives as long as `self`.
         // This is safe as long as the 'static reference is only returned to callers
         // if &self is 'static.
+        #[expect(unsafe_code)] // CHECKED(Chloe)
         let static_ref: &'static T = unsafe { &*val };
 
         map.insert(hash, static_ref);
@@ -253,6 +273,7 @@ impl Interner {
         self.intern_slice(val, Self::alloc_slice_clone)
     }
 
+    /// Interns a slice into the interner.
     fn intern_slice<'a, T: Hash + PartialEq>(
         &'a self,
         val: &[T],
@@ -267,10 +288,10 @@ impl Interner {
             let (len, ptr) = *interned;
             let ptr = ptr.cast::<T>();
 
-            #[expect(unsafe_code)] // CHECKED(Chloe)
             // SAFETY:
             // When inserting into the `interned_slices` map,
             // we ensure that the pointer/length comes from a valid slice.
+            #[expect(unsafe_code)] // CHECKED(Chloe)
             let slice = unsafe { slice::from_raw_parts(ptr, len) };
 
             if slice == val {
@@ -304,15 +325,16 @@ impl Interner {
             .expect_unreachable(); // CHECKED(Chloe)
         let ptr = ptr.cast::<T>();
 
-        #[expect(unsafe_code)] // CHECKED(Chloe)
         // SAFETY:
         // When inserting into the `interned_slices` map,
         // we ensure that the pointer/length comes from a valid slice.
+        #[expect(unsafe_code)] // CHECKED(Chloe)
         unsafe {
             slice::from_raw_parts(ptr, len)
         }
     }
 
+    /// Reports a hash collision. These are treated as impossible, so this function is never called.
     #[inline(never)]
     #[cold]
     fn report_collision() -> ! {
