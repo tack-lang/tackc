@@ -191,6 +191,18 @@ impl NonEmptyLogicalPath {
     pub fn join<T: Into<PathComponent>>(&self, component: T) -> Self {
         self.join_non_empty(component)
     }
+
+    /// Joins a path to this non-empty path.
+    #[must_use]
+    pub fn join_path(&self, path: &LogicalPath) -> Self {
+        self.iter()
+            .chain(path.iter())
+            .copied()
+            .collect::<LogicalPath>()
+            .into_non_empty()
+            // `self` is non-empty, so anything added to `self` will also be non-empty.
+            .expect_unreachable() // CHECKED(Chloe)
+    }
 }
 
 impl Deref for NonEmptyLogicalPath {
