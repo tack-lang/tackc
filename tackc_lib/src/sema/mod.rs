@@ -120,6 +120,7 @@ impl LogicalPath {
             .expect_unreachable() // CHECKED(Chloe)
     }
 
+    /// Calls [`NonEmptyLogicalPath::new`] on this path.
     pub fn into_non_empty(&self) -> Option<NonEmptyLogicalPath> {
         NonEmptyLogicalPath::new(self.clone())
     }
