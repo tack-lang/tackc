@@ -1,4 +1,4 @@
-//! A step to do namespace analysis - turning a tree of [`LogicalModule`]s into an [`AnonymousNamespace`]s.
+//! A step to do namespace analysis - turning a [`ModuleTree`] into a tree of [`Namespace`]s.
 
 use std::{borrow::Cow, fmt::Write, mem};
 
