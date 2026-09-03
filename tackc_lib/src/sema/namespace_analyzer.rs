@@ -100,7 +100,7 @@ pub enum NamespaceExpression<'a> {
 }
 
 /// A function, represented in a namespace.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NamespaceFunction<'a> {
     /// The return type of this function.
     pub ret_type: Option<&'a Expression>,
@@ -109,7 +109,7 @@ pub struct NamespaceFunction<'a> {
 }
 
 /// A type hint. Self-documenting newtype struct for [`Expression`].
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct TypeHint<'a>(pub &'a Expression);
 
 /// The state of the analyzer.
