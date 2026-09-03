@@ -2,7 +2,8 @@
 
 use std::{borrow::Cow, fmt::Write, mem};
 
-use thin_vec::ThinVec;
+use derive_more::{IsVariant, TryUnwrap, Unwrap};
+use rustc_hash::FxHashMap;
 
 use crate::{
     frontend::ast::{
@@ -15,20 +16,18 @@ use crate::{
     },
     utils::{
         UnwrapExt,
-        hash::IdentityHashMap,
-        intern::Interned,
         tree::{TreeItem, TreeItemExt},
     },
 };
 
 /// A namespace, holds items, and other namespaces.
-#[derive(Debug)]
-pub struct Namespace {
+#[derive(Debug, Default)]
+pub struct Namespace<'a> {
     /// The children of this namespace.
-    pub children: IdentityHashMap<PathComponent, NamespaceChild>,
+    pub children: FxHashMap<PathComponent, NamespaceChild<'a>>,
 }
 
-impl Namespace {
+impl Namespace<'_> {
     /// Displays this [`Namespace`].
     pub fn display(&self, global: &Global) -> String {
         let mut out = String::new();
@@ -45,18 +44,18 @@ impl Namespace {
 
 /// A child of a namespace.
 #[derive(Debug)]
-pub struct NamespaceChild {
+pub struct NamespaceChild<'a> {
     /// The path to this child, ignoring any re-exports.
     pub path: NonEmptyLogicalPath,
     /// The name this child can be accessed by. Usually the last component of `path`.
     pub name: PathComponent,
     /// The value of this child.
-    pub value: NamespaceExpression,
+    pub value: NamespaceExpression<'a>,
     /// Whether or not this child is exported.
     pub exported: bool,
 }
 
-impl TreeItem for NamespaceChild {
+impl TreeItem for NamespaceChild<'_> {
     fn name<'a>(&'a self, global: &'a Global) -> std::borrow::Cow<'a, str> {
         match self.value {
             NamespaceExpression::Namespace(_) => {
@@ -76,64 +75,40 @@ impl TreeItem for NamespaceChild {
                 .map(|child| child as &dyn TreeItem)
                 .collect::<Vec<_>>()
                 .into(),
-            NamespaceExpression::Function(ref func) => func.metadata.children(),
             _ => (&[]).into(),
         }
     }
 }
 
 /// An expression belonging to a namespace.
-#[derive(Debug)]
-pub enum NamespaceExpression {
+#[derive(Debug, Unwrap, TryUnwrap, IsVariant)]
+pub enum NamespaceExpression<'a> {
     /// An expression.
-    Expression(Expression),
+    Expression(&'a Expression),
     /// A function.
-    Function(NamespaceFunction),
+    Function(NamespaceFunction<'a>),
     /// A path, used for `imp` statements.
     Path(NonEmptyLogicalPath),
     /// A namespace.
-    Namespace(Namespace),
-    /// A let binding, used in a function.
-    LetBinding,
+    Namespace(Namespace<'a>),
+    /// A let binding, used in function namespaces.
+    LetBinding(Option<TypeHint<'a>>),
+    /// A parameter, used in function namespaces.
+    Parameter(TypeHint<'a>),
 }
 
-/// A function represented in a namespace.
+/// A function, represented in a namespace.
 #[derive(Debug)]
-pub struct NamespaceFunction {
-    /// The parameters for this function.
-    pub params: ThinVec<(Interned<str>, Expression)>,
+pub struct NamespaceFunction<'a> {
     /// The return type of this function.
-    pub ret_type: TriState<Expression>,
+    pub ret_type: Option<&'a Expression>,
     /// The block for this function.
-    pub block: Block,
-    /// The 'metadata' about this function. Contains information allowing functions to be namespaces.
-    pub metadata: NamespaceBlock,
+    pub block: &'a Block,
 }
 
-/// Metadata turning a block into a namespace.
+/// A type hint. Self-documenting newtype struct for [`Expression`].
 #[derive(Debug)]
-pub struct NamespaceBlock {
-    /// The path to this block.
-    pub path: NonEmptyLogicalPath,
-    /// The children of this block. Referenced using [`Idx`](crate::sema::PathComponent::Idx) paths.
-    pub children: ThinVec<Self>,
-    /// Let bindings in this block.
-    pub bindings: ThinVec<Interned<str>>,
-}
-
-impl TreeItem for NamespaceBlock {
-    fn name<'a>(&'a self, global: &'a Global) -> Cow<'a, str> {
-        self.path.last().display(global).into()
-    }
-
-    fn children(&self) -> Cow<'_, [&dyn TreeItem]> {
-        self.children
-            .iter()
-            .map(|block| block as &dyn TreeItem)
-            .chain(self.bindings.iter().map(|str| str as &dyn TreeItem))
-            .collect()
-    }
-}
+pub struct TypeHint<'a>(pub &'a Expression);
 
 /// The state of the analyzer.
 struct State<'a> {
@@ -142,12 +117,12 @@ struct State<'a> {
 }
 
 /// Analyzes the [`ModuleTree`], turning it into a [`Namespace`].
-pub fn analyze(modules: ModuleTree, global: &Global) -> Namespace {
-    let mut children = IdentityHashMap::default();
+pub fn analyze<'a>(modules: &'a ModuleTree, global: &Global) -> Namespace<'a> {
+    let mut children = FxHashMap::default();
 
     let state = State { global };
 
-    for (_, module) in modules.nodes {
+    for module in modules.nodes.values() {
         state.analyze_module(&mut children, module, &LogicalPath::EMPTY);
     }
 
@@ -156,22 +131,22 @@ pub fn analyze(modules: ModuleTree, global: &Global) -> Namespace {
 
 impl State<'_> {
     /// Analyzes a module, and adds it to the namespace given.
-    fn analyze_module(
+    fn analyze_module<'a>(
         &self,
-        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
-        module: ModuleNode,
+        namespace: &mut FxHashMap<PathComponent, NamespaceChild<'a>>,
+        module: &'a ModuleNode,
         namespace_path: &LogicalPath,
     ) {
         let name = module.get_name();
         let path = namespace_path.join_non_empty(name);
 
-        let mut children = IdentityHashMap::default();
+        let mut children = FxHashMap::default();
 
-        for (_, module) in module.nodes {
+        for module in module.nodes.values() {
             self.analyze_module(&mut children, module, &path);
         }
 
-        for (_, item) in module.items {
+        for item in module.items.values() {
             self.analyze_item(&mut children, item, &path);
         }
 
@@ -187,31 +162,31 @@ impl State<'_> {
     }
 
     /// Analyzes an item, and adds it to the given namespace.
-    fn analyze_item(
+    fn analyze_item<'a>(
         &self,
-        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
-        item: Item,
+        namespace: &mut FxHashMap<PathComponent, NamespaceChild<'a>>,
+        item: &'a Item,
         namespace_path: &LogicalPath,
     ) -> Option<()> {
         match item.kind {
-            ItemKind::ConstItem(item) => {
+            ItemKind::ConstItem(ref item) => {
                 let name = item.ident?.get(&self.global.interner).0;
                 let path = namespace_path.join_non_empty(name);
                 namespace.insert(
                     name.into(),
                     NamespaceChild {
                         name: name.into(),
-                        value: NamespaceExpression::Expression(item.expr?),
+                        value: NamespaceExpression::Expression(item.expr.as_ref()?),
                         exported: item.exported,
                         path,
                     },
                 );
             }
-            ItemKind::FuncItem(func_item) => {
+            ItemKind::FuncItem(ref func_item) => {
                 self.analyze_function(namespace, func_item, namespace_path);
             }
-            ItemKind::ImpItem(imp_item) => {
-                let ast_path = imp_item.path?;
+            ItemKind::ImpItem(ref imp_item) => {
+                let ast_path = imp_item.path.as_ref()?;
 
                 if ast_path.components().contains(&None) {
                     return None;
@@ -248,120 +223,159 @@ impl State<'_> {
     }
 
     /// Analyzes a function, and adds it to the given namespace.
-    fn analyze_function(
+    fn analyze_function<'a>(
         &self,
-        namespace: &mut IdentityHashMap<PathComponent, NamespaceChild>,
-        func_item: FuncItem,
+        namespace: &mut FxHashMap<PathComponent, NamespaceChild<'a>>,
+        func_item: &'a FuncItem,
         namespace_path: &LogicalPath,
     ) -> Option<()> {
-        struct MetadataVisitor<'a> {
-            current: NamespaceBlock,
-            global: &'a Global,
-        }
-
-        impl MetadataVisitor<'_> {
-            fn visit_root(mut self, block: &Block) -> NamespaceBlock {
-                for stmt in block.stmts.iter().flatten() {
-                    self.visit_statement(stmt);
-                }
-
-                if let Some(expr) = block.expr.as_ref().some() {
-                    self.visit_expression(expr);
-                }
-
-                self.current
-            }
-        }
-
-        impl AstVisitor<'_> for MetadataVisitor<'_> {
-            fn visit_block(&mut self, block: &Block) {
-                let new_path = self.current.path.join(
-                    self.global
-                        .interner
-                        .intern_str(format!("_{}", self.current.children.len())),
-                );
-                let new = NamespaceBlock {
-                    path: new_path,
-                    children: ThinVec::new(),
-                    bindings: ThinVec::new(),
-                };
-                let old = mem::replace(&mut self.current, new);
-
-                for stmt in block.stmts.iter().flatten() {
-                    self.visit_statement(stmt);
-                }
-
-                if let Some(expr) = block.expr.as_ref().some() {
-                    self.visit_expression(expr);
-                }
-
-                let new = mem::replace(&mut self.current, old);
-
-                self.current.children.push(new);
-            }
-
-            fn visit_let_statement(&mut self, stmt: &'_ LetStatement) {
-                if let Some(ident) = stmt.ident {
-                    self.current
-                        .bindings
-                        .push(ident.get(&self.global.interner).0);
-                }
-
-                if let TriState::Some(ref expr) = stmt.expr {
-                    self.visit_expression(expr);
-                }
-
-                if let TriState::Some(ref ty) = stmt.ty {
-                    self.visit_expression(ty);
-                }
-            }
-        }
-
-        let name = func_item.get_name(self.global)?;
+        let name = PathComponent::Identifier(func_item.ident?.get(&self.global.interner).0);
         let path = namespace_path.join_non_empty(name);
+        let exported = func_item.exported;
+        let mut children = FxHashMap::default();
 
-        let visitor = MetadataVisitor {
-            current: NamespaceBlock {
-                path: path.clone(),
-                children: ThinVec::new(),
-                bindings: ThinVec::new(),
-            },
-            global: self.global,
-        };
-
-        let root = visitor.visit_root(func_item.block.as_ref()?);
-
-        let params = if func_item
-            .params
-            .iter()
-            .any(|&(val, ref expr)| val.is_none() || expr.is_none())
-        {
-            return None;
-        } else {
-            func_item
-                .params
-                .into_iter()
-                .filter_map(|(sym, expr)| Some((sym?.get(&self.global.interner).0, expr?)))
-                .collect()
-        };
-
-        let func = NamespaceFunction {
-            block: func_item.block?,
-            params,
-            ret_type: func_item.ret_type,
-            metadata: root,
-        };
+        self.populate_function_namespace(&mut children, func_item, &path)?;
 
         namespace.insert(
-            name.into(),
+            name,
             NamespaceChild {
-                name: name.into(),
                 path,
-                value: NamespaceExpression::Function(func),
-                exported: func_item.exported,
+                name,
+                value: NamespaceExpression::Namespace(Namespace { children }),
+                exported,
             },
         );
 
         Some(())
+    }
+
+    /// Populates a function namespace using a [`FuncItem`].
+    fn populate_function_namespace<'a>(
+        &self,
+        namespace: &mut FxHashMap<PathComponent, NamespaceChild<'a>>,
+        func_item: &'a FuncItem,
+        namespace_path: &LogicalPath,
+    ) -> Option<()> {
+        for &(param, ref type_hint) in &func_item.params {
+            let name = PathComponent::Identifier(param?.get(&self.global.interner).0);
+            let path = namespace_path.join_non_empty(name);
+            namespace.insert(
+                name,
+                NamespaceChild {
+                    path,
+                    name,
+                    value: NamespaceExpression::Parameter(TypeHint(type_hint.as_ref()?)),
+                    exported: true,
+                },
+            );
+        }
+
+        let children = BlockNamespaceVisitor {
+            current: FxHashMap::default(),
+            current_path: namespace_path.into_non_empty()?,
+            global: self.global,
+        }
+        .visit_root(func_item.block.as_ref()?);
+
+        for (comp, child) in children {
+            namespace.insert(comp, child);
+        }
+
+        let inner_path = namespace_path.join_non_empty(PathComponent::Function);
+        namespace.insert(
+            PathComponent::Function,
+            NamespaceChild {
+                path: inner_path,
+                name: PathComponent::Function,
+                value: NamespaceExpression::Function(NamespaceFunction {
+                    block: func_item.block.as_ref()?,
+                    ret_type: match func_item.ret_type {
+                        TriState::Some(ref val) => Some(val),
+                        TriState::None => None,
+                        TriState::Error => return None,
+                    },
+                }),
+                exported: true,
+            },
+        );
+
+        Some(())
+    }
+}
+
+/// An [`AstVisitor`] that visits blocks to add them to the namespace.
+struct BlockNamespaceVisitor<'g, 'a> {
+    /// The current namespace.
+    current: FxHashMap<PathComponent, NamespaceChild<'a>>,
+    /// The path to the current namespace.
+    current_path: NonEmptyLogicalPath,
+    /// The global context.
+    global: &'g Global,
+}
+
+impl<'a> BlockNamespaceVisitor<'_, 'a> {
+    /// Visits the root of a function block.
+    fn visit_root(mut self, block: &'a Block) -> FxHashMap<PathComponent, NamespaceChild<'a>> {
+        for stmt in block.stmts.iter().flatten() {
+            self.visit_statement(stmt);
+        }
+
+        if let TriState::Some(ref expr) = block.expr {
+            self.visit_expression(expr);
+        }
+
+        self.current
+    }
+}
+
+impl<'a> AstVisitor<'a> for BlockNamespaceVisitor<'_, 'a> {
+    fn visit_block(&mut self, block: &'a Block) {
+        let component = PathComponent::NodeId(block.id);
+        let mut old = mem::take(&mut self.current);
+        let path = self.current_path.join(component);
+        self.current_path = path.clone();
+
+        for stmt in block.stmts.iter().flatten() {
+            self.visit_statement(stmt);
+        }
+
+        if let TriState::Some(ref expr) = block.expr {
+            self.visit_expression(expr);
+        }
+
+        let new = mem::take(&mut self.current);
+        old.insert(
+            PathComponent::NodeId(block.id),
+            NamespaceChild {
+                path,
+                name: component,
+                value: NamespaceExpression::Namespace(Namespace { children: new }),
+                exported: true,
+            },
+        );
+        self.current = old;
+    }
+
+    fn visit_let_statement(&mut self, stmt: &'a LetStatement) {
+        if let TriState::Some(ref ty) = stmt.ty {
+            self.visit_expression(ty);
+        }
+        if let TriState::Some(ref expr) = stmt.expr {
+            self.visit_expression(expr);
+        }
+
+        let Some(sym) = stmt.ident else { return };
+        let name = PathComponent::Identifier(sym.get(&self.global.interner).0);
+        let path = self.current_path.join(name);
+
+        self.current.insert(
+            name,
+            NamespaceChild {
+                path,
+                name,
+                value: NamespaceExpression::LetBinding(stmt.expr.as_ref().some().map(TypeHint)),
+                exported: true,
+            },
+        );
     }
 }

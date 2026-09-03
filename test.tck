@@ -2,13 +2,17 @@ mod statement;
 
 exp imp tack.stdlib.T;
 
+func test2(param_1: type) {
+    param_1
+}
+
 func test() {
     let ret = {
         {
             let ret = tack.t.T;
         }
         {
-            let other = 5;
+            let other = test2(5);
             other
         }
     };

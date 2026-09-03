@@ -6,6 +6,7 @@ use derive_more::{IsVariant, TryUnwrap, Unwrap, derive::From};
 use thin_vec::ThinVec;
 
 use crate::{
+    frontend::ast::NodeId,
     global::Global,
     utils::{UnwrapExt, intern::Interned},
 };
@@ -20,6 +21,8 @@ pub enum PathComponent {
     Identifier(Interned<str>),
     /// An index. Used in special cases where the compiler needs a path to something, but can't use an identifier.
     Idx(NonZeroU64),
+    /// A path component by a [`NodeId`].
+    NodeId(NodeId),
     /// An inner function component. Used to refer to the inner function of a namespace.
     Function,
 }
@@ -30,6 +33,7 @@ impl PathComponent {
         match self {
             Self::Identifier(ident) => ident.get(&global.interner).to_owned(),
             Self::Idx(idx) => format!("_{idx}"),
+            Self::NodeId(id) => format!("_node_{}", id.id),
             Self::Function => "_inner".to_owned(),
         }
     }
@@ -124,7 +128,9 @@ impl<'a> IntoIterator for &'a LogicalPath {
 
 impl<I: Into<PathComponent>> FromIterator<I> for LogicalPath {
     fn from_iter<T: IntoIterator<Item = I>>(iter: T) -> Self {
-        Self::from(iter.into_iter().map(Into::into).collect::<ThinVec<_>>())
+        Self {
+            components: iter.into_iter().map(Into::into).collect::<ThinVec<_>>(),
+        }
     }
 }
 

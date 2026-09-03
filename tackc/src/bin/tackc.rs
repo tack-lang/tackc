@@ -101,7 +101,7 @@ fn main() {
         println!("{}", e.display(global));
     }
 
-    let namespace = namespace_analyzer::analyze(mod_tree, global);
+    let namespace = namespace_analyzer::analyze(&mod_tree, global);
     println!("{}", namespace.display(global));
 }
 
