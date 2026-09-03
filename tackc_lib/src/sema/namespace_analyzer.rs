@@ -53,6 +53,8 @@ pub struct NamespaceChild<'a> {
     pub value: NamespaceExpression<'a>,
     /// Whether or not this child is exported.
     pub exported: bool,
+    /// Whether or not this child is only attatched to instances of this namespace.
+    pub instance: bool,
 }
 
 impl TreeItem for NamespaceChild<'_> {
@@ -157,6 +159,7 @@ impl State<'_> {
                 name: name.into(),
                 value: NamespaceExpression::Namespace(Namespace { children }),
                 exported: module.exported,
+                instance: false,
             },
         );
     }
@@ -179,6 +182,7 @@ impl State<'_> {
                         value: NamespaceExpression::Expression(item.expr.as_ref()?),
                         exported: item.exported,
                         path,
+                        instance: false,
                     },
                 );
             }
@@ -214,6 +218,7 @@ impl State<'_> {
                         path: imp_path,
                         value: NamespaceExpression::Path(pointed_path),
                         exported: imp_item.exported,
+                        instance: false,
                     },
                 );
             }
@@ -243,6 +248,7 @@ impl State<'_> {
                 name,
                 value: NamespaceExpression::Namespace(Namespace { children }),
                 exported,
+                instance: false,
             },
         );
 
@@ -266,6 +272,7 @@ impl State<'_> {
                     name,
                     value: NamespaceExpression::Parameter(TypeHint(type_hint.as_ref()?)),
                     exported: true,
+                    instance: false,
                 },
             );
         }
@@ -296,6 +303,7 @@ impl State<'_> {
                     },
                 }),
                 exported: true,
+                instance: false,
             },
         );
 
@@ -351,6 +359,7 @@ impl<'a> AstVisitor<'a> for BlockNamespaceVisitor<'_, 'a> {
                 name: component,
                 value: NamespaceExpression::Namespace(Namespace { children: new }),
                 exported: true,
+                instance: false,
             },
         );
         self.current = old;
@@ -375,6 +384,7 @@ impl<'a> AstVisitor<'a> for BlockNamespaceVisitor<'_, 'a> {
                 name,
                 value: NamespaceExpression::LetBinding(stmt.expr.as_ref().some().map(TypeHint)),
                 exported: true,
+                instance: false,
             },
         );
     }
